@@ -1,12 +1,13 @@
-function [N D tspan tdir lt y0 f0 g0 h ConstStep dataType DiagonalNoise ...
-          ScalarNoise ConstFFUN ConstGFUN Stratonovich RandFUN CustomRandFUN]...
+function [N D tspan tdir lt y0 f0 g0 h ConstStep dataType idxNonNegative ...
+          NonNegative DiagonalNoise ScalarNoise ConstFFUN ConstGFUN ...
+          Stratonovich RandFUN CustomRandFUN] ...
           = sdearguments(solver,f,g,tspan,y0,options,args)
 %SDEARGUMENTS  Helper function that processes arguments for all SDE solvers.
 %
 %   See also SDE_EULER, SDE_MILSTEIN, SDEGET, FUNCTION_HANDLE, RANDSTREAM.
         
 %   Andrew D. Horchler, adh9@case.edu, Created 12-12-11
-%   Revision: 1.0, 2-26-12
+%   Revision: 1.0, 3-28-12
 
 %   SDEARGUMENTS is partially based on an updating of version 1.12.4.15 of
 %   Matlab's ODEARGUMENTS.
@@ -111,6 +112,36 @@ if m ~= N
             'FFUN must return a vector the same length as Y0.  See %s.',solver);
 end
 
+% Check for non-negative components
+idxNonNegative = sdeget(options,'NonNegative','no','flag');
+if strcmp(idxNonNegative,'yes')
+    idxNonNegative = 1:N;
+    NonNegative = true;
+elseif ~strcmp(idxNonNegative,'no') && ~isempty(idxNonNegative)
+    if ~isnumeric(idxNonNegative) || ~isreal(idxNonNegative) || ...
+            ~all(isfinite(idxNonNegative)) || ~isvector(idxNonNegative)
+        error(  'SDELab:sdearguments:InvalidNonNegative',...
+               ['NonNegative option must be a finite real numeric vector.'...
+                '  See %s.'],solver);
+    end
+    if any(idxNonNegative < 1) || any(idxNonNegative > N) || ...
+            ~all(idxNonNegative-floor(idxNonNegative) == 0)
+        error(  'SDELab:sdearguments:InvalidNonNegative',...
+               ['NonNegative option must be a vector of integer indices no '...
+                'greater than the length of Y0.  See %s.'],solver);
+    end
+    if any(diff(sort(idxNonNegative)) == 0)
+        error(  'SDELab:sdearguments:InvalidNonNegative',...
+               ['NonNegative vector cannot contain repeated indices.'...
+                '  See %s.'],solver);
+    end
+    y0(idxNonNegative) = max(y0(idxNonNegative),0);
+    NonNegative = true;
+else
+    idxNonNegative = [];
+    NonNegative = false;
+end
+
 % Ensure second solver input is function handle, or matix for constant function
 if ~isa(g,'function_handle')
     if isempty(g) && ndims(g) == 2 && all(size(g) == 0) && isnumeric(g)
@@ -166,23 +197,18 @@ if ndims(g0) ~= 2 || isempty(g0) || ~isfloat(g0)
             '  See %s.'],solver);
 end
 [m n] = size(g0);
-if m == 1 && n == 1 % scalar noise case is same for both and doesn't depend on N
-    ScalarNoise = true;
-    D = 1;
-elseif DiagonalNoise
-    if n ~= 1
+if DiagonalNoise
+    if n ~= 1 || ~(m == N || m == 1)
         error(  'SDELab:sdearguments:GFUNNotColumnVector',...
-               ['For diagonal noise, GFUN must return a scalar value or a '...
-                'non-empty column vector.  See %s.'],solver);
-    end
-    if m ~= N
-        error(  'SDELab:sdearguments:GFUNDimensionMismatchDiagonal',...
                ['For diagonal noise, GFUN must return a scalar value or a '...
                 'non-empty column vector the same length as Y0.'...
                 '  See %s.'],solver);
     end
     ScalarNoise = false;
-    D = m;
+    D = N;
+elseif m == 1 && n == 1 % scalar noise case same for both, doesn't depend on N
+    ScalarNoise = true;
+    D = 1;
 else
     if m ~= N
         error(  'SDELab:sdearguments:GFUNDimensionMismatchNonDiagonal',...
@@ -213,9 +239,9 @@ if ~isempty(RandFUN)	% Use alternative random number generator
 else    % Use Matlab's random number generator for normal variates
     RandSeed = sdeget(options,'RandSeed',[],'flag');
     if ~isempty(RandSeed)
-        if ndims(RandSeed) ~= 2 || any(size(RandSeed) ~= 1) || ...
-                ~isfinite(RandSeed) || ~isnumeric(RandSeed) || ...
-                ~isreal(RandSeed) || RandSeed >= 2^32 || RandSeed < 0
+        if ~isscalar(RandSeed) || ~isnumeric(RandSeed) || ...
+                ~isreal(RandSeed) || ~isfinite(RandSeed) || ...
+                RandSeed >= 2^32 || RandSeed < 0
             error(	'SDELab:sdearguments:InvalidRandSeed',...
                    ['RandSeed must be a non-negative integer value less '...
                     'than 2^32.  See %s.'],solver);

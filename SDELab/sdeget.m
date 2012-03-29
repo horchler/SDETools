@@ -19,7 +19,7 @@ function opts = sdeget(options,name,default,noErrorCheck)
 %   SDEGET is based on an updating of version 1.37.4.5 of Matlab's ODEGET
 
 %   Andrew D. Horchler, adh9@case.edu, 10-28-10
-%   Revision: 1.0, 1-1-12
+%   Revision: 1.0, 3-28-12
 
 
 % Undocumented usage for fast access with no error checking
@@ -54,11 +54,12 @@ Names = {   'SDEType'
             'DiagonalNoise'
             'ConstFFUN'
             'ConstGFUN'
+            'NonNegative'
             'SaveMemory'
         };
 
 j = find(strncmpi(name,Names,length(name)));
-if isempty(j)	% if no matches
+if isempty(j)           % if no matches
 	error(  'SDELab:sdeget:InvalidPropertyName',...
            ['Unrecognized property name ''%s''.  See SDESET for '...
             'possibilities.'],name);

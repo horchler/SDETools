@@ -52,14 +52,15 @@ function options = sdeset(varargin)
 %   these.
 %
 %DiagonalNoise - Dimension of stochastic function  [ {yes} | no ]
-%   Set this property to 'no' to use the more general, but more computationaly
-%   intense, case where each dimension of the stochastic function can be
-%   disturbed by multiple components of the Wiener process vector. In this case,
-%   the stochastic function argument, GFUN (and DGFUN, if specified), must
-%   return a square matrix of dimension LENGTH(Y0) rather than a vector. This in
-%   contrast to the default diagonal noise situation where each dimension of the
-%   stochastic function is only perturbed by a single corresponding component of
-%   the Wiener process.
+%   In the default diagonal (uncorrelated) noise situation each dimension of the
+%   stochastic function is only perturbed by a single component of the
+%   D-dimensional Wiener process. GFUN (and DGFUN, if specified) must return a
+%   scalar or a column vector of length N = LENGTH(Y0). If a scalar is returned,
+%   this value is used across all N dimensions. Set this property to 'no' to use
+%   the more general, but more computationaly intense, correlated noise case
+%   where each dimension of the stochastic function can be disturbed by multiple
+%   components of the Wiener process. In this case, the stochastic function
+%   argument, GFUN (and DGFUN, if specified), must return a N-by-D matrix.
 %
 %ConstFFUN - Deterministic function is constant  [ yes | {no} ]
 %   Set this property to 'yes' if the determinstic function, f(t,y), of the SDE
@@ -72,6 +73,12 @@ function options = sdeset(varargin)
 %   therefore not a function of time or state. The function is then evaluated
 %   only once by the integration routine, improving performance.
 %
+%NonNegative - Non-negative components [ yes | {no} | vector of indices ]
+%   Set to 'yes' to specify that all components of the solution are
+%   non-negative. A vector of indices specifies individual components of the
+%   solution vector that must be non-negative. An empty vector, [], is
+%   equivalent to 'no'.
+%
 %SaveMemory - Limit memory usage of solver at cost to perfomance  [ yes | {no} ]
 %   Set this property to 'yes' to minimize the internal memory footprint of SDE
 %   solvers of order 1.0 strong and greater. In general, performance will be
@@ -83,7 +90,7 @@ function options = sdeset(varargin)
 %   SDESET is based on an updating of version 1.46.4.10 of Matlab's ODESET.
 
 %   Andrew D. Horchler, adh9@case.edu, 10-27-10
-%   Revision: 1.0, 1-1-12
+%   Revision: 1.0, 3-28-12
 
 
 Names = {   'SDEType'
@@ -96,6 +103,7 @@ Names = {   'SDEType'
             'DiagonalNoise'
             'ConstFFUN'
             'ConstGFUN'
+            'NonNegative'
             'SaveMemory'
         };
 Values = {	'{Stratonovich} | Ito'
@@ -108,6 +116,7 @@ Values = {	'{Stratonovich} | Ito'
             '{yes} |  no '
             ' yes  | {no}'
             ' yes  | {no}'
+            ' yes  | {no} | vector'
             ' yes  | {no}'
         };
 m = length(Names);
@@ -134,7 +143,7 @@ while i<=nargin
 	arg = varargin{i};
 	if ischar(arg)	% arg is an option name
         break;
-    end
+	end
 	if ~isempty(arg)	% [] is a valid options argument
         if ~isa(arg,'struct')
             error(  'SDELab:sdeset:NoPropertyNameOrStruct',...
@@ -152,7 +161,7 @@ while i<=nargin
                 options.(Name) = val;
             end
         end
-    end
+	end
 	i = i+1;
 end
 

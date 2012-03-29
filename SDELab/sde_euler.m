@@ -58,7 +58,7 @@ function [Y W] = sde_euler(f,g,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9@case.edu, Created 10-28-10
-%   Revision: 1.0, 1-2-12
+%   Revision: 1.0, 3-28-12
 
 
 solver = 'SDE_EULER';
@@ -84,9 +84,9 @@ elseif isempty(options) && (ndims(options) ~= 2 || any(size(options) ~= 0) ...
 end
 
 % Handle solver arguments
-[N D tspan tdir lt y0 fout gout h ConstStep dataType DiagonalNoise ...
-	ScalarNoise ConstFFUN ConstGFUN Stratonovich RandFUN CustomRandFUN]...
-	= sdearguments(solver,f,g,tspan,y0,options,varargin);
+[N D tspan tdir lt y0 fout gout h ConstStep dataType idxNonNegative ...
+    NonNegative DiagonalNoise ScalarNoise ConstFFUN ConstGFUN Stratonovich ...
+    RandFUN CustomRandFUN] = sdearguments(solver,f,g,tspan,y0,options,varargin);
 
 Y = zeros(lt,N,dataType);   % State array
 
@@ -202,7 +202,7 @@ if nargout == 2 && D <= N
 end
 
 % Integrate
-if ConstFFUN && ConstGFUN && (D <= N || nargout == 2)   % no FOR loop needed
+if ConstFFUN && ConstGFUN && (D <= N || nargout == 2) && ~NonNegative	% no FOR loop needed
     if ScalarNoise
         if ConstStep
             Y(2:end,:) = bsxfun(@plus,y0',cumsum(bsxfun(@plus,fout'*h,Y(2:end,ones(1,N))*gout),1));
@@ -289,6 +289,9 @@ else
             end
         end
     end
+    if NonNegative
+        Yi(idxNonNegative) = max(Yi(idxNonNegative),0);
+    end
     Y(2,:) = Yi;
     
     % Integration loop using cached state, Yi, and increment, Wi
@@ -330,7 +333,7 @@ else
                     Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+gout*dW(:);
                 end
             else
-                Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+Y(i+1,:)';
+                Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+dW(:);
             end
         else
             if ~ConstFFUN
@@ -352,6 +355,9 @@ else
                     Yi = Yi+fout+feval(g,tspan(i),Yi,varargin{:})*dW(:);
                 end
             end
+        end
+        if NonNegative
+            Yi(idxNonNegative) = max(Yi(idxNonNegative),0);
         end
         Y(i+1,:) = Yi;
     end
