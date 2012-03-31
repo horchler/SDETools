@@ -23,17 +23,22 @@ function options = sdeset(varargin)
 %   particular SDE integration scheme is based upon the Stratonovich or Ito
 %   stochastic integral.
 %
-%DFFUN - Specify a derivative of the deterministic function  [ function_handle ]
+%DFFUN - Derivative of the deterministic function  [ function_handle | vector ]
 %   Set this property to a function handle in order to specify the derivative of
 %   the deterministic function, df(t,y)/dy, to use derivative methods if
-%   available. If this property is not set, derivative-free methods are used.
+%   available. If this property is not set, derivative-free methods are used. If
+%   a floating-point matrix is specified instead of a function handle, the
+%   ConstFFUN property is implicitly assumed.
 %
-%DGFUN - Specify a derivative of the stochastic function  [ function_handle ]
+%DGFUN - Derivative of the stochastic function  [ function_handle | matrix ]
 %   Set this property to a function handle in order to specify the derivative of
 %   the stochastic function, dg(t,y)/dy, to use derivative methods if available.
-%   If this property is not set, derivative-free methods are used.
+%   If this property is not set, derivative-free methods are used. If a
+%   floating-point matrix is specified instead of a function handle, the
+%   ConstGFUN property is implicitly assumed. If all values are equal to zero,
+%   then the ConstDGFUN property is also assumed.
 %   
-%RandSeed - Create random stream and set seed  [ positive integer < 2^32 ]
+%RandSeed - Create random stream and set seed  [ 0 <= integer < 2^32 ]
 %   Create a random number stream separate from Matlab's default stream with the
 %   specified seed value. If a seed is not specified, Matlab's current default
 %   stream is used.
@@ -73,24 +78,24 @@ function options = sdeset(varargin)
 %   therefore not a function of time or state. The function is then evaluated
 %   only once by the integration routine, improving performance.
 %
+%ConstDGFUN - Derivative of stochastic function is constant  [ yes | {no} ]
+%   Set this property to 'yes' if the derivative of th stochastic function,
+%   dg(t,y)/dy, of the SDE is constant and therefore not a function of time or
+%   state. The function is then evaluated only once by the integration routine,
+%   improving performance.
+%
 %NonNegative - Non-negative components [ yes | {no} | vector of indices ]
 %   Set to 'yes' to specify that all components of the solution are
 %   non-negative. A vector of indices specifies individual components of the
 %   solution vector that must be non-negative. An empty vector, [], is
 %   equivalent to 'no'.
-%
-%SaveMemory - Limit memory usage of solver at cost to perfomance  [ yes | {no} ]
-%   Set this property to 'yes' to minimize the internal memory footprint of SDE
-%   solvers of order 1.0 strong and greater. In general, performance will be
-%   reduced, but this option may be useful for large calculations or for systems
-%   with limited available memory.
 %   
 %   See also SDEGET, SDE_EULER, SDE_MILSTEIN, SDE_VALIDATE, FUNCTION_HANDLE.
 
 %   SDESET is based on an updating of version 1.46.4.10 of Matlab's ODESET.
 
 %   Andrew D. Horchler, adh9@case.edu, 10-27-10
-%   Revision: 1.0, 3-28-12
+%   Revision: 1.0, 3-29-12
 
 
 Names = {   'SDEType'
@@ -103,21 +108,21 @@ Names = {   'SDEType'
             'DiagonalNoise'
             'ConstFFUN'
             'ConstGFUN'
+            'ConstDGFUN'
             'NonNegative'
-            'SaveMemory'
         };
 Values = {	'{Stratonovich} | Ito'
+            'function_handle | vector'
+            'function_handle | matrix'
             'function_handle'
-            'function_handle'
-            'function_handle'
-            'positive integer < 2^32'
+            '0 <= integer < 2^32'
             ' yes  | {no}'
             ' yes  | {no}'
             '{yes} |  no '
             ' yes  | {no}'
             ' yes  | {no}'
-            ' yes  | {no} | vector'
             ' yes  | {no}'
+            ' yes  | {no} | vector'
         };
 m = length(Names);
 

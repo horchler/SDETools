@@ -55,7 +55,37 @@ end
 y0 = y0(:);
 N = length(y0);	% number of state variables
 
-% Ensure first solver input is function handle, or matix for constant function
+% Check for non-negative components
+idxNonNegative = sdeget(options,'NonNegative','no','flag');
+if strcmp(idxNonNegative,'yes')
+    idxNonNegative = 1:N;
+    y0 = max(y0,0);
+    NonNegative = true;
+elseif ~strcmp(idxNonNegative,'no') && ~isempty(idxNonNegative)
+    if ~isnumeric(idxNonNegative) || ~isreal(idxNonNegative) || ...
+            ~all(isfinite(idxNonNegative)) || ~isvector(idxNonNegative)
+        error(  'SDELab:sdearguments:InvalidNonNegative',...
+               ['NonNegative option must be a finite real numeric vector.'...
+                '  See %s.'],solver);
+    end
+    if any(idxNonNegative < 1) || any(idxNonNegative > N) || ...
+            ~all(idxNonNegative-floor(idxNonNegative) == 0)
+        error(  'SDELab:sdearguments:InvalidNonNegative',...
+               ['NonNegative option must be a vector of integer indices no '...
+                'greater than the length of Y0.  See %s.'],solver);
+    end
+    if any(diff(sort(idxNonNegative)) == 0)
+        error(  'SDELab:sdearguments:InvalidNonNegative',...
+               ['NonNegative vector cannot contain repeated indices.'...
+                '  See %s.'],solver);
+    end
+    y0(idxNonNegative) = max(y0(idxNonNegative),0);
+    NonNegative = true;
+else
+    NonNegative = false;
+end
+
+% Ensure first solver input is function handle, or matrix for constant function
 if ~isa(f,'function_handle')
     if isempty(f) && ndims(f) == 2 && all(size(f) == 0) && isnumeric(f)
         f0 = 0;
@@ -112,37 +142,7 @@ if m ~= N
             'FFUN must return a vector the same length as Y0.  See %s.',solver);
 end
 
-% Check for non-negative components
-idxNonNegative = sdeget(options,'NonNegative','no','flag');
-if strcmp(idxNonNegative,'yes')
-    idxNonNegative = 1:N;
-    NonNegative = true;
-elseif ~strcmp(idxNonNegative,'no') && ~isempty(idxNonNegative)
-    if ~isnumeric(idxNonNegative) || ~isreal(idxNonNegative) || ...
-            ~all(isfinite(idxNonNegative)) || ~isvector(idxNonNegative)
-        error(  'SDELab:sdearguments:InvalidNonNegative',...
-               ['NonNegative option must be a finite real numeric vector.'...
-                '  See %s.'],solver);
-    end
-    if any(idxNonNegative < 1) || any(idxNonNegative > N) || ...
-            ~all(idxNonNegative-floor(idxNonNegative) == 0)
-        error(  'SDELab:sdearguments:InvalidNonNegative',...
-               ['NonNegative option must be a vector of integer indices no '...
-                'greater than the length of Y0.  See %s.'],solver);
-    end
-    if any(diff(sort(idxNonNegative)) == 0)
-        error(  'SDELab:sdearguments:InvalidNonNegative',...
-               ['NonNegative vector cannot contain repeated indices.'...
-                '  See %s.'],solver);
-    end
-    y0(idxNonNegative) = max(y0(idxNonNegative),0);
-    NonNegative = true;
-else
-    idxNonNegative = [];
-    NonNegative = false;
-end
-
-% Ensure second solver input is function handle, or matix for constant function
+% Ensure second solver input is function handle, or matrix for constant function
 if ~isa(g,'function_handle')
     if isempty(g) && ndims(g) == 2 && all(size(g) == 0) && isnumeric(g)
         g0 = 0;
@@ -204,9 +204,9 @@ if DiagonalNoise
                 'non-empty column vector the same length as Y0.'...
                 '  See %s.'],solver);
     end
-    ScalarNoise = false;
+	ScalarNoise = (N == 1);
     D = N;
-elseif m == 1 && n == 1 % scalar noise case same for both, doesn't depend on N
+elseif m == 1 && n == 1	% scalar noise doesn't depend on N
     ScalarNoise = true;
     D = 1;
 else
@@ -250,20 +250,26 @@ else    % Use Matlab's random number generator for normal variates
         Stream = RandStream.create('mt19937ar','Seed',RandSeed);
     else
         % Use default stream
-        Stream = RandStream.getGlobalStream;
+        try
+            Stream = RandStream.getGlobalStream;
+        catch                                       %#ok<CTCH>
+            Stream = RandStream.getDefaultStream;	%#ok<GETRS>
+        end
     end
     
     % Set property if antithetic random variates option is specified
-    set(Stream,'Antithetic',strcmp(sdeget(options,'Antithetic','no','flag'),'yes'));
+    set(Stream,'Antithetic',strcmp(sdeget(options,'Antithetic','no','flag'),...
+        'yes'));
     
     RandFUN = @(M,N)randn(Stream,M,N,dataType);
     CustomRandFUN = false;
 end
 
 % Integration method is dependent on if SDE is Stratonovich or Ito form
-if ConstGFUN || strcmp(sdeget(options,'AdditiveNoise','no','flag'),'yes')
+if ConstGFUN
     % Stochastic function is constant or additive, i.e., not a function of state
     Stratonovich = false;
 else
-    Stratonovich = strcmp(sdeget(options,'SDEType','Stratonovich','flag'),'Stratonovich');
+    Stratonovich = strcmp(sdeget(options,'SDEType','Stratonovich','flag'),...
+        'Stratonovich');
 end

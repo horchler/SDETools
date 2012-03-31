@@ -1,43 +1,54 @@
 function [Y W] = sde_milstein(f,g,tspan,y0,options,varargin)
 %SDE_MILSTEIN  Solve stochastic differential equations, Milstein method.
 %   YOUT = SDE_MILSTEIN(FFUN,GFUN,TSPAN,Y0) with TSPAN = [T0 T1 ... TFINAL]
-%   integrates the system of stochastic differential equations dy = f(t,y)*dt +
-%   g(t,y)*dW with diagonal noise from time T0 to TFINAL (all increasing or all
-%   decreasing with fixed step size) with initial conditions Y0. FFUN and GFUN
-%   are function handles. For a scalar T and a vector Y, FFUN(T,Y) and GFUN(T,Y)
-%   return column vectors corresponding to f(t,y) and g(t,y), the deterministic
-%   and stochastic parts of the SDE, respectively. Each row in the solution
-%   array YOUT corresponds to a time in the input vector TSPAN.
+%   integrates the N-dimensional system of stochastic differential equations
+%   dy = f(t,y)*dt + g(t,y)*dW with N-dimensional diagonal noise from time T0 to
+%   TFINAL (all increasing or all decreasing) with initial conditions Y0. FFUN
+%   and GFUN are function handles or floating point matrices. For scalar T and
+%   vector Y, FFUN(T,Y) and GFUN(T,Y) return column vectors corresponding to
+%   f(t,y) and g(t,y), the deterministic and stochastic parts of the SDE,
+%   respectively. GFUN(T,Y) can also return a scalar, in which case this value
+%   is used across all N dimensions. TSPAN is a length M vector. Y0 is a length
+%   N vector. Each row in the M-by-N solution array YOUT corresponds to a time
+%   in TSPAN.
+%
+%   [YOUT, W] = SDE_MILSTEIN(FFUN,GFUN,TSPAN,Y0) outputs the M-by-N matrix W of
+%   integrated Weiner increments that were used by the solver. Each row of W to
+%   a time in TSPAN.
 %
 %   YOUT = SDE_MILSTEIN(FFUN,GFUN,TSPAN,Y0,OPTIONS) solves the above with
 %   default integration properties replaced by values in OPTIONS, an argument
 %   created with the SDESET function. See SDESET for details. The type of SDE to
 %   be integrated, 'Ito' or the default 'Stratonovich', can be specified via the
-%   SDEType property. By default, the derivative-free Milstein method is 
-%   applied, but if the Derivative property is set to a function handle that
-%   refers to the derivative of the noise function g(t,y), the full Milstein
-%   method is used. Another commonly used option is manually specifying the
-%   random seed with the RandSeed property and creates a separate random number
-%   stream rather than using the default one.
+%   SDEType property. By default, the derivative-free Milstein method is
+%   applied, but if the if the DGFUN property is set to a function handle or
+%   floating point matrix to specify the derivative of the noise function
+%   g(t,y), then the general Milstein method is used. Another commonly used
+%   option is manually specifying the random seed with the RandSeed property and
+%   creates a separate random number stream rather than using the default one.
 %
-%   [YOUT W] = SDE_MILSTEIN(FFUN,GFUN,TSPAN,Y0) outputs the matrix W of
-%   integrated Weiner increments that were used by the solver. W is LENGTH(Y0)
-%   rows by LENGTH(TSPAN) columns, corresponding to [T0 T1 T2 ... TFINAL].
-%
-%   Example
+%   Example:
 %       y = sde_milstein(@f1,@g1,0:0.01:1,[1 0]);
 %       solves the 2-D Stratonovich SDE system dy = f1(t,y)*dt + g1(t,y)*dW,
 %       using the derivative-free Milstein method and the default random number
 %       stream.
 %
-%   NOTE:
+%   Notes:
 %       SDEs are assumed to be in Stratonovich form by default. SDEs in Ito form
 %       can be handled by setting the 'SDEType' OPTIONS property to 'Ito' via
 %       the SDESET function. These forms are generally not equivalent and will
 %       converge to different solutions, so care should be taken to ensure that
 %       the form of SDEFUN matches 'SDEType'.
 %
-%   See also
+%       In the case of additve noise, i.e., when g(t,y) is constant, both Ito
+%       and Stratonovich interpretations are equivalent and the Milstein method
+%       reduces to the Euler-Maruyama method implemented in SDE_EULER. If
+%       GFUN(T,Y) is specified as a floating point matrix rather than a function
+%       handle then it is automatically assumed to be constant. Alternatively,
+%       the ConstGFUN property can be set to 'yes' to indicate that GFUN(T,Y) is
+%       constant and only needs to be evaluated once.
+%
+%   See also:
 %       other SDE solvers:  SDE_EULER
 %       implicit SDEs:      
 %       options handling:   SDESET, SDEGET
@@ -53,237 +64,403 @@ function [Y W] = sde_milstein(f,g,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9@case.edu, 10-25-10
-%   Revision: 1.0
+%   Revision: 1.0, 3-31-12
 
 
-% Check inputs
+solver = 'SDE_MILSTEIN';
+
+% Check inputs and outputs
 if nargin < 5
-	options = [];
     if nargin < 4
-        error(  'MATLAB:sde_milstein:NotEnoughInputs',...
-                'Not enough input arguments.  See SDE_MILSTEIN.');
+        error('SDELab:sde_milstein:NotEnoughInputs',...
+              'Not enough input arguments.  See %s.',solver);
     end
-end
-
-% Ensure first two inputs are function handles
-if ~isa(f,'function_handle')
-    error(  'MATLAB:sde_milstein:NotAFunctionHandle',...
-            'Input FFUN must be a function handle.  See SDE_MILSTEIN.');
-end
-if ~isa(g,'function_handle')
-    error(  'MATLAB:sde_milstein:NotAFunctionHandle',...
-            'Input GFUN must be a function handle.  See SDE_MILSTEIN.');
-end
-
-lt = length(tspan);     % number of time steps
-if lt < 2
-    error(  'MATLAB:sde_milstein:BadInputSize',...
-            'Input vector TSPAN must have length >= 2.  See SDE_MILSTEIN.');
-end
-N = length(y0);         % number of state variables
-if N < 1
-    error(  'MATLAB:sde_milstein:BadInputSize',...
-            'Input vector Y0 must have length >= 1.  See SDE_MILSTEIN.');
-end
-
-h = tspan(2)-tspan(1);  % length of fixed step size
-sh = sqrt(h);
-
-% Check output of SDE functions and save it
-fout = feval(f,tspan(1),y0,varargin{:});
-if ~isvector(fout) || length(fout) ~= N
-    error(  'MATLAB:sde_milstein:DimensionMismatch',...
-            'FFUN must return vector of LENGTH(Y0).  See SDE_MILSTEIN.');
-end
-yout = fout*h;
-
-% Dimension of stochastic function
-DiagonalNoise = strcmp(sdeget(options,'DiagonalNoise','yes','fast'),'yes');
-
-gout = feval(g,tspan(1),y0,varargin{:});
-if DiagonalNoise
-    if ~isvector(gout) || length(gout) ~= N
-        error(  'MATLAB:sde_milstein:DimensionMismatch',...
-                'GFUN must return vector of LENGTH(Y0) if noise is diagonal.  See SDE_MILSTEIN.');
+    if isa(y0,'struct')
+        error('SDELab:sde_milstein:NotEnoughInputsOptions',...
+             ['An SDE options structure was provided as the last argument, '...
+              'but one of the first four input arguments is missing.'...
+              '  See %s.'],solver);
     end
-else
-    if size(gout,1) ~= N || size(gout,2) ~= N
-        error(  'MATLAB:sde_milstein:DimensionMismatch',...
-                'GFUN must return square matrix of dimension LENGTH(Y0).  See SDE_MILSTEIN.');
-    end
+    options = [];
+elseif isempty(options) && (ndims(options) ~= 2 || ...
+        any(size(options) ~= 0) || ~(isstruct(options) || iscell(options) || ...
+        isnumeric(options))) || ~isempty(options) && ~isstruct(options)
+	error('SDELab:sde_milstein:InvalidSDESETStruct',...
+          'Invalid SDE options structure.  See SDESET.');
 end
+
+% Handle solver arguments
+[N D tspan tdir lt y0 fout gout h ConstStep dataType idxNonNegative ...
+    NonNegative DiagonalNoise ScalarNoise ConstFFUN ConstGFUN Stratonovich ...
+    RandFUN CustomRandFUN] = sdearguments(solver,f,g,tspan,y0,options,varargin);
 
 % If optional derivative function property is set
-dg = sdeget(options,'DGFUN',[],'fast');
-Derivative = ~isempty(dg);
-if Derivative
+if ~ConstGFUN
+    dg = sdeget(options,'DGFUN',[],'fast');
+
+    % Ensure DGFUN is function handle, or matrix for constant function
     if ~isa(dg,'function_handle')
-        error(  'MATLAB:sde_milstein:NotAFunctionHandle',...
-                'DGFUN must be a function handle.  See SDE_MILSTEIN.');
-    end
-    dgout = feval(dg,tspan(1),y0,varargin{:});
-    if DiagonalNoise
-        if ~isvector(dgout) || length(dgout) ~= N
-            error(  'MATLAB:sde_milstein:DimensionMismatch',...
-                    'DGFUN must return vector of LENGTH(Y0).  See SDE_MILSTEIN.');
+        if isempty(dg) && ndims(dg) == 2 && all(size(dg) == 0) && isnumeric(dg)
+            Derivative = false;
+        elseif ~isempty(dg) && ndims(dg) == 2 && isfloat(dg)
+            dgout = dg;
+            ConstDGFUN = true;
+            Derivative = true;
+            if all(dgout == 0)
+                ConstGFUN = true;
+            end
+        else
+            error(  'SDELab:sde_milstein:InvalidDGFUN',...
+                   ['The input DGFUN must be a function handle, a matrix of '...
+                    'singles or doubles, or an empty numeric matrix, [], '...
+                    'denoting no stochastic derivative function.'...
+                    '  See %s.'],solver);
         end
     else
-        if size(dgout,1) ~= N || size(dgout,2) ~= N
-            error(  'MATLAB:sde_milstein:DimensionMismatch',...
-                    'DGFUN must return square matrix of dimension LENGTH(Y0).  See SDE_MILSTEIN.');
+        % Check output of DGFUN and save it
+        try
+            dgout = feval(dg,t0,y0,varargin{:});
+        catch err
+            switch err.identifier
+                case 'MATLAB:TooManyInputs'
+                    error(  'SDELab:sde_milstein:DGFUNTooFewInputs',...
+                           ['DGFUN must have at least two inputs.'...
+                            '  See %s.'],solver);
+                case 'MATLAB:TooManyOutputs'
+                    error(  'SDELab:sde_milstein:DGFUNNoOutput',...
+                           ['The output of DGFUN was not specified. DGFUN '...
+                            'must return a non-empty matrix.  See %s.'],solver);
+                case 'MATLAB:unassignedOutputs'
+                    error(  'SDELab:sde_milstein:DGFUNUnassignedOutput',...
+                           ['The first output of DGFUN was not assigned.'...
+                            '  See %s.'],solver);
+                case 'MATLAB:minrhs'
+                    error(  'SDELab:sde_milstein:DGFUNTooManyInputs',...
+                           ['DGFUN requires one or more input arguments '...
+                            '(parameters) that were not supplied.'...
+                            '  See %s.'],solver);
+                otherwise
+                    rethrow(err);
+            end
+        end
+        % If stochastic derivative function specified as constant
+        ConstDGFUN = strcmp(sdeget(options,'ConstDGFUN','no','flag'),'yes');
+        Derivative = true;
+    end
+
+    % Ensure that size and type of output of DGFUN is consistent
+    if Derivative
+        if ndims(dgout) ~= 2 || isempty(dgout) || ~isfloat(dgout)
+            error(  'SDELab:sde_milstein:DGFUNNot2DArray',...
+                   ['DGFUN must return a non-empty matrix of floating point '...
+                    'values.  See %s.'],solver);
+        end
+        [m n] = size(dgout);
+        if DiagonalNoise
+            if n ~= 1 || ~(m == N || m == 1)
+                error(  'SDELab:sde_milstein:DGFUNNotColumnVector',...
+                       ['For diagonal noise, DGFUN must return a scalar '...
+                        'value or a non-empty column vector the same length '...
+                        'as Y0.  See %s.'],solver);
+            end
+        else
+            if m ~= N
+                error(  'SDELab:sde_milstein:DGFUNDimensionMismatchNonDiag',...
+                       ['For non-diagonal noise, DGFUN must return a scalar '...
+                        'value or a non-empty matrix with the same number '...
+                        'of rows as the length as Y0.  See %s.'],solver);
+            end
         end
     end
 end
 
-% If noise is specified as scalar, 1-D
-ScalarNoise = strcmp(sdeget(options,'ScalarNoise','no','fast'),'yes');
+Y = zeros(lt,N,dataType);   % State array
 
-% Calculate Wiener increments from normal variates and store them in state array
-RandFUN = sdeget(options,'RandFUN',[],'fast');
-if ~isempty(RandFUN)	% Use alternative random number generator
-    if ~isa(RandFUN,'function_handle')
-        error(  'MATLAB:sde_milstein:NotAFunctionHandle',...
-                'RANDFUN must be a function handle.  See SDE_MILSTEIN.');
-    end
-    if ScalarNoise
-        dW = [0 sh*feval(RandFUN,1,lt-1)];
-        if size(dW,1) ~= 1 || size(dW,2) ~= lt
-            error(  'MATLAB:sde_milstein:DimensionMismatch',...
-                   ['Output RANDFUN of must be 1 row by LENGTH(TSPAN)-1 '...
-                    'columns.  See SDE_MILSTEIN.']);
+% Calculate Wiener increments from normal variates, store in state if possible
+sh = tdir*sqrt(h);
+h = tdir*h;
+if CustomRandFUN    % check output of alternative RandFUN
+    try
+        if D > N
+            if nargout == 2 % Store Wiener increments in W
+                W = feval(RandFUN,D,lt);
+                if ndims(W) ~= 2 || isempty(W) || ~isfloat(W)
+                    error(  'SDELab:sde_milstein:RandFUNNot2DArray1',...
+                           ['RandFUN must return a non-empty matrix of '...
+                            'floating point values.  See %s.'],solver);
+                end
+                [m n] = size(W);
+                if m ~= lt || n ~= D
+                    error(  'SDELab:sde_milstein:RandFUNDimensionMismatch1',...
+                           ['The specified alternative RandFUN did not '...
+                            'output a %d by %d matrix as requested.'...
+                            '  See %s.',D,lt,solver]);
+                end
+                if ConstStep
+                    W = sh*W;
+                    W(1,1:D) = zeros(1,D,dataType);
+                else
+                    W = bsxfun(@times,[0;sh],W);
+                end
+            else            % Unable to store Wiener increments
+                dW = feval(RandFUN,1,D);
+                if ndims(dW) ~= 2 || isempty(dW) || ~isfloat(dW)
+                    error(  'SDELab:sde_milstein:RandFUNNot2DArray2',...
+                           ['RandFUN must return a non-empty matrix of '...
+                            'floating point values.  See %s.'],solver);
+                end
+                [m n] = size(dW);
+                if m ~= 1 || n ~= D
+                    error(  'SDELab:sde_milstein:RandFUNDimensionMismatch2',...
+                           ['The specified alternative RandFUN did not '...
+                            'output a %d by 1 column vector as requested.'...
+                            '  See %s.',D,solver]);
+                end
+                dW = sh(1)*dW;
+            end
+        elseif D == N       % Store Wiener increments in Y indirectly
+            r = feval(RandFUN,lt-1,D);
+            if ndims(r) ~= 2 || isempty(r) || ~isfloat(r)
+                error(  'SDELab:sde_milstein:RandFUNNot2DArray3',...
+                       ['RandFUN must return a non-empty matrix of floating '...
+                        'point values.  See %s.'],solver);
+            end
+            [m n] = size(r);
+            if m ~= lt-1 || n ~= D
+                error(  'SDELab:sde_milstein:RandFUNDimensionMismatch3',...
+                       ['The specified alternative RandFUN did not output a '...
+                        '%d by %d matrix as requested.'...
+                        '   See %s.',D,lt-1,solver]);
+            end
+            if ConstStep
+                Y(2:end,1:D) = sh*r;
+            else
+                Y(2:end,1:D) = bsxfun(@times,sh,r);
+            end
+            clear r;    % remove large temporary variable to save memory
         end
-        Y = zeros(N,lt);
-        Y(1,:) = dW;
-    else
-        Y = [zeros(N,1) sh*feval(RandFUN,N,lt-1)];
-        if size(Y,1) ~= N || size(Y,2) ~= lt
-            error(  'MATLAB:sde_milstein:DimensionMismatch',...
-                   ['Output RANDFUN of must be LENGTH(Y0) rows by LENGTH(TSPAN)-1 '...
-                    'columns.  See SDE_MILSTEIN.']);
+    catch err
+        switch err.identifier
+            case 'MATLAB:TooManyInputs'
+                error(  'SDELab:sde_milstein:RandFUNTooFewInputs',...
+                       ['RandFUN must have at least two inputs.'...
+                        '  See %s.'],solver);
+            case 'MATLAB:TooManyOutputs'
+                error(  'SDELab:sde_milstein:RandFUNNoOutput',...
+                       ['The output of RandFUN was not specified. RandFUN '...
+                        'must return a non-empty matrix.  See %s.'],solver);
+            case 'MATLAB:unassignedOutputs'
+                error(  'SDELab:sde_milstein:RandFUNUnassignedOutput',...
+                       ['The first output of RandFUN was not assigned.'...
+                        '  See %s.'],solver);
+            case 'MATLAB:minrhs'
+                error(  'SDELab:sde_milstein:RandFUNTooManyInputs',...
+                       ['RandFUN must not require more than two inputs.'...
+                        '  See %s.'],solver);
+            otherwise
+                rethrow(err);
         end
     end
-else	% Use Matlab's random number generator for normal variates
-    RandSeed = sdeget(options,'RandSeed',[],'fast');
-    if ~isempty(RandSeed)
-        if RandSeed >= 2^32 || RandSeed < 0
-            error(	'MATLAB:sde_milstein:ImproperValue',...
-                    'RANDSEED must be positive and less than 2^32.  See SDE_MILSTEIN.');
+else    % No error checking needed if default RANDN used
+    if D > N
+        if nargout == 2 % Store Wiener increments in W
+            if ConstStep
+                W = sh*feval(RandFUN,lt,D);
+                W(1,1:D) = zeros(1,D,dataType);
+            else
+                W = bsxfun(@times,[0;sh],feval(RandFUN,lt,D));
+            end
+        else            % Unable to store Wiener increments
+            dW = sh(1)*feval(RandFUN,1,D);
         end
-        Stream = RandStream.create('mt19937ar','seed',RandSeed);    % Create stream
-    else
-        Stream = RandStream.getDefaultStream;   % Use default stream
-    end
-
-    % Pre-calculate Wiener increments, optionally using antithetic variates method
-    if N > 1 && strcmp(sdeget(options,'Antithetic','no','fast'),'yes')
-        M = round(0.5*N);
-        Y = zeros(N,lt);
-        Y(1:M,2:end) = sh*randn(Stream,M,lt-1);
-        Y(M+1:end,2:end) = -Y(1:M-mod(N,2),2:end);
-    else
-        if ScalarNoise
-            Y = zeros(N,lt);
-            Y(1,2:end) = sh*randn(Stream,1,lt-1);
+    else                % Store Wiener increments in Y
+        if ConstStep
+            Y(2:end,1:D) = sh*feval(RandFUN,lt-1,D);
         else
-            Y = [zeros(N,1) sh*randn(Stream,N,lt-1)];
+            Y(2:end,1:D) = bsxfun(@times,sh,feval(RandFUN,lt-1,D));
         end
     end
 end
 
 % Only allocate W matrix if requested as output
-if nargout > 1
-    if ScalarNoise
-        W = cumsum(Y(1,:));
-    else
-        W = cumsum(Y,2);
-    end
+if nargout == 2 && D <= N
+	W = cumsum(Y(:,1:D),1);
 end
 
-% If deterministic or stochastic functions functions specified as constant
-ConstFFUN = strcmp(sdeget(options,'ConstFFUN','no','fast'),'yes');
-ConstGFUN = strcmp(sdeget(options,'ConstGFUN','no','fast'),'yes');
-
-% Square of noise term is dependent on if SDE is Stratonovich or Ito form
-isIto = strcmp(sdeget(options,'SDEType','Stratonovich','fast'),'Ito');
-
 % Integration loop
-Y(:,1) = y0;
-if ConstFFUN && ConstGFUN
+if ConstFFUN && ConstGFUN && (D <= N || nargout == 2) && ~NonNegative	% no FOR loop needed
     if ScalarNoise
-        Y(:,2:end) = bsxfun(@plus,y0,cumsum(bsxfun(@plus,yout,gout*Y(1,2:end)),2));
+        if ConstStep
+            Y(2:end,:) = bsxfun(@plus,y0',cumsum(bsxfun(@plus,fout'*h,Y(2:end,ones(1,N))*gout),1));
+        else
+            Y(2:end,:) = bsxfun(@plus,y0',cumsum(h*fout'+Y(2:end,ones(1,N))*gout,1));
+        end
     elseif DiagonalNoise
-        Y(:,2:end) = bsxfun(@plus,y0,cumsum(bsxfun(@plus,yout,bsxfun(@times,gout,Y(:,2:end))),2));
+        if ConstStep
+            Y(2:end,:) = bsxfun(@plus,y0',cumsum(bsxfun(@plus,h*fout',bsxfun(@times,gout',Y(2:end,:))),1));
+        else
+            Y(2:end,:) = bsxfun(@plus,y0',cumsum(h*fout'+bsxfun(@times,gout',Y(2:end,:)),1));
+        end
     else
-        Y(:,2:end) = bsxfun(@plus,y0,cumsum(bsxfun(@plus,yout,gout*Y(:,2:end)),2));
+        if ConstStep
+            if D > N
+                Y(2:end,:) = bsxfun(@plus,y0',cumsum(bsxfun(@plus,fout'*h,W(2:end,:)*gout'),1));
+            else
+                Y(2:end,:) = bsxfun(@plus,y0',cumsum(bsxfun(@plus,fout'*h,Y(2:end,1:D)*gout'),1));
+            end
+        else
+            if D > N
+                Y(2:end,:) = bsxfun(@plus,y0',cumsum(h*fout'+W(2:end,:)*gout',1));
+            else
+                Y(2:end,:) = bsxfun(@plus,y0',cumsum(bsxfun(@plus,h*fout',Y(2:end,1:D)*gout'),1));
+            end
+        end
     end
 else
-    if ConstGFUN
-        if ScalarNoise
-            Y(:,2:end) = gout*Y(1,2:end);
-        elseif DiagonalNoise
-            Y(:,2:end) = bsxfun(@times,gout,Y(:,2:end));
-        else
-            Y(:,2:end) = gout*Y(:,2:end);
+    % step size and Wiener increment for first time step
+    dt=h(1);
+    sdt=sh(1);
+    if D > N
+        if nargout == 2      	% dW already exists if D > N && nargin == 1
+            dW = W(2,:);
+            Wi = W(1,:)+dW;
+            W(2,:) = Wi;        % integrate Wiener increments
         end
-        Y(:,2) = y0 + yout + Y(:,2);
+    else
+        dW = Y(2,1:D);  %%% Needed??
+    end
+    dW = dW(:);
+    
+    Y(1,:) = y0;	% Set initial conditions
+    
+    % Use existing fout and gout to calculate the first time step, Y(2,:)
+    if ConstGFUN
+        if D <= N        	% All values of gout*dW can be stored in Y array
+            if ScalarNoise
+                Y(2:end,:) = Y(2:end,ones(1,N))*gout;
+            elseif DiagonalNoise
+                Y(2:end,:) = bsxfun(@times,gout',Y(2:end,:));
+            else
+                Y(2:end,:) = Y(2:end,1:D)*gout';
+            end
+            Yi = y0+fout*dt+Y(2,:)';
+        elseif nargout == 2	% All values of gout*dW can be stored in Y array
+            if ScalarNoise
+                Y(2:end,:) = W(2:end,ones(1,N))*gout;
+            elseif DiagonalNoise
+                Y(2:end,:) = bsxfun(@times,gout',W(2:end,:));
+            else
+                Y(2:end,:) = W(2:end,:)*gout';
+            end
+            Yi = y0+fout*dt+Y(2,:)';
+        else               	% Wiener increments were not precalculated
+            if DiagonalNoise
+                Yi = y0+fout*dt+gout.*dW;
+            else
+                Yi = y0+fout*dt+gout*dW;
+            end
+        end
     else
         if Derivative
-            if DiagonalNoise
-                dgout = gout.*dgout;
+            if Stratonovich
+                dW2 = 0.5*dW.^2;
             else
-                dgout = gout*dgout;
+                dW2 = 0.5*(dW.^2-dt);
+            end
+            if DiagonalNoise
+                Yi = y0+fout*dt+gout.*(dW+dgout.*dW2);
+            else
+                Yi = y0+fout*dt+gout*(dW+dgout*dW2);    %%% wrong??
             end
         else
-            if DiagonalNoise
-                dgout = feval(g,tspan(1),y0+yout+gout*sh,varargin{:})-gout;
+            if Stratonovich
+                dW2 = (0.5/sdt)*dW.^2;
             else
-                dgout = feval(g,tspan(1),y0+yout+diag(gout,0)*sh,varargin{:})-gout;%wrong
+                dW2 = (0.5/sdt)*(dW.^2-dt);
             end
-        end
-        if ScalarNoise
-            dW2 = 0.5*(Y(1,2).^2-h*isIto)*(~Derivative/sh+Derivative);
-            Y(:,2) = y0 + yout + gout*Y(1,2) + dgout*dW2;
-        else
-            dW2 = 0.5*(Y(:,2).^2-h*isIto)*(~Derivative/sh+Derivative);
             if DiagonalNoise
-                Y(:,2) = y0 + yout + gout.*Y(:,2) + dgout.*dW2;
+                Ybar = y0+gout.*dW;
+                Yi = Ybar+fout*dt+(feval(g,tspan(1),Ybar,varargin{:})-gout).*dW2;
             else
-                Y(:,2) = y0 + yout + gout*Y(:,2) + dgout*dW2;%wrong
+                Ybar = y0+gout*dW;
+                Yi = Ybar+fout*dt+(feval(g,tspan(1),Ybar,varargin{:})-gout)*dW2;    %%% wrong??
             end
         end
     end
+    if NonNegative
+        Yi(idxNonNegative) = max(Yi(idxNonNegative),0);
+    end
+    Y(2,:) = Yi;
+    
+    % Integration loop using cached state, Yi, and increment, Wi
     for i=2:lt-1
-        if ~ConstFFUN
-            yout = feval(f,tspan(i),Y(:,i),varargin{:})*h;
+        % Step size and Wiener increments
+        if ~ConstStep
+            dt=h(i);
+            sdt=sh(i);
         end
-        if ConstGFUN
-            Y(:,i+1) = Y(:,i) + yout + Y(:,i+1);
+        if D > N
+            if nargout == 2
+                dW = W(i+1,:);
+                Wi = Wi+dW;
+                W(i+1,:) = Wi;                  % Integrate Wiener increments
+            else
+                dW = sdt*feval(RandFUN,1,D);	% Generate Wiener increments
+            end
         else
-            gout = feval(g,tspan(i),Y(:,i),varargin{:});
-            if Derivative   % Use Milstein with derivative function if specified
+            dW = Y(i+1,1:D);    %%% Needed??
+        end
+        dW = dW(:);
+        
+        % Calculate next time step
+        if ConstGFUN
+            if D > N && nargout == 1
                 if DiagonalNoise
-                    dgout = gout.*feval(dg,tspan(i),Y(:,i),varargin{:});
+                    Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+gout.*dW;
                 else
-                    dgout = gout*feval(dg,tspan(i),Y(:,i),varargin{:});
+                    Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+gout*dW;
+                end
+            else
+                Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+dW;
+            end
+        else
+            if ~ConstFFUN
+                fout = feval(f,tspan(i),Yi,varargin{:})*dt;
+            end
+            
+            gout = feval(g,tspan(i),Yi,varargin{:});
+            if Derivative   % Use Milstein with derivative function if specified
+                if Stratonovich
+                    dW2 = 0.5*dW.^2;
+                else
+                    dW2 = 0.5*(dW.^2-dt);
+                end
+                if ~ConstDGFUN
+                    dgout = feval(dg,tspan(i),Yi,varargin{:});
+                end
+                if DiagonalNoise
+                    Yi = Yi+fout+gout.*(dW+dgout.*dW2);
+                else
+                    Yi = Yi+fout+gout*(dW+dgout*dW2);	%%% wrong??
                 end
             else            % Otherwise use derivative-free Milstein method
-                if DiagonalNoise
-                    dgout = feval(g,tspan(i),Y(:,i)+yout+gout*sh,varargin{:})-gout;
+                if Stratonovich
+                    dW2 = (0.5/sdt)*dW.^2;
                 else
-                    dgout = feval(g,tspan(1),y0+yout+diag(gout,0)*sh,varargin{:})-gout;%wrong
+                    dW2 = (0.5/sdt)*(dW.^2-dt);
                 end
-            end
-            if ScalarNoise
-                dW2 = 0.5*(Y(1,i+1).^2-h*isIto)*(~Derivative/sh+Derivative);
-                Y(:,i+1) = Y(:,i) + yout + gout*Y(1,i+1) + dgout*dW2;
-            else
-                dW2 = 0.5*(Y(:,i+1).^2-h*isIto)*(~Derivative/sh+Derivative);
                 if DiagonalNoise
-                    Y(:,i+1) = Y(:,i) + yout + gout.*Y(:,i+1) + dgout.*dW2;
+                    Ybar = Yi+gout.*dW;
+                    Yi = Ybar+fout+(feval(g,tspan(i),Ybar,varargin{:})-gout).*dW2;
                 else
-                    Y(:,i+1) = Y(:,i) + yout + gout*Y(:,i+1) + dgout*dW2;%wrong
+                    Ybar = Yi+gout*dW;
+                    Yi = Ybar+fout+(feval(g,tspan(i),Ybar,varargin{:})-gout)*dW2;   %%% wrong??
                 end
             end
         end
+        if NonNegative
+            Yi(idxNonNegative) = max(Yi(idxNonNegative),0);
+        end
+        Y(i+1,:) = Yi;
     end
 end

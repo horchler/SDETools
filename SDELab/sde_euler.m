@@ -10,7 +10,11 @@ function [Y W] = sde_euler(f,g,tspan,y0,options,varargin)
 %   Each row in the solution array YOUT corresponds to a time in the input
 %   vector TSPAN.
 %
-%   YOUT = SDE_EULER(FFUN,GFUN,TSPAN,Y0,OPTIONS) solves the above with default
+%   [YOUT, W] = SDE_EULER(FFUN,GFUN,TSPAN,Y0,...) outputs the matrix W of
+%   integrated Weiner increments that were used by the solver. W is LENGTH(Y0)
+%   rows by LENGTH(TSPAN) columns, corresponding to [T0 T1 T2 ... TFINAL].
+%
+%   [...] = SDE_EULER(FFUN,GFUN,TSPAN,Y0,OPTIONS) solves the above with default
 %   integration properties replaced by values in OPTIONS, an argument created
 %   with the SDESET function. See SDESET for details. The type of SDE to be
 %   integrated, 'Ito' or the default 'Stratonovich', can be specified via the
@@ -23,10 +27,6 @@ function [Y W] = sde_euler(f,g,tspan,y0,options,varargin)
 %   RandSeed property and creates a separate random number stream rather than
 %   using the default one.
 %
-%   [YOUT, W] = SDE_EULER(FFUN,GFUN,TSPAN,Y0,...) outputs the matrix W of
-%   integrated Weiner increments that were used by the solver. W is LENGTH(Y0)
-%   rows by LENGTH(TSPAN) columns, corresponding to [T0 T1 T2 ... TFINAL].
-%
 %   YOUT = SDE_EULER([],GFUN,TSPAN,Y0,...)
 %
 %   Example:
@@ -34,12 +34,19 @@ function [Y W] = sde_euler(f,g,tspan,y0,options,varargin)
 %       solves the 2-D Stratonovich SDE system dy = f1(t,y)*dt + g1(t,y)*dW,
 %       using the Euler-Heun method and the default random number stream.
 %
-%   NOTE:
+%   Note:
 %       SDEs are assumed to be in Stratonovich form by default. SDEs in Ito form
 %       can be handled by setting the 'SDEType' OPTIONS property to 'Ito' via
 %       the SDESET function. These forms are generally not equivalent and will
 %       converge to different solutions, so care should be taken to ensure that
 %       the form of SDEFUN matches 'SDEType'.
+%
+%       In the case of additve noise, i.e., when g(t,y) is constant, both Ito
+%       and Stratonovich interpretations are equivalent. If GFUN(T,Y) is
+%       specified as a floating point matrix rather than a function handle then
+%       it is automatically assumed to be constant. Alternatively, the ConstGFUN
+%       property can be set to 'yes' to indicate that GFUN(T,Y) is constant and
+%       only needs to be evaluated once.
 %
 %   See also:
 %       Explicit SDE solvers:	SDE_MILSTEIN
@@ -58,7 +65,7 @@ function [Y W] = sde_euler(f,g,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9@case.edu, Created 10-28-10
-%   Revision: 1.0, 3-28-12
+%   Revision: 1.0, 3-31-12
 
 
 solver = 'SDE_EULER';
@@ -72,13 +79,13 @@ if nargin < 5
     if isa(y0,'struct')
         error(  'SDELab:sde_euler:NotEnoughInputsOptions',...
                ['An SDE options structure was provided as the last '...
-                'argument,  but one of the first four input arguments is '...
+                'argument, but one of the first four input arguments is '...
                 'missing.  See %s.'],solver);
     end
     options = [];
-elseif isempty(options) && (ndims(options) ~= 2 || any(size(options) ~= 0) ...
-        || ~isnumeric(options) || ~iscell(options) || ~isstruct(options)) ...
-        || (~isempty(options) && ~isa(options,'struct'))
+elseif isempty(options) && (ndims(options) ~= 2 || ...
+        any(size(options) ~= 0) || ~(isstruct(options) || iscell(options) || ...
+        isnumeric(options))) || ~isempty(options) && ~isstruct(options)
 	error(  'SDELab:sde_euler:InvalidSDESETStruct',...
             'Invalid SDE options structure.  See SDESET.');
 end
@@ -242,6 +249,7 @@ else
     else
         dW = Y(2,1:D);
     end
+    dW = dW(:);
     
     Y(1,:) = y0;	% Set initial conditions
     
@@ -267,25 +275,23 @@ else
             Yi = y0+fout*dt+Y(2,:)';
         else               	% Wiener increments were not precalculated
             if DiagonalNoise
-                Yi = y0+fout*dt+gout.*dW(:);
+                Yi = y0+fout*dt+gout.*dW;
             else
-                Yi = y0+fout*dt+gout*dW(:);
+                Yi = y0+fout*dt+gout*dW;
             end
         end
     else
         if Stratonovich	% Use Euler-Heun step
             if DiagonalNoise
-                gout = 0.5*(gout+feval(g,tspan(1),y0+gout.*dW(:),varargin{:}));
-                Yi = y0+fout*dt+gout.*dW(:);
+                Yi = y0+fout*dt+0.5*(gout+feval(g,tspan(1),y0+gout.*dW,varargin{:})).*dW;
             else
-                gout = 0.5*(gout+feval(g,tspan(1),y0+gout*dW(:),varargin{:}));
-                Yi = y0+fout*dt+gout*dW(:);
+                Yi = y0+fout*dt+0.5*(gout+feval(g,tspan(1),y0+gout*dW,varargin{:}))*dW;
             end
         else
             if DiagonalNoise
-                Yi = y0+fout*dt+gout.*dW(:);
+                Yi = y0+fout*dt+gout.*dW;
             else
-                Yi = y0+fout*dt+gout*dW(:);
+                Yi = y0+fout*dt+gout*dW;
             end
         end
     end
@@ -297,62 +303,51 @@ else
     % Integration loop using cached state, Yi, and increment, Wi
     for i=2:lt-1
         % Step size and Wiener increment
-        if ConstStep
-            if D > N
-                if nargout == 2
-                    dW = W(i+1,:);
-                    Wi = Wi+dW;
-                    W(i+1,:) = Wi;              % Integrate Wiener increments
-                else
-                    dW = sh*feval(RandFUN,1,D);     % Generate Wiener increments
-                end
-            else
-                dW = Y(i+1,1:D);
-            end
-        else    % Variable time step case
+        if ~ConstStep
             dt=h(i);
-            if D > N
-                if nargout == 2
-                    dW = W(i+1,:);
-                    Wi = Wi+dW;
-                    W(i+1,:) = Wi;              % Integrate Wiener increments
-                else
-                    dW = sh(i)*feval(RandFUN,1,D);  % Generate Wiener increments
-                end
-            else
-                dW = Y(i+1,1:D);
-            end
+            sdt=sh(i);
         end
+        if D > N
+            if nargout == 2
+                dW = W(i+1,:);
+                Wi = Wi+dW;
+                W(i+1,:) = Wi;                  % Integrate Wiener increments
+            else
+                dW = sdt*feval(RandFUN,1,D);	% Generate Wiener increments
+            end
+        else
+            dW = Y(i+1,1:D);
+        end
+        dW = dW(:);
         
         % Calculate next time step
         if ConstGFUN
             if D > N && nargout == 1
                 if DiagonalNoise
-                    Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+gout.*dW(:);
+                    Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+gout.*dW;
                 else
-                    Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+gout*dW(:);
+                    Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+gout*dW;
                 end
             else
-                Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+dW(:);
+                Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+dW;
             end
         else
             if ~ConstFFUN
                 fout = feval(f,tspan(i),Yi,varargin{:})*dt;
             end
+            gout = feval(g,tspan(i),Yi,varargin{:});
             
-            if Stratonovich	% Use Euler-Heun step
+            if Stratonovich     % Use Euler-Heun step
                 if DiagonalNoise
-                    gout = 0.5*(gout+feval(g,tspan(i),Yi+gout.*dW(:),varargin{:}));
-                    Yi = Yi+fout+gout.*dW(:);
+                    Yi = Yi+fout+0.5*(gout+feval(g,tspan(i),Yi+gout.*dW,varargin{:})).*dW;
                 else
-                    gout = 0.5*(gout+feval(g,tspan(i),Yi+gout*dW(:),varargin{:}));
-                    Yi = Yi+fout+gout*dW(:);
+                    Yi = Yi+fout+0.5*(gout+feval(g,tspan(i),Yi+gout*dW,varargin{:}))*dW;
                 end
             else
                 if DiagonalNoise
-                    Yi = Yi+fout+feval(g,tspan(i),Yi,varargin{:}).*dW(:);
+                    Yi = Yi+fout+gout.*dW;
                 else
-                    Yi = Yi+fout+feval(g,tspan(i),Yi,varargin{:})*dW(:);
+                    Yi = Yi+fout+gout*dW;
                 end
             end
         end
