@@ -1,47 +1,47 @@
-function sde_euler_benchmark(tests,N,Tol)
-%SDE_EULER_BENCHMARK  Performance tests for SDE_EULER solver function.
-%   SDE_EULER_BENCHMARK will perform all tests. See code (type 'edit
-%   SDE_EULER_BENCHMARK' in the command window) for test details or to add
+function sde_milstein_benchmark(tests,N,Tol)
+%SDE_MILSTEIN_BENCHMARK  Performance tests for SDE_MILSTEIN solver function.
+%   SDE_MILSTEIN_BENCHMARK will perform all tests. See code (type 'edit
+%   SDE_MILSTEIN_BENCHMARK' in the command window) for test details or to add
 %   additional tests. The SDELab Toolbox must be on the Matlab path or in the
 %   same directory as this function.
 %
-%   SDE_EULER_BENCHMARK(TESTS) where TESTS = [N1 N2 ... NM] is a vector of
+%   SDE_MILSTEIN_BENCHMARK(TESTS) where TESTS = [N1 N2 ... NM] is a vector of
 %   specific test numbers (indices, 1 ... N) to run. Tests can be listed in any
 %   order and will be run in the order specified.
 %
-%   SDE_EULER_BENCHMARK(TESTS,N)
-%   SDE_EULER_BENCHMARK(TESTS,N,TOL)
+%   SDE_MILSTEIN_BENCHMARK(TESTS,N)
+%   SDE_MILSTEIN_BENCHMARK(TESTS,N,TOL)
 %
 %   Not part of the the SDELab Toolbox; used only for development.
 %   
-%   See also: SDE_EULER, SDEARGUMENTS, SDE_EULER_UNITTEST, SDE_EULER_VALIDATE,
-%       SDE_MILSTEIN_BENCHMARK
+%   See also: SDE_MILSTEIN, SDEARGUMENTS, SDE_MILSTEIN_UNITTEST,
+%       SDE_MILSTEIN_VALIDATE, SDE_EULER_BENCHMARK
 
-%   Andrew D. Horchler, adh9@case.edu, Created 1-2-11
+%   Andrew D. Horchler, adh9@case.edu, Created 4-2-11
 %   Revision: 1.0, 4-4-12
 
 
 % Make sure toolbox on path, otherwise ensure we're in right location and add it
 if strfind(path,'SDELab')
-    if exist('sde_euler','file') ~= 2
-        error(  'SDELab:sde_euler_benchmark:FunctionNotFound',...
+    if exist('sde_milstein','file') ~= 2
+        error(  'SDELab:sde_milstein_benchmark:FunctionNotFound',...
                ['The SDELab Toolbox is appears to be on the Matlab path, '...
-                'but the SDE_EULER solver function cannot be found.']);
+                'but the SDE_MILSTEIN solver function cannot be found.']);
     end
     PathAdded = false;
 else
     if exist('SDELab','dir') ~= 7
-        error(  'SDELab:sde_euler_benchmark:ToolboxNotFound',...
+        error(  'SDELab:sde_milstein_benchmark:ToolboxNotFound',...
                ['The SDELab Toolbox is not be on the Matlab path and the '...
                 'root directory of the of the toolbox, SDELab, is in the '...
                 'same directory as this function.']);
     end
     addpath SDELab
-    if exist('sde_euler','file') ~= 2
+    if exist('sde_milstein','file') ~= 2
         rmpath SDELab
-        error(  'SDELab:sde_euler_benchmark:FunctionNotFoundAfterAdd',...
+        error(  'SDELab:sde_milstein_benchmark:FunctionNotFoundAfterAdd',...
                ['The SDELab Toolbox was added to the Matlab path, but the '...
-                'SDE_EULER solver function cannot be found.']);
+                'SDE_MILSTEIN solver function cannot be found.']);
     end
     PathAdded = true;   % Path will be reset at end
 end
@@ -49,10 +49,11 @@ end
 % Validate input argument if it exists
 if nargin >= 1
     if isempty(tests) || ~isnumeric(tests) || ~all(isfinite(tests))
-        error('SDELab:sde_euler_benchmark:InvalidArg1','Invalid argument 1.');
+        error('SDELab:sde_milstein_benchmark:InvalidArg1',...
+              'Invalid argument 1.');
     end
     if any(tests < 1)
-        error(  'SDELab:sde_euler_benchmark:NotAnIndex',...
+        error(  'SDELab:sde_milstein_benchmark:NotAnIndex',...
                 'Tests are numbered as indices, from 1 to N.');
     end
     tests = floor(tests);
@@ -63,7 +64,8 @@ end
 
 if nargin >= 2
     if isempty(N) || ~isnumeric(N) || ~all(isfinite(N))
-        error('SDELab:sde_euler_benchmark:InvalidArg2','Invalid argument 2.');
+        error('SDELab:sde_milstein_benchmark:InvalidArg2',...
+              'Invalid argument 2.');
     end
     N = floor(N);
 else
@@ -73,7 +75,8 @@ end
 if nargin == 3
     if isempty(Tol) || length(Tol) ~= 1 || ~isnumeric(Tol) || ...
             ~all(isfinite(Tol)) || Tol <= 0
-        error('SDELab:sde_euler_benchmark:InvalidArg2','Invalid argument 2.');
+        error('SDELab:sde_milstein_benchmark:InvalidArg2',...
+              'Invalid argument 2.');
     end
     Tol = floor(Tol);
 else
@@ -318,7 +321,7 @@ ost = ceil(log10((lts+1)));
 for k=1:lts
     i = ts(k);
     
-    % get arguments
+    % Get arguments
     f = fi{i};
     g = gi{i};
     tspan = tspani{i};
@@ -336,23 +339,23 @@ for k=1:lts
     % Warm up function before timing
     if oneout{i}
         if isempty(opts) && isempty(params)
-            y = sde_euler(f,g,tspan,y0);    %#ok<*NASGU>
+            y = sde_milstein(f,g,tspan,y0);    %#ok<*NASGU>
         elseif ~isempty(opts) && isempty(params)
-            y = sde_euler(f,g,tspan,y0,opts);
+            y = sde_milstein(f,g,tspan,y0,opts);
         elseif isempty(opts) && ~isempty(params)
-            y = sde_euler(f,g,tspan,y0,[],params);
+            y = sde_milstein(f,g,tspan,y0,[],params);
         else
-            y = sde_euler(f,g,tspan,y0,opts,params);
+            y = sde_milstein(f,g,tspan,y0,opts,params);
         end
     else
         if isempty(opts) && isempty(params)
-            [y w] = sde_euler(f,g,tspan,y0); %#ok<*ASGLU>
+            [y w] = sde_milstein(f,g,tspan,y0);	%#ok<*ASGLU>
         elseif ~isempty(opts) && isempty(params)
-            [y w] = sde_euler(f,g,tspan,y0,opts);
+            [y w] = sde_milstein(f,g,tspan,y0,opts);
         elseif isempty(opts) && ~isempty(params)
-            [y w] = sde_euler(f,g,tspan,y0,[],params);
+            [y w] = sde_milstein(f,g,tspan,y0,[],params);
         else
-            [y w] = sde_euler(f,g,tspan,y0,opts,params);
+            [y w] = sde_milstein(f,g,tspan,y0,opts,params);
         end
     end
     
@@ -364,37 +367,37 @@ for k=1:lts
         if oneout{i}
             if isempty(opts) && isempty(params)
                 tic
-                y = sde_euler(f,g,tspan,y0);
+                y = sde_milstein(f,g,tspan,y0);
                 t(j) = toc;
             elseif ~isempty(opts) && isempty(params)
                 tic
-                y = sde_euler(f,g,tspan,y0,opts);
+                y = sde_milstein(f,g,tspan,y0,opts);
                 t(j) = toc;
             elseif isempty(opts) && ~isempty(params)
                 tic
-                y = sde_euler(f,g,tspan,y0,[],params);
+                y = sde_milstein(f,g,tspan,y0,[],params);
                 t(j) = toc;
             else
                 tic
-                y = sde_euler(f,g,tspan,y0,opts,params);
+                y = sde_milstein(f,g,tspan,y0,opts,params);
                 t(j) = toc;
             end
         else
             if isempty(opts) && isempty(params)
                 tic
-                [y w] = sde_euler(f,g,tspan,y0);
+                [y w] = sde_milstein(f,g,tspan,y0);
                 t(j) = toc;
             elseif ~isempty(opts) && isempty(params)
                 tic
-                [y w] = sde_euler(f,g,tspan,y0,opts);
+                [y w] = sde_milstein(f,g,tspan,y0,opts);
                 t(j) = toc;
             elseif isempty(opts) && ~isempty(params)
                 tic
-                [y w] = sde_euler(f,g,tspan,y0,[],params);
+                [y w] = sde_milstein(f,g,tspan,y0,[],params);
                 t(j) = toc;
             else
                 tic
-                [y w] = sde_euler(f,g,tspan,y0,opts,params);
+                [y w] = sde_milstein(f,g,tspan,y0,opts,params);
                 t(j) = toc;
             end
         end

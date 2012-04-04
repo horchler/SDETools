@@ -65,7 +65,7 @@ function [Y W] = sde_euler(f,g,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9@case.edu, Created 10-28-10
-%   Revision: 1.0, 3-31-12
+%   Revision: 1.0, 4-4-12
 
 
 solver = 'SDE_EULER';
@@ -195,7 +195,9 @@ else    % No error checking needed if default RANDN used
             dW = sh(1)*feval(RandFUN,1,D);
         end
     else                % Store Wiener increments in Y
-        if ConstStep
+        if N == 1 && DiagonalNoise
+            Y(2:end) = sh.*feval(RandFUN,lt-1,1);
+        elseif ConstStep
             Y(2:end,1:D) = sh*feval(RandFUN,lt-1,D);
         else
             Y(2:end,1:D) = bsxfun(@times,sh,feval(RandFUN,lt-1,D));
@@ -238,122 +240,144 @@ if ConstFFUN && ConstGFUN && (D <= N || nargout == 2) && ~NonNegative	% no FOR l
         end
     end
 else
-    % step size and Wiener increment for first time step
-    dt=h(1);
-    if D > N
-        if nargout == 2      	% dW already exists if D > N && nargin == 1
-            dW = W(2,:);
-            Wi = W(1,:)+dW;
-            W(2,:) = Wi;        % integrate Wiener increments
-        end
-    else
-        dW = Y(2,1:D);
-    end
-    dW = dW(:);
-    
-    Y(1,:) = y0;	% Set initial conditions
-    
-    % Use existing fout and gout to calculate the first time step, Y(2,:)
-    if ConstGFUN
-        if D <= N        	% All values of gout*dW can be stored in Y array
-            if ScalarNoise
-                Y(2:end,:) = Y(2:end,ones(1,N))*gout;
-            elseif DiagonalNoise
-                Y(2:end,:) = bsxfun(@times,gout',Y(2:end,:));
-            else
-                Y(2:end,:) = Y(2:end,1:D)*gout';
-            end
-            Yi = y0+fout*dt+Y(2,:)';
-        elseif nargout == 2	% All values of gout*dW can be stored in Y array
-            if ScalarNoise
-                Y(2:end,:) = W(2:end,ones(1,N))*gout;
-            elseif DiagonalNoise
-                Y(2:end,:) = bsxfun(@times,gout',W(2:end,:));
-            else
-                Y(2:end,:) = W(2:end,:)*gout';
-            end
-            Yi = y0+fout*dt+Y(2,:)';
-        else               	% Wiener increments were not precalculated
-            if DiagonalNoise
-                Yi = y0+fout*dt+gout.*dW;
-            else
-                Yi = y0+fout*dt+gout*dW;
-            end
-        end
-    else
-        if Stratonovich	% Use Euler-Heun step
-            if DiagonalNoise
-                Yi = y0+fout*dt+0.5*(gout+feval(g,tspan(1),y0+gout.*dW,varargin{:})).*dW;
-            else
-                Yi = y0+fout*dt+0.5*(gout+feval(g,tspan(1),y0+gout*dW,varargin{:}))*dW;
-            end
+    % Optimized integration loop for 1-D scalar noise case
+    if N == 1 && DiagonalNoise
+        dt = h(1);  % Step size for first time step and fixed step-size
+        Y(1) = y0;	% Set initial conditions
+        
+        % Use existing fout and gout to calculate the first time step, Y(2)
+        if ConstGFUN
+            Y(2) = y0+fout*dt+gout*Y(2);
         else
-            if DiagonalNoise
-                Yi = y0+fout*dt+gout.*dW;
+            if Stratonovich     % Use Euler-Heun step
+                Y(2) = y0+fout*dt+0.5*(gout+feval(g,tspan(1),y0+gout*Y(2),varargin{:}))*Y(2);
             else
-                Yi = y0+fout*dt+gout*dW;
+                Y(2) = y0+fout*dt+gout*Y(2);
             end
         end
-    end
-    if NonNegative
-        Yi(idxNonNegative) = max(Yi(idxNonNegative),0);
-    end
-    Y(2,:) = Yi;
-    
-    % Integration loop using cached state, Yi, and increment, Wi
-    for i=2:lt-1
-        % Step size and Wiener increment
-        if ~ConstStep
-            dt=h(i);
-            sdt=sh(i);
+        if NonNegative
+            Y(2) = max(Y(2),0);
         end
+        
+        % Integration loop using Weiner increments stored in Y(i+1)
+        for i = 2:lt-1
+            if ~ConstStep
+                dt = h(i);  % Step size
+            end
+
+            % Calculate next time step
+            if ConstGFUN
+              	Y(i+1) = Y(i)+feval(f,tspan(i),Y(i),varargin{:})*dt+gout*Y(i+1);
+            else
+                if ~ConstFFUN
+                    fout = feval(f,tspan(i),Y(i),varargin{:})*dt;
+                end
+                gout = feval(g,tspan(i),Y(i),varargin{:});
+
+                if Stratonovich     % Use Euler-Heun step
+                    Y(i+1) = Y(i)+fout+0.5*(gout+feval(g,tspan(i),Y(i)+gout*Y(i+1),varargin{:}))*Y(i+1);
+                else
+                    Y(i+1) = Y(i)+fout+gout*Y(i+1);
+                end
+            end
+            if NonNegative
+                Y(i+1) = max(Y(i+1),0);
+            end
+        end
+    else
+        % step size and Wiener increment for first time-step and fixed step-size
+        dt = h(1);	% Step size for first time step and fixed step-size
         if D > N
-            if nargout == 2
-                dW = W(i+1,:);
-                Wi = Wi+dW;
-                W(i+1,:) = Wi;                  % Integrate Wiener increments
+            if nargout == 2         % dW already exists if D > N && nargin == 1
+                dW = W(2,:);
+                W(2,:) = W(1,:)+dW;	% integrate Wiener increments
             else
-                dW = sdt*feval(RandFUN,1,D);	% Generate Wiener increments
+                sdt = sh(1);
             end
         else
-            dW = Y(i+1,1:D);
+            dW = Y(2,1:D);
         end
         dW = dW(:);
-        
-        % Calculate next time step
+
+        Y(1,:) = y0;	% Set initial conditions
+
+        % Use existing fout and gout to calculate the first time step, Y(2,:)
         if ConstGFUN
-            if D > N && nargout == 1
-                if DiagonalNoise
-                    Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+gout.*dW;
-                else
-                    Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+gout*dW;
-                end
+            if DiagonalNoise
+                Yi = y0+fout*dt+gout.*dW;
             else
-                Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+dW;
+                Yi = y0+fout*dt+gout*dW;
             end
         else
-            if ~ConstFFUN
-                fout = feval(f,tspan(i),Yi,varargin{:})*dt;
-            end
-            gout = feval(g,tspan(i),Yi,varargin{:});
-            
-            if Stratonovich     % Use Euler-Heun step
+            if Stratonovich	% Use Euler-Heun step
                 if DiagonalNoise
-                    Yi = Yi+fout+0.5*(gout+feval(g,tspan(i),Yi+gout.*dW,varargin{:})).*dW;
+                    Yi = y0+fout*dt+0.5*(gout+feval(g,tspan(1),y0+gout.*dW,varargin{:})).*dW;
                 else
-                    Yi = Yi+fout+0.5*(gout+feval(g,tspan(i),Yi+gout*dW,varargin{:}))*dW;
+                    Yi = y0+fout*dt+0.5*(gout+feval(g,tspan(1),y0+gout*dW,varargin{:}))*dW;
                 end
             else
                 if DiagonalNoise
-                    Yi = Yi+fout+gout.*dW;
+                    Yi = y0+fout*dt+gout.*dW;
                 else
-                    Yi = Yi+fout+gout*dW;
+                    Yi = y0+fout*dt+gout*dW;
                 end
             end
         end
         if NonNegative
             Yi(idxNonNegative) = max(Yi(idxNonNegative),0);
         end
-        Y(i+1,:) = Yi;
+        Y(2,:) = Yi;
+
+        % Integration loop using cached state, Yi, and increment, dW
+        for i = 2:lt-1
+            % Step size and Wiener increment
+            if ~ConstStep
+                dt = h(i);
+                sdt = sh(i);
+            end
+            if D > N
+                if nargout == 2
+                    dW = W(i+1,:);
+                    W(i+1,:) = W(i,:)+dW;      	% Integrate Wiener increments
+                else
+                    dW = sdt*feval(RandFUN,1,D);	% Generate Wiener increments
+                end
+            else
+                dW = Y(i+1,1:D);
+            end
+            dW = dW(:);
+
+            % Calculate next time step
+            if ConstGFUN
+                if DiagonalNoise
+                    Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+gout.*dW;
+                else
+                    Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+gout*dW;
+                end
+            else
+                if ~ConstFFUN
+                    fout = feval(f,tspan(i),Yi,varargin{:})*dt;
+                end
+                gout = feval(g,tspan(i),Yi,varargin{:});
+
+                if Stratonovich     % Use Euler-Heun step
+                    if DiagonalNoise
+                        Yi = Yi+fout+0.5*(gout+feval(g,tspan(i),Yi+gout.*dW,varargin{:})).*dW;
+                    else
+                        Yi = Yi+fout+0.5*(gout+feval(g,tspan(i),Yi+gout*dW,varargin{:}))*dW;
+                    end
+                else
+                    if DiagonalNoise
+                        Yi = Yi+fout+gout.*dW;
+                    else
+                        Yi = Yi+fout+gout*dW;
+                    end
+                end
+            end
+            if NonNegative
+                Yi(idxNonNegative) = max(Yi(idxNonNegative),0);
+            end
+            Y(i+1,:) = Yi;
+        end
     end
 end

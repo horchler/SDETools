@@ -64,7 +64,7 @@ function [Y W] = sde_milstein(f,g,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9@case.edu, 10-25-10
-%   Revision: 1.0, 3-31-12
+%   Revision: 1.0, 4-4-12
 
 
 solver = 'SDE_MILSTEIN';
@@ -274,7 +274,9 @@ else    % No error checking needed if default RANDN used
             dW = sh(1)*feval(RandFUN,1,D);
         end
     else                % Store Wiener increments in Y
-        if ConstStep
+        if N == 1 && DiagonalNoise
+            Y(2:end) = sh.*feval(RandFUN,lt-1,1);
+        elseif ConstStep
             Y(2:end,1:D) = sh*feval(RandFUN,lt-1,D);
         else
             Y(2:end,1:D) = bsxfun(@times,sh,feval(RandFUN,lt-1,D));
@@ -317,150 +319,198 @@ if ConstFFUN && ConstGFUN && (D <= N || nargout == 2) && ~NonNegative	% no FOR l
         end
     end
 else
-    % step size and Wiener increment for first time step
-    dt=h(1);
-    sdt=sh(1);
-    if D > N
-        if nargout == 2      	% dW already exists if D > N && nargin == 1
-            dW = W(2,:);
-            Wi = W(1,:)+dW;
-            W(2,:) = Wi;        % integrate Wiener increments
+    % Optimized integration loop for 1-D scalar noise case
+    if N == 1 && DiagonalNoise
+        dt = h(1);  % Step size for first time step and fixed step-size
+        Y(1) = y0;	% Set initial conditions
+
+        % Use existing fout and gout to calculate the first time step, Y(2,:)
+        if ConstGFUN
+            Y(2) = y0+fout*dt+gout*Y(2);
+        else
+            if Derivative
+                if Stratonovich
+                    dW2 = 0.5*Y(2)^2;
+                else
+                    dW2 = 0.5*(Y(2)^2-dt);
+                end
+                Y(2) = y0+fout*dt+gout*(Y(2)+dgout*dW2);
+            else
+                sdt = sh(1);
+                if Stratonovich
+                    dW2 = (0.5/sdt)*Y(2)^2;
+                else
+                    dW2 = (0.5/sdt)*(Y(2)^2-dt);
+                end
+              	Ybar = y0+gout*Y(2);
+                Y(2) = Ybar+fout*dt+(feval(g,tspan(1),Ybar,varargin{:})-gout)*dW2;
+            end
+        end
+        if NonNegative
+            Y(2) = max(Y(2),0);
+        end
+        
+        % Integration loop using Weiner increments stored in Y(i+1)
+        for i = 2:lt-1
+            % Step size and Wiener increments
+            if ~ConstStep
+                dt = h(i);
+                sdt = sh(i);
+            end
+
+            % Calculate next time step
+            if ConstGFUN
+              	Y(i+1) = Y(i)+feval(f,tspan(i),Y(i),varargin{:})*dt+gout*Y(i+1);
+            else
+                if ~ConstFFUN
+                    fout = feval(f,tspan(i),Y(i),varargin{:})*dt;
+                end
+
+                gout = feval(g,tspan(i),Y(i),varargin{:});
+                if Derivative   % Use Milstein with derivative if specified
+                    if Stratonovich
+                        dW2 = 0.5*Y(i+1)^2;
+                    else
+                        dW2 = 0.5*(Y(i+1)^2-dt);
+                    end
+                    if ~ConstDGFUN
+                        dgout = feval(dg,tspan(i),Y(i),varargin{:});
+                    end
+                    Y(i+1) = Y(i)+fout+gout*(Y(i+1)+dgout*dW2);
+                else            % Otherwise use derivative-free Milstein method
+                    if Stratonovich
+                        dW2 = (0.5/sdt)*Y(i+1)^2;
+                    else
+                        dW2 = (0.5/sdt)*(Y(i+1)^2-dt);
+                    end
+                 	Ybar = Y(i)+gout*Y(i+1);
+                	Y(i+1) = Ybar+fout+(feval(g,tspan(i),Ybar,varargin{:})-gout)*dW2;
+                end
+            end
+            if NonNegative
+                Y(i+1) = max(Y(i+1),0);
+            end
         end
     else
-        dW = Y(2,1:D);  %%% Needed??
-    end
-    dW = dW(:);
-    
-    Y(1,:) = y0;	% Set initial conditions
-    
-    % Use existing fout and gout to calculate the first time step, Y(2,:)
-    if ConstGFUN
-        if D <= N        	% All values of gout*dW can be stored in Y array
-            if ScalarNoise
-                Y(2:end,:) = Y(2:end,ones(1,N))*gout;
-            elseif DiagonalNoise
-                Y(2:end,:) = bsxfun(@times,gout',Y(2:end,:));
-            else
-                Y(2:end,:) = Y(2:end,1:D)*gout';
+        % step size and Wiener increment for first time step
+        dt = h(1);
+        sdt = sh(1);
+        if D > N 
+            if nargout == 2         % dW already exists if D > N && nargin == 1
+                dW = W(2,:);
+                W(2,:) = W(1,:)+dW;	% integrate Wiener increments
             end
-            Yi = y0+fout*dt+Y(2,:)';
-        elseif nargout == 2	% All values of gout*dW can be stored in Y array
-            if ScalarNoise
-                Y(2:end,:) = W(2:end,ones(1,N))*gout;
-            elseif DiagonalNoise
-                Y(2:end,:) = bsxfun(@times,gout',W(2:end,:));
-            else
-                Y(2:end,:) = W(2:end,:)*gout';
-            end
-            Yi = y0+fout*dt+Y(2,:)';
-        else               	% Wiener increments were not precalculated
+        else
+            dW = Y(2,1:D);
+        end
+        dW = dW(:);
+
+        Y(1,:) = y0;	% Set initial conditions
+
+        % Use existing fout and gout to calculate the first time step, Y(2,:)
+        if ConstGFUN
             if DiagonalNoise
                 Yi = y0+fout*dt+gout.*dW;
             else
                 Yi = y0+fout*dt+gout*dW;
             end
-        end
-    else
-        if Derivative
-            if Stratonovich
-                dW2 = 0.5*dW.^2;
-            else
-                dW2 = 0.5*(dW.^2-dt);
-            end
-            if DiagonalNoise
-                Yi = y0+fout*dt+gout.*(dW+dgout.*dW2);
-            else
-                Yi = y0+fout*dt+gout*(dW+dgout*dW2);    %%% wrong??
-            end
         else
-            if Stratonovich
-                dW2 = (0.5/sdt)*dW.^2;
-            else
-                dW2 = (0.5/sdt)*(dW.^2-dt);
-            end
-            if DiagonalNoise
-                Ybar = y0+gout.*dW;
-                Yi = Ybar+fout*dt+(feval(g,tspan(1),Ybar,varargin{:})-gout).*dW2;
-            else
-                Ybar = y0+gout*dW;
-                Yi = Ybar+fout*dt+(feval(g,tspan(1),Ybar,varargin{:})-gout)*dW2;    %%% wrong??
-            end
-        end
-    end
-    if NonNegative
-        Yi(idxNonNegative) = max(Yi(idxNonNegative),0);
-    end
-    Y(2,:) = Yi;
-    
-    % Integration loop using cached state, Yi, and increment, Wi
-    for i=2:lt-1
-        % Step size and Wiener increments
-        if ~ConstStep
-            dt=h(i);
-            sdt=sh(i);
-        end
-        if D > N
-            if nargout == 2
-                dW = W(i+1,:);
-                Wi = Wi+dW;
-                W(i+1,:) = Wi;                  % Integrate Wiener increments
-            else
-                dW = sdt*feval(RandFUN,1,D);	% Generate Wiener increments
-            end
-        else
-            dW = Y(i+1,1:D);    %%% Needed??
-        end
-        dW = dW(:);
-        
-        % Calculate next time step
-        if ConstGFUN
-            if D > N && nargout == 1
-                if DiagonalNoise
-                    Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+gout.*dW;
-                else
-                    Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+gout*dW;
-                end
-            else
-                Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+dW;
-            end
-        else
-            if ~ConstFFUN
-                fout = feval(f,tspan(i),Yi,varargin{:})*dt;
-            end
-            
-            gout = feval(g,tspan(i),Yi,varargin{:});
-            if Derivative   % Use Milstein with derivative function if specified
+            if Derivative
                 if Stratonovich
                     dW2 = 0.5*dW.^2;
                 else
                     dW2 = 0.5*(dW.^2-dt);
                 end
-                if ~ConstDGFUN
-                    dgout = feval(dg,tspan(i),Yi,varargin{:});
-                end
                 if DiagonalNoise
-                    Yi = Yi+fout+gout.*(dW+dgout.*dW2);
+                    Yi = y0+fout*dt+gout.*(dW+dgout.*dW2);
                 else
-                    Yi = Yi+fout+gout*(dW+dgout*dW2);	%%% wrong??
+                    Yi = y0+fout*dt+gout*(dW+dgout*dW2);
                 end
-            else            % Otherwise use derivative-free Milstein method
+            else
                 if Stratonovich
                     dW2 = (0.5/sdt)*dW.^2;
                 else
                     dW2 = (0.5/sdt)*(dW.^2-dt);
                 end
                 if DiagonalNoise
-                    Ybar = Yi+gout.*dW;
-                    Yi = Ybar+fout+(feval(g,tspan(i),Ybar,varargin{:})-gout).*dW2;
+                    Ybar = y0+gout.*dW;
+                    Yi = Ybar+fout*dt+(feval(g,tspan(1),Ybar,varargin{:})-gout).*dW2;
                 else
-                    Ybar = Yi+gout*dW;
-                    Yi = Ybar+fout+(feval(g,tspan(i),Ybar,varargin{:})-gout)*dW2;   %%% wrong??
+                    Ybar = y0+gout*dW;
+                    Yi = Ybar+fout*dt+(feval(g,tspan(1),Ybar,varargin{:})-gout)*dW2;
                 end
             end
         end
         if NonNegative
             Yi(idxNonNegative) = max(Yi(idxNonNegative),0);
         end
-        Y(i+1,:) = Yi;
+        Y(2,:) = Yi;
+
+        % Integration loop using cached state, Yi, and increment, dW
+        for i = 2:lt-1
+            % Step size and Wiener increments
+            if ~ConstStep
+                dt = h(i);
+                sdt = sh(i);
+            end
+            if D > N
+                if nargout == 2
+                    dW = W(i+1,:);
+                    W(i+1,:) = W(i,:)+dW;     	% Integrate Wiener increments
+                else
+                    dW = sdt*feval(RandFUN,1,D);	% Generate Wiener increments
+                end
+            else
+                dW = Y(i+1,1:D);
+            end
+            dW = dW(:);
+
+            % Calculate next time step
+            if ConstGFUN
+                if DiagonalNoise
+                    Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+gout.*dW;
+                else
+                    Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+gout*dW;
+                end
+            else
+                if ~ConstFFUN
+                    fout = feval(f,tspan(i),Yi,varargin{:})*dt;
+                end
+
+                gout = feval(g,tspan(i),Yi,varargin{:});
+                if Derivative   % Use Milstein with derivative function if specified
+                    if Stratonovich
+                        dW2 = 0.5*dW.^2;
+                    else
+                        dW2 = 0.5*(dW.^2-dt);
+                    end
+                    if ~ConstDGFUN
+                        dgout = feval(dg,tspan(i),Yi,varargin{:});
+                    end
+                    if DiagonalNoise
+                        Yi = Yi+fout+gout.*(dW+dgout.*dW2);
+                    else
+                        Yi = Yi+fout+gout*(dW+dgout*dW2);
+                    end
+                else            % Otherwise use derivative-free Milstein method
+                    if Stratonovich
+                        dW2 = (0.5/sdt)*dW.^2;
+                    else
+                        dW2 = (0.5/sdt)*(dW.^2-dt);
+                    end
+                    if DiagonalNoise
+                        Ybar = Yi+gout.*dW;
+                        Yi = Ybar+fout+(feval(g,tspan(i),Ybar,varargin{:})-gout).*dW2;
+                    else
+                        Ybar = Yi+gout*dW;
+                        Yi = Ybar+fout+(feval(g,tspan(i),Ybar,varargin{:})-gout)*dW2;
+                    end
+                end
+            end
+            if NonNegative
+                Yi(idxNonNegative) = max(Yi(idxNonNegative),0);
+            end
+            Y(i+1,:) = Yi;
+        end
     end
 end
