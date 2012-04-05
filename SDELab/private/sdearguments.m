@@ -2,12 +2,14 @@ function [N D tspan tdir lt y0 f0 g0 h ConstStep dataType idxNonNegative ...
           NonNegative DiagonalNoise ScalarNoise ConstFFUN ConstGFUN ...
           Stratonovich RandFUN CustomRandFUN] ...
           = sdearguments(solver,f,g,tspan,y0,options,args)
-%SDEARGUMENTS  Helper function that processes arguments for all SDE solvers.
+%SDEARGUMENTS  Processes arguments for all SDE solvers.
 %
-%   See also SDE_EULER, SDE_MILSTEIN, SDEGET, FUNCTION_HANDLE, RANDSTREAM.
+%   See also:
+%       SDE_EULER, SDE_MILSTEIN, SDEARGUMENTS_SPECIAL, SDEGET, FUNCTION_HANDLE,
+%       RANDSTREAM
         
 %   Andrew D. Horchler, adh9@case.edu, Created 12-12-11
-%   Revision: 1.0, 4-2-12
+%   Revision: 1.0, 4-4-12
 
 %   SDEARGUMENTS is partially based on an updating of version 1.12.4.15 of
 %   Matlab's ODEARGUMENTS.
@@ -221,12 +223,12 @@ else
 end
 
 % Determine the dominant data type, single or double
-dataType = superiorfloat(t0,y0,f0,g0);
-if ~all(strcmp(dataType,{class(t0),class(y0),class(f0),class(g0)}))
+if ~all(strcmp(class(t0),{class(y0),class(f0),class(g0)}))
     warning( 'SDELab:sdearguments:InconsistentDataType',...
             ['Mixture of single and double data for inputs TSPAN and Y0 and '...
              'outputs of FFUN and GFUN.']);
 end
+dataType = superiorfloat(t0,y0,f0,g0);
 
 % Create function handle to be used for generating Wiener increments
 RandFUN = sdeget(options,'RandFUN',[],'flag');

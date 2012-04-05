@@ -153,8 +153,8 @@ if CustomRandFUN    % check output of alternative RandFUN
                         '%d by %d matrix as requested.'...
                         '   See %s.',D,lt-1,solver]);
             end
-            if ConstStep
-                Y(2:end,1:D) = sh*r;
+            if N == 1 || ConstStep
+                Y(2:end,1:D) = sh.*r;
             else
                 Y(2:end,1:D) = bsxfun(@times,sh,r);
             end
@@ -195,10 +195,8 @@ else    % No error checking needed if default RANDN used
             dW = sh(1)*feval(RandFUN,1,D);
         end
     else                % Store Wiener increments in Y
-        if N == 1 && DiagonalNoise
-            Y(2:end) = sh.*feval(RandFUN,lt-1,1);
-        elseif ConstStep
-            Y(2:end,1:D) = sh*feval(RandFUN,lt-1,D);
+        if N == 1 && DiagonalNoise || ConstStep
+            Y(2:end,1:D) = sh.*feval(RandFUN,lt-1,D);
         else
             Y(2:end,1:D) = bsxfun(@times,sh,feval(RandFUN,lt-1,D));
         end
