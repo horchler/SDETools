@@ -22,37 +22,43 @@ function [Y W] = sde_euler(f,g,tspan,y0,options,varargin)
 %   noise by setting the DiagonalNoise property to 'no'. The Euler-Maruyama
 %   method is used for Ito SDEs. The Euler-Heun method is used for Stratonovitch
 %   SDEs unless either the AdditiveNoise or the ConstGFUN property is set to
-%   'yes', in which case the Ito and Stratonovitch SDEs are equivalent. Another 
-%   commonly used option is manually specifying the random seed with the
-%   RandSeed property and creates a separate random number stream rather than
-%   using the default one.
+%   'yes', in which case the Ito and Stratonovitch SDEs are equivalent. Another
+%   commonly used option is to manually specify the random seed via the RandSeed
+%   property, which creates a new random number stream, instead of using the
+%   default stream, to generate the Wiener increments.
 %
 %   YOUT = SDE_EULER([],GFUN,TSPAN,Y0,...)
 %
 %   Example:
-%       y = sde_euler(@f1,@g1,0:0.01:1,[1 0]);
-%       solves the 2-D Stratonovich SDE system dy = f1(t,y)*dt + g1(t,y)*dW,
-%       using the Euler-Heun method and the default random number stream.
+%       % Solve 2-D Stratonovich SDE using Euler-Heun method
+%       mu = 1; sig = [0.1;0.5]; dt = 1e-2; t = 0:dt:1;
+%       f = @(t,y)mu.*y; g = @(t,y)sig.*y;
+%       y = sde_euler(f,g,t,[1 1]); plot(t,y);
+%       title(['Euler-Heun Method, dt = ' num2str(dt) ', \mu = ' num2str(mu)]);
+%       txt = {['\sigma = ' num2str(sig(1))],['\sigma = ' num2str(sig(2))]};
+%       legend(txt,2); legend boxoff; xlabel('t'); ylabel('y(t)');
 %
 %   Note:
 %       SDEs are assumed to be in Stratonovich form by default. SDEs in Ito form
-%       can be handled by setting the 'SDEType' OPTIONS property to 'Ito' via
-%       the SDESET function. These forms are generally not equivalent and will
+%       can be handled by setting the SDEType OPTIONS property to 'Ito' via the
+%       SDESET function. These forms are generally not equivalent and will
 %       converge to different solutions, so care should be taken to ensure that
-%       the form of SDEFUN matches 'SDEType'.
+%       the form of SDEFUN matches SDEType.
 %
-%       In the case of additve noise, i.e., when g(t,y) is constant, both Ito
-%       and Stratonovich interpretations are equivalent. If GFUN(T,Y) is
-%       specified as a floating point matrix rather than a function handle then
-%       it is automatically assumed to be constant. Alternatively, the ConstGFUN
-%       property can be set to 'yes' to indicate that GFUN(T,Y) is constant and
-%       only needs to be evaluated once.
+%       In the case of additve noise, i.e., when diffusion term, g(t,y), is not
+%       a function of the state variables, both Ito and Stratonovich
+%       interpretations are equivalent. If GFUN(T,Y) is specified as a floating
+%       point matrix rather than a function handle then it is automatically
+%       assumed to be constant. Alternatively, the ConstGFUN property can be set
+%       to 'yes' to indicate that GFUN(T,Y) is constant and only needs to be
+%       evaluated once.
 %
 %   See also:
 %       Explicit SDE solvers:	SDE_MILSTEIN
 %       Implicit SDE solvers:   
+%       Stochastic processes:	SDE_GBM, SDE_OU
 %       Option handling:        SDESET, SDEGET
-%       SDE demos:           
+%       SDE demos/validation:   SDE_EULER_VALIDATE, SDE_MILSTEIN_VALIDATE
 %   	Other:                  FUNCTION_HANDLE, RANDSTREAM
 
 %   SDE_EULER is an implementation of the order 0.5 strong (order 1.0 weak)
@@ -65,7 +71,7 @@ function [Y W] = sde_euler(f,g,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9@case.edu, Created 10-28-10
-%   Revision: 1.0, 4-4-12
+%   Revision: 1.0, 4-9-12
 
 
 solver = 'SDE_EULER';

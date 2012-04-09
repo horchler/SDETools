@@ -24,36 +24,42 @@ function [Y W] = sde_milstein(f,g,tspan,y0,options,varargin)
 %   applied, but if the if the DGFUN property is set to a function handle or
 %   floating point matrix to specify the derivative of the noise function
 %   g(t,y), then the general Milstein method is used. Another commonly used
-%   option is manually specifying the random seed with the RandSeed property and
-%   creates a separate random number stream rather than using the default one.
+%   option is to manually specify the random seed via the  RandSeed property,
+%   which creates a new random number stream, instead of using the default
+%   stream, to generate the Wiener increments.
 %
 %   Example:
-%       y = sde_milstein(@f1,@g1,0:0.01:1,[1 0]);
-%       solves the 2-D Stratonovich SDE system dy = f1(t,y)*dt + g1(t,y)*dW,
-%       using the derivative-free Milstein method and the default random number
-%       stream.
+%       % Solve 2-D Stratonovich SDE using Milstein method with derivative
+%       mu = 1; sig = [0.1;0.5]; dt = 1e-2; t = 0:dt:1;
+%       f = @(t,y)mu.*y; g = @(t,y)sig.*y; opts = sdeset('DGFUN',sig);
+%       y = sde_milstein(f,g,t,[1 1]); plot(t,y);
+%       title(['Milstein Method, dt = ' num2str(dt) ', \mu = ' num2str(mu)]);
+%       txt = {['\sigma = ' num2str(sig(1))],['\sigma = ' num2str(sig(2))]};
+%       legend(txt,2); legend boxoff; xlabel('t'); ylabel('y(t)');
 %
 %   Notes:
 %       SDEs are assumed to be in Stratonovich form by default. SDEs in Ito form
-%       can be handled by setting the 'SDEType' OPTIONS property to 'Ito' via
+%       can be handled by setting the SDEType OPTIONS property to 'Ito' via
 %       the SDESET function. These forms are generally not equivalent and will
 %       converge to different solutions, so care should be taken to ensure that
-%       the form of SDEFUN matches 'SDEType'.
+%       the form of SDEFUN matches SDEType.
 %
-%       In the case of additve noise, i.e., when g(t,y) is constant, both Ito
-%       and Stratonovich interpretations are equivalent and the Milstein method
-%       reduces to the Euler-Maruyama method implemented in SDE_EULER. If
-%       GFUN(T,Y) is specified as a floating point matrix rather than a function
-%       handle then it is automatically assumed to be constant. Alternatively,
-%       the ConstGFUN property can be set to 'yes' to indicate that GFUN(T,Y) is
-%       constant and only needs to be evaluated once.
+%       In the case of additve noise, i.e., when diffusion term, g(t,y), is not
+%       a function of the state variables, both Ito and Stratonovich
+%       interpretations are equivalent and the Milstein method reduces to the
+%       Euler-Maruyama method implemented in SDE_EULER. If GFUN(T,Y) is
+%       specified as a floating point matrix rather than a function handle then
+%       it is automatically assumed to be constant. Alternatively, the ConstGFUN
+%       property can be set to 'yes' to indicate that GFUN(T,Y) is constant and
+%       only needs to be evaluated once.
 %
 %   See also:
-%       other SDE solvers:  SDE_EULER
-%       implicit SDEs:      
-%       options handling:   SDESET, SDEGET
-%       SDE examples:       
-%       function handles:   FUNCTION_HANDLE
+%       Other SDE solvers:      SDE_EULER
+%       Implicit SDE solvers:      
+%       Stochastic processes:	SDE_GBM, SDE_OU
+%       Option handling:        SDESET, SDEGET
+%       SDE demos/validation:	SDE_EULER_VALIDATE, SDE_MILSTEIN_VALIDATE
+%       Other:                  FUNCTION_HANDLE, RANDSTREAM
 
 %   SDE_MILSTEIN is an implementation of the order 1.0 strong (order 1.0 weak)
 %   explicit Milstein scheme, which is also an order 1.0 strong Taylor
@@ -64,7 +70,7 @@ function [Y W] = sde_milstein(f,g,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9@case.edu, 10-25-10
-%   Revision: 1.0, 4-4-12
+%   Revision: 1.0, 4-9-12
 
 
 solver = 'SDE_MILSTEIN';

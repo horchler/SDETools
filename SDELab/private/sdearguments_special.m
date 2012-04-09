@@ -1,12 +1,12 @@
-function [N tspan tdir lt y0 h ConstStep RandFUN CustomRandFUN] ...
+function [N tspan tdir lt y0 h ConstStep Stratonovich RandFUN CustomRandFUN] ...
           = sdearguments_special(func,tspan,y0,options,dataType)
 %SDEARGUMENTS_SPECIAL  Processes arguments for all SDE special functions.
 %
 %   See also:
-%       SDE_GBM, SDEARGUMENTS, SDEGET, FUNCTION_HANDLE, RANDSTREAM
+%       SDE_GBM, SDE_OU, SDEARGUMENTS, SDEGET, FUNCTION_HANDLE, RANDSTREAM
         
 %   Andrew D. Horchler, adh9@case.edu, Created 4-4-12
-%   Revision: 1.0, 4-4-12
+%   Revision: 1.0, 4-8-12
 
 %   SDEARGUMENTS_SPECIAL is partially based on an updating of version 1.12.4.15
 %   of Matlab's ODEARGUMENTS.
@@ -92,3 +92,7 @@ else    % Use Matlab's random number generator for normal variates
     RandFUN = @(M,N)randn(Stream,M,N,dataType);
     CustomRandFUN = false;
 end
+
+% Solution method is dependent on if SDE is Stratonovich or Ito form
+Stratonovich = strcmp(sdeget(options,'SDEType','Stratonovich','flag'),...
+    'Stratonovich');

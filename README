@@ -1,12 +1,13 @@
 SDELAB
-   Version 1.0, 4-4-12
+   Version 1.0, 4-9-12
 
    Stochastic differential equation (SDE) solvers.
        sde_euler       - Euler-Maruyama (Ito) and Euler-Heun (Stratonovich) 
        sde_milstein    - Milstein method, derivative and derivative-free.
 
-   Stochastic differential equation (SDE) special functions.
+   Stochastic differential equation (SDE) processes.
        sde_gbm         - Geometric Brownian motion process, analytic solution.
+       sde_ou          - Ornstein-Uhlenbeck process, analytic solution.
 
    Stochastic interpolatolation and SDE solver utilities.
        sde_interp      - Brownian bridge interpolation.
@@ -19,7 +20,7 @@ SDELAB
        sde_euler_validate  - Test sde_euler performance and convergence order.
 
    Tested with Matlab 7.13.0.564 (R2011b)
-   Mac OS X 10.6.8 Build: 10K549, Java 1.6.0_29-b11-402-10M3527
+   Mac OS X 10.6.8 Build: 10K549, Java 1.6.0_31-b04-413-10M3623
 
    Andrew D. Horchler, adh9@case.edu, Created 12-18-11
-   Revision: 1.0, 4-4-12
+   Revision: 1.0, 4-9-12
