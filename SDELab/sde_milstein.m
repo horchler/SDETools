@@ -70,7 +70,7 @@ function [Y W] = sde_milstein(f,g,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9@case.edu, 10-25-10
-%   Revision: 1.0, 4-9-12
+%   Revision: 1.0, 4-10-12
 
 
 solver = 'SDE_MILSTEIN';
@@ -98,7 +98,8 @@ end
 % Handle solver arguments
 [N D tspan tdir lt y0 fout gout h ConstStep dataType idxNonNegative ...
     NonNegative DiagonalNoise ScalarNoise ConstFFUN ConstGFUN Stratonovich ...
-    RandFUN CustomRandFUN] = sdearguments(solver,f,g,tspan,y0,options,varargin);
+    RandFUN CustomRandFUN ResetAntithetic] ...
+    = sdearguments(solver,f,g,tspan,y0,options,varargin);
 
 % If optional derivative function property is set
 if ~ConstGFUN
@@ -517,4 +518,14 @@ else
             Y(i+1,:) = Yi;
         end
     end
+end
+
+% Reset antihetic property if global stream was used
+if ResetAntithetic
+    try
+        Stream = RandStream.getGlobalStream;
+    catch                                       %#ok<CTCH>
+        Stream = RandStream.getDefaultStream;	%#ok<GETRS>
+    end
+    set(Stream,'Antithetic',~Stream.Antithetic);
 end

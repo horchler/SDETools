@@ -1,5 +1,5 @@
 function opts = sdeget(options,name,default,noErrorCheck)
-%SDEGET	Get SDE OPTIONS parameters.
+%SDEGET	 Get SDE OPTIONS parameters.
 %   VAL = SDEGET(OPTIONS,'NAME') extracts the value of the named property from
 %   integrator options structure OPTIONS, returning an empty matrix if the
 %   property value is not specified in OPTIONS. It is sufficient to type only
@@ -8,18 +8,18 @@ function opts = sdeget(options,name,default,noErrorCheck)
 %   
 %   VAL = SDEGET(OPTIONS,'NAME',DEFAULT) extracts the named property as above,
 %   but returns VAL = DEFAULT if the named property is not specified in OPTIONS.
-%   For example
+%
+%   Example:
+%       % Returns val = 'Ito' if the SDEType property is not specified in opts
+%       val = sdeget(opts,'SDEType','Ito');
 %   
-%       val = sdeget(opts1,'SDEType','Ito');
-%   
-%   returns val = 'Ito' if the SDEType property is not specified in opts1.
-%   
-%   See also SDESET, SDE_EULER, SDE_MILSTEIN.
+%   See also:
+%       SDESET, SDE_EULER, SDE_MILSTEIN, SDE_GBM, SDE_OU
 
 %   SDEGET is based on an updating of version 1.37.4.5 of Matlab's ODEGET
 
 %   Andrew D. Horchler, adh9@case.edu, 10-28-10
-%   Revision: 1.0, 3-29-12
+%   Revision: 1.0, 4-10-12
 
 
 % Undocumented usage for fast access with no error checking
@@ -47,10 +47,10 @@ end
 Names = {   'SDEType'
             'DFFUN'
             'DGFUN'
-            'RandFUN'
             'RandSeed'
             'Antithetic'
-            'AdditiveNoise'
+            'RandStream'
+            'RandFUN'
             'DiagonalNoise'
             'ConstFFUN'
             'ConstGFUN'

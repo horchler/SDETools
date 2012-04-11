@@ -1,5 +1,5 @@
 function options = sdeset(varargin)
-%SDESET Create/alter SDE OPTIONS structure.
+%SDESET  Create/alter SDE OPTIONS structure.
 %   OPTIONS = SDESET('NAME1',VALUE1,'NAME2',VALUE2,...) creates an integrator
 %   options structure OPTIONS in which the named properties have the specified
 %   values. Any unspecified properties have default values. It is sufficient to
@@ -42,19 +42,27 @@ function options = sdeset(varargin)
 %   Create a random number stream separate from Matlab's default stream with the
 %   specified seed value. If a seed is not specified, Matlab's current default
 %   stream is used.
+%
+%Antithetic - Use antithetic variates for Wiener increments  [ yes | {no} ]
+%   Set this property to 'yes' to use the antithetic variates variance reduction
+%   method to calculate the normal variates for the Wiener increments. Half as
+%   many normal variates are generated and the remainder are the negative of
+%   these. If Matlab's default random number stream is used (i.e., RandSeed not
+%   specified) the stream's antithetic property is reset to it's previous state
+%   after use.
+%
+%RandStream - Specify independent random number stream  [RandStream object]
+%   Specify an alternative random number stream using a RandStream object
+%   created with the RandStream function. The RandSeed and Antithetic properties
+%   are ignored if the RandStream property is specified.
 %   
 %RandFUN - Specify alternative random number function  [ function_handle ]
 %   Set this property to a function handle in order to specify an alternative
 %   random number generator function, instead of using Matlab's random number
 %   generator, to calculate the Wiener increments. The corresponding function
 %   must take two arguments, M and N, and output an M by N matrix of normal
-%   variates.
-% 
-%Antithetic - Use antithetic variates for Wiener increments  [ yes | {no} ]
-%   Set this property to 'yes' to use the antithetic variates variance reduction
-%   method to calculate the normal variates for the Wiener increments. Half as
-%   many normal variates are generated and the remainder are the negative of
-%   these.
+%   variates. The RandSeed, RandStream, and Antithetic properties are ignored if
+%   the RandFUN property is specified.
 %
 %DiagonalNoise - Dimension of stochastic function  [ {yes} | no ]
 %   In the default diagonal (uncorrelated) noise situation each dimension of the
@@ -90,21 +98,23 @@ function options = sdeset(varargin)
 %   solution vector that must be non-negative. An empty vector, [], is
 %   equivalent to 'no'.
 %   
-%   See also SDEGET, SDE_EULER, SDE_MILSTEIN, SDE_VALIDATE, FUNCTION_HANDLE.
+%   See also:
+%       SDEGET, SDE_EULER, SDE_MILSTEIN, SDE_GBM, SDE_OU, FUNCTION_HANDLE,
+%       RANDSTREAM
 
 %   SDESET is based on an updating of version 1.46.4.10 of Matlab's ODESET.
 
 %   Andrew D. Horchler, adh9@case.edu, 10-27-10
-%   Revision: 1.0, 3-29-12
+%   Revision: 1.0, 4-10-12
 
 
 Names = {   'SDEType'
             'DFFUN'
             'DGFUN'
-            'RandFUN'
             'RandSeed'
             'Antithetic'
-            'AdditiveNoise'
+            'RandStream'
+            'RandFUN'
             'DiagonalNoise'
             'ConstFFUN'
             'ConstGFUN'
@@ -114,16 +124,16 @@ Names = {   'SDEType'
 Values = {	'{Stratonovich} | Ito'
             'function_handle | vector'
             'function_handle | matrix'
-            'function_handle'
             '0 <= integer < 2^32'
             ' yes  | {no}'
-            ' yes  | {no}'
+            'RandStream object'
+            'function_handle'
             '{yes} |  no '
             ' yes  | {no}'
             ' yes  | {no}'
             ' yes  | {no}'
             ' yes  | {no} | vector'
-        };
+         };
 m = length(Names);
 
 % Print out possible values of properties.

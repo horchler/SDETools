@@ -33,7 +33,7 @@ function [Y W] = sde_euler(f,g,tspan,y0,options,varargin)
 %       % Solve 2-D Stratonovich SDE using Euler-Heun method
 %       mu = 1; sig = [0.1;0.5]; dt = 1e-2; t = 0:dt:1;
 %       f = @(t,y)mu.*y; g = @(t,y)sig.*y;
-%       y = sde_euler(f,g,t,[1 1]); plot(t,y);
+%       y = sde_euler(f,g,t,[1 1],opts); plot(t,y);
 %       title(['Euler-Heun Method, dt = ' num2str(dt) ', \mu = ' num2str(mu)]);
 %       txt = {['\sigma = ' num2str(sig(1))],['\sigma = ' num2str(sig(2))]};
 %       legend(txt,2); legend boxoff; xlabel('t'); ylabel('y(t)');
@@ -71,7 +71,7 @@ function [Y W] = sde_euler(f,g,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9@case.edu, Created 10-28-10
-%   Revision: 1.0, 4-9-12
+%   Revision: 1.0, 4-10-12
 
 
 solver = 'SDE_EULER';
@@ -99,7 +99,8 @@ end
 % Handle solver arguments
 [N D tspan tdir lt y0 fout gout h ConstStep dataType idxNonNegative ...
     NonNegative DiagonalNoise ScalarNoise ConstFFUN ConstGFUN Stratonovich ...
-    RandFUN CustomRandFUN] = sdearguments(solver,f,g,tspan,y0,options,varargin);
+    RandFUN CustomRandFUN ResetAntithetic] ...
+    = sdearguments(solver,f,g,tspan,y0,options,varargin);
 
 Y = zeros(lt,N,dataType);   % State array
 
@@ -384,4 +385,14 @@ else
             Y(i+1,:) = Yi;
         end
     end
+end
+
+% Reset antihetic property if global stream was used
+if ResetAntithetic
+    try
+        Stream = RandStream.getGlobalStream;
+    catch                                       %#ok<CTCH>
+        Stream = RandStream.getDefaultStream;	%#ok<GETRS>
+    end
+    set(Stream,'Antithetic',~Stream.Antithetic);
 end

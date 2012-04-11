@@ -1,5 +1,5 @@
-%SDELAB
-%   Version 1.0, 4-9-12
+%SDELab
+%   Version 1.0, 4-10-12
 %
 %   Stochastic differential equation (SDE) solvers.
 %       sde_euler       - Euler-Maruyama (Ito) and Euler-Heun (Stratonovich) 
@@ -23,4 +23,4 @@
 %   Mac OS X 10.6.8 Build: 10K549, Java 1.6.0_31-b04-413-10M3623
 
 %   Andrew D. Horchler, adh9@case.edu, Created 12-18-11
-%   Revision: 1.0, 4-9-12
+%   Revision: 1.0, 4-10-12

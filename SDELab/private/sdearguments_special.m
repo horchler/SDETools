@@ -1,12 +1,13 @@
-function [N tspan tdir lt y0 h ConstStep Stratonovich RandFUN CustomRandFUN] ...
+function [N tspan tdir lt y0 h ConstStep Stratonovich RandFUN CustomRandFUN ...
+          ResetAntithetic] ...
           = sdearguments_special(func,tspan,y0,options,dataType)
-%SDEARGUMENTS_SPECIAL  Processes arguments for all SDE special functions.
+%SDEARGUMENTS_SPECIAL  Process arguments for all SDE special functions.
 %
 %   See also:
 %       SDE_GBM, SDE_OU, SDEARGUMENTS, SDEGET, FUNCTION_HANDLE, RANDSTREAM
         
 %   Andrew D. Horchler, adh9@case.edu, Created 4-4-12
-%   Revision: 1.0, 4-8-12
+%   Revision: 1.0, 4-10-12
 
 %   SDEARGUMENTS_SPECIAL is partially based on an updating of version 1.12.4.15
 %   of Matlab's ODEARGUMENTS.
@@ -65,29 +66,43 @@ if ~isempty(RandFUN)	% Use alternative random number generator
     end
     CustomRandFUN = true;
 else    % Use Matlab's random number generator for normal variates
-    RandSeed = sdeget(options,'RandSeed',[],'flag');
-    if ~isempty(RandSeed)
-        if ~isscalar(RandSeed) || ~isnumeric(RandSeed) || ...
-                ~isreal(RandSeed) || ~isfinite(RandSeed) || ...
-                RandSeed >= 2^32 || RandSeed < 0
-            error(	'SDELab:sdearguments_special:InvalidRandSeed',...
-                   ['RandSeed must be a non-negative integer value less '...
-                    'than 2^32.  See %s.'],func);
+    Stream = sdeget(options,'RandStream',[],'flag');
+    if ~isempty(Stream)
+        if ~isa(Stream,'RandStream')
+            error(  'SDELab:sdearguments_special:InvalidRandStream',...
+                    'RandStream must be a RandStream object.  See %s.',solver);
         end
-        % Create new stream based on seed value
-        Stream = RandStream.create('mt19937ar','Seed',RandSeed);
     else
-        % Use default stream
-        try
-            Stream = RandStream.getGlobalStream;
-        catch                                       %#ok<CTCH>
-            Stream = RandStream.getDefaultStream;	%#ok<GETRS>
+        RandSeed = sdeget(options,'RandSeed',[],'flag');
+        if ~isempty(RandSeed)
+            if ~isscalar(RandSeed) || ~isnumeric(RandSeed) || ...
+                    ~isreal(RandSeed) || ~isfinite(RandSeed) || ...
+                    RandSeed >= 2^32 || RandSeed < 0
+                error(	'SDELab:sdearguments_special:InvalidRandSeed',...
+                       ['RandSeed must be a non-negative integer value less '...
+                        'than 2^32.  See %s.'],func);
+            end
+            % Create new stream based on seed value
+            Stream = RandStream.create('mt19937ar','Seed',RandSeed);
+        else
+            % Use default stream
+            try
+                Stream = RandStream.getGlobalStream;
+            catch                                       %#ok<CTCH>
+                Stream = RandStream.getDefaultStream;	%#ok<GETRS>
+            end
+        end
+
+        % Set property if antithetic random variates option is specified
+        Antithetic = strcmp(sdeget(options,'Antithetic','no','flag'),'yes');
+        ResetAntithetic = false;
+        if Antithetic ~= Stream.Antithetic
+            set(Stream,'Antithetic',Antithetic);
+            if isempty(RandSeed)
+                ResetAntithetic = true;
+            end
         end
     end
-    
-    % Set property if antithetic random variates option is specified
-    set(Stream,'Antithetic',strcmp(sdeget(options,'Antithetic','no','flag'),...
-        'yes'));
     
     RandFUN = @(M,N)randn(Stream,M,N,dataType);
     CustomRandFUN = false;
