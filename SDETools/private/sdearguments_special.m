@@ -7,7 +7,7 @@ function [N tspan tdir lt y0 h ConstStep Stratonovich RandFUN CustomRandFUN ...
 %       SDE_GBM, SDE_OU, SDEARGUMENTS, SDEGET, FUNCTION_HANDLE, RANDSTREAM
         
 %   Andrew D. Horchler, adh9@case.edu, Created 4-4-12
-%   Revision: 1.0, 4-10-12
+%   Revision: 1.0, 4-11-12
 
 %   SDEARGUMENTS_SPECIAL is partially based on an updating of version 1.12.4.15
 %   of Matlab's ODEARGUMENTS.
@@ -16,16 +16,16 @@ function [N tspan tdir lt y0 h ConstStep Stratonovich RandFUN CustomRandFUN ...
 % Check that tspan is internally consistent
 lt = length(tspan);         % number of time steps
 if lt < 2
-    error(  'SDELab:sdearguments_special:InvalidTSpanSize',...
+    error(  'SDETools:sdearguments_special:InvalidTSpanSize',...
             'Input vector TSPAN must have length >= 2.  See %s.',func);
 end
 if ~isfloat(tspan) || ~isreal(tspan)
-    error(  'SDELab:sdearguments_special:InvalidTSpanDataType',...
+    error(  'SDETools:sdearguments_special:InvalidTSpanDataType',...
            ['Datatype of the input vector TSPAN must be real single or '...
             'real double.  See %s.'],func);
 end
 if any(~isfinite(tspan))
-    warning(    'SDELab:sdearguments_special:TSpanNotFinite',...
+    warning(    'SDETools:sdearguments_special:TSpanNotFinite',...
                ['One or more elements of the input TSPAN are not finite'...
                 '  See %s.'],func);
 end
@@ -34,7 +34,7 @@ t0 = tspan(1);
 tdir = sign(tspan(end)-t0);
 dtspan = diff(tspan);
 if tdir == 0 || (tdir > 0 && any(dtspan <= 0)) || (tdir < 0 && any(dtspan >= 0))
-	error(	'SDELab:sdearguments_special:TspanNotMonotonic',...
+	error(	'SDETools:sdearguments_special:TspanNotMonotonic',...
            ['The entries in TSPAN must strictly increase or decrease.'...
             '  See %s.'],func);
 end
@@ -50,7 +50,7 @@ end
 
 % Check y0
 if isempty(y0) || ~isfloat(y0)
-    error(  'SDELab:sdearguments_special:Y0EmptyOrNotFloat',...
+    error(  'SDETools:sdearguments_special:Y0EmptyOrNotFloat',...
            ['The initial conditions, Y0, must be non-empty vector of '...
             'singles or doubles.  See %s.'],func);
 end
@@ -59,9 +59,10 @@ N = length(y0);	% number of state variables
 
 % Create function handle to be used for generating Wiener increments
 RandFUN = sdeget(options,'RandFUN',[],'flag');
+ResetAntithetic = false;
 if ~isempty(RandFUN)	% Use alternative random number generator
     if ~isa(RandFUN,'function_handle')
-        error(  'SDELab:sdearguments_special:RandFUNNotAFunctionHandle',...
+        error(  'SDETools:sdearguments_special:RandFUNNotAFunctionHandle',...
                 'RandFUN must be a function handle.  See %s.',func);
     end
     CustomRandFUN = true;
@@ -69,7 +70,7 @@ else    % Use Matlab's random number generator for normal variates
     Stream = sdeget(options,'RandStream',[],'flag');
     if ~isempty(Stream)
         if ~isa(Stream,'RandStream')
-            error(  'SDELab:sdearguments_special:InvalidRandStream',...
+            error(  'SDETools:sdearguments_special:InvalidRandStream',...
                     'RandStream must be a RandStream object.  See %s.',solver);
         end
     else
@@ -78,7 +79,7 @@ else    % Use Matlab's random number generator for normal variates
             if ~isscalar(RandSeed) || ~isnumeric(RandSeed) || ...
                     ~isreal(RandSeed) || ~isfinite(RandSeed) || ...
                     RandSeed >= 2^32 || RandSeed < 0
-                error(	'SDELab:sdearguments_special:InvalidRandSeed',...
+                error(	'SDETools:sdearguments_special:InvalidRandSeed',...
                        ['RandSeed must be a non-negative integer value less '...
                         'than 2^32.  See %s.'],func);
             end
@@ -95,7 +96,6 @@ else    % Use Matlab's random number generator for normal variates
 
         % Set property if antithetic random variates option is specified
         Antithetic = strcmp(sdeget(options,'Antithetic','no','flag'),'yes');
-        ResetAntithetic = false;
         if Antithetic ~= Stream.Antithetic
             set(Stream,'Antithetic',Antithetic);
             if isempty(RandSeed)

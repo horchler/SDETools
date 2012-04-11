@@ -2,7 +2,7 @@ function sde_euler_unittest(tests)
 %SDE_EULER_UNITTEST  Suite of unit tests for SDE_EULER solver function.
 %   SDE_EULER_UNITTEST will perform all tests. Detailed feedback is provided if
 %   any of the tests fail. See code (type 'edit SDE_EULER_UNITTEST' in the
-%   command window) for test details or to add additional tests. The SDELab
+%   command window) for test details or to add additional tests. The SDETools
 %   Toolbox must be on the Matlab path or in the same directory as this
 %   function.
 %
@@ -12,35 +12,35 @@ function sde_euler_unittest(tests)
 %   are specified, they may be listed in any order, but they will be evaluated
 %   in ascending order.
 %
-%   Not part of the the SDELab Toolbox; used only for development.
+%   Not part of the the SDETools Toolbox; used only for development.
 %   
 %   See also: SDE_EULER, SDEARGUMENTS, SDE_EULER_BENCHMARK, SDE_EULER_VALIDATE,
 %       SDE_MILSTEIN_UNITTEST
 
 %   Andrew D. Horchler, adh9@case.edu, Created 12-20-11
-%   Revision: 1.0, 4-4-12
+%   Revision: 1.0, 4-11-12
 
 
 % make sure toolbox on path, otherwise ensure we're in right location and add it
-if strfind(path,'SDELab')
+if strfind(path,'SDETools')
     if exist('sde_euler','file') ~= 2
-        error(  'SDELab:sde_euler_unittest:FunctionNotFound',...
-               ['The SDELab Toolbox is appears to be on the Matlab path, '...
+        error(  'SDETools:sde_euler_unittest:FunctionNotFound',...
+               ['The SDETools Toolbox is appears to be on the Matlab path, '...
                 'but the SDE_EULER solver function cannot be found.']);
     end
     pathadded = false;
 else
-    if exist('SDELab','dir') ~= 7
-        error(  'SDELab:sde_euler_unittest:ToolboxNotFound',...
-               ['The SDELab Toolbox is not be on the Matlab path and the '...
-                'root directory of the of the toolbox, SDELab, is in the '...
+    if exist('SDETools','dir') ~= 7
+        error(  'SDETools:sde_euler_unittest:ToolboxNotFound',...
+               ['The SDETools Toolbox is not be on the Matlab path and the '...
+                'root directory of the of the toolbox, SDETools, is in the '...
                 'same directory as this function.']);
     end
-    addpath SDELab
+    addpath SDETools
     if exist('sde_euler','file') ~= 2
-        rmpath SDELab
-        error(  'SDELab:sde_euler_unittest:FunctionNotFoundAfterAdd',...
-               ['The SDELab Toolbox was added to the Matlab path, but the '...
+        rmpath SDETools
+        error(  'SDETools:sde_euler_unittest:FunctionNotFoundAfterAdd',...
+               ['The SDETools Toolbox was added to the Matlab path, but the '...
                 'SDE_EULER solver function cannot be found.']);
     end
     pathadded = true;   % we'll reset path at end
@@ -49,10 +49,10 @@ end
 % validate input argument if it exists
 if nargin == 1
     if isempty(tests) || ~isnumeric(tests) || ~all(isfinite(tests))
-        error('SDELab:sde_euler_unittest:InvalidArgument','Invalid argument.');
+        error('SDETools:sde_euler_unittest:InvalidArgument','Invalid argument.');
     end
     if any(tests < 1)
-        error(  'SDELab:sde_euler_unittest:NotAnIndex',...
+        error(  'SDETools:sde_euler_unittest:NotAnIndex',...
                 'Tests are numbered as indices, from 1 to N.');
     end
     runtests = true;
@@ -84,34 +84,34 @@ st = dbstack;
 i = 1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,0:0.1:1,0);';
-msg{i} = 'SDELab:sde_euler:NotEnoughInputs';
+msg{i} = 'SDETools:sde_euler:NotEnoughInputs';
 
 % only one function with options
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,0:0.1:1,0,sdeset(''SDEType'',''Ito''));';
-msg{i} = 'SDELab:sde_euler:NotEnoughInputsOptions';
+msg{i} = 'SDETools:sde_euler:NotEnoughInputsOptions';
 
 % no tspan
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0);';
-msg{i} = 'SDELab:sde_euler:NotEnoughInputs';
+msg{i} = 'SDETools:sde_euler:NotEnoughInputs';
 
 % no tspan with options
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0,sdeset(''SDEType'',''Ito''));';
-msg{i} = 'SDELab:sde_euler:NotEnoughInputsOptions';
+msg{i} = 'SDETools:sde_euler:NotEnoughInputsOptions';
 
 % no ICs
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1);';
-msg{i} = 'SDELab:sde_euler:NotEnoughInputs';
+msg{i} = 'SDETools:sde_euler:NotEnoughInputs';
 
 
 % f:
@@ -121,21 +121,21 @@ st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler('''',@(t,x)x+1,0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:InvalidFFUN';
+msg{i} = 'SDETools:sdearguments:InvalidFFUN';
 
 % not a valid input, not float
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(uint8(0),@(t,x)x+1,0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:InvalidFFUN';
+msg{i} = 'SDETools:sdearguments:InvalidFFUN';
 
 % not a valid input, not a matrix
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(ones(2,2,2),@(t,x)x+1,0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:InvalidFFUN';
+msg{i} = 'SDETools:sdearguments:InvalidFFUN';
 
 % function doesn't exist
 st = dbstack;
@@ -149,69 +149,69 @@ st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t)x+1,@(t,x)x+1,0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:FFUNTooFewInputs';
+msg{i} = 'SDETools:sdearguments:FFUNTooFewInputs';
 
 % state output not specified
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@f1,@(t,x)x+1,0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:FFUNNoOutput';
+msg{i} = 'SDETools:sdearguments:FFUNNoOutput';
 
 % state output not assigned in function
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@f2,@(t,x)x+1,0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:FFUNUnassignedOutput';
+msg{i} = 'SDETools:sdearguments:FFUNUnassignedOutput';
 
 % too many inputs required
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x,a)a*x+1,@(t,x)x+1,0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:FFUNTooManyInputs';
+msg{i} = 'SDETools:sdearguments:FFUNTooManyInputs';
 
 % state output smaller
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x(1)+1,@(t,x)x+1,0:0.1:1,[0 0]);';
-msg{i} = 'SDELab:sdearguments:FFUNDimensionMismatch';
+msg{i} = 'SDETools:sdearguments:FFUNDimensionMismatch';
 
 % state output larger
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)[x;x]+1,@(t,x)x+1,0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:FFUNDimensionMismatch';
+msg{i} = 'SDETools:sdearguments:FFUNDimensionMismatch';
 
 % state output not a matrix
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)rand(1,1,2)+1,@(t,x)x+1,0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:FFUNNotColumnVector';
+msg{i} = 'SDETools:sdearguments:FFUNNotColumnVector';
 
 % state output not a colum vector
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)[x,x]+1,@(t,x)x+1,0:0.1:1,[0 0]);';
-msg{i} = 'SDELab:sdearguments:FFUNNotColumnVector';
+msg{i} = 'SDETools:sdearguments:FFUNNotColumnVector';
 
 % state output not non-empty
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)[],@(t,x)x+1,0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:FFUNNotColumnVector';
+msg{i} = 'SDETools:sdearguments:FFUNNotColumnVector';
 
 % state output not float
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)uint8(x)+1,@(t,x)x+1,0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:FFUNNotColumnVector';
+msg{i} = 'SDETools:sdearguments:FFUNNotColumnVector';
 
 
 % g:
@@ -221,21 +221,21 @@ st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,'''',0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:InvalidGFUN';
+msg{i} = 'SDETools:sdearguments:InvalidGFUN';
 
 % not a valid input, not float
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,uint8(0),0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:InvalidGFUN';
+msg{i} = 'SDETools:sdearguments:InvalidGFUN';
 
 % not a valid input, not a matrix
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,ones(2,2,2),0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:InvalidGFUN';
+msg{i} = 'SDETools:sdearguments:InvalidGFUN';
 
 % function doesn't exist
 st = dbstack;
@@ -249,77 +249,77 @@ st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t)x+1,0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:GFUNTooFewInputs';
+msg{i} = 'SDETools:sdearguments:GFUNTooFewInputs';
 
 % state output not specified
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@g1,0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:GFUNNoOutput';
+msg{i} = 'SDETools:sdearguments:GFUNNoOutput';
 
 % state output not assigned in function
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@g2,0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:GFUNUnassignedOutput';
+msg{i} = 'SDETools:sdearguments:GFUNUnassignedOutput';
 
 % too many inputs required
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x,a)a*x+1,0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:GFUNTooManyInputs';
+msg{i} = 'SDETools:sdearguments:GFUNTooManyInputs';
 
 % state output smaller
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x(1:2)+1,0:0.1:1,[0,0,0]);';
-msg{i} = 'SDELab:sdearguments:GFUNDimensionMismatchDiagonal';
+msg{i} = 'SDETools:sdearguments:GFUNDimensionMismatchDiagonal';
 
 % state output larger
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)[x;x]+1,0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:GFUNDimensionMismatchDiagonal';
+msg{i} = 'SDETools:sdearguments:GFUNDimensionMismatchDiagonal';
 
 % state output not a matrix
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)rand(1,1,2)+1,0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:GFUNNotMatrix';
+msg{i} = 'SDETools:sdearguments:GFUNNotMatrix';
 
 % state output number of rows not equal number of states for non-diagonal noise
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)rand(2)+1,0:0.1:1,0,sdeset(''Diagonal'',''no''));';
-msg{i} = 'SDELab:sdearguments:GFUNDimensionMismatchNonDiagonal';
+msg{i} = 'SDETools:sdearguments:GFUNDimensionMismatchNonDiagonal';
 
 % state output not a column vector for diagonal noise
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)rand(2)+1,0:0.1:1,[0 0]);';
-msg{i} = 'SDELab:sdearguments:GFUNDimensionMismatchDiagonal';
+msg{i} = 'SDETools:sdearguments:GFUNDimensionMismatchDiagonal';
 
 % state output not non-empty
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)[],0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:GFUNNotMatrix';
+msg{i} = 'SDETools:sdearguments:GFUNNotMatrix';
 
 % state output not float
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)uint8(x)+1,0:0.1:1,0);';
-msg{i} = 'SDELab:sdearguments:GFUNNotMatrix';
+msg{i} = 'SDETools:sdearguments:GFUNNotMatrix';
 
 
 % tspan:
@@ -329,42 +329,42 @@ st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0,0);';
-msg{i} = 'SDELab:sdearguments:InvalidTSpanSize';
+msg{i} = 'SDETools:sdearguments:InvalidTSpanSize';
 
 % const time
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,[0,0,0,0],0);';
-msg{i} = 'SDELab:sdearguments:TspanNotMonotonic';
+msg{i} = 'SDETools:sdearguments:TspanNotMonotonic';
 
 % non-monotonic time
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,sin(0:0.5*pi:2*pi),0);';
-msg{i} = 'SDELab:sdearguments:TspanNotMonotonic';
+msg{i} = 'SDETools:sdearguments:TspanNotMonotonic';
 
 % not float
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,uint8(0:9),0);';
-msg{i} = 'SDELab:sdearguments:InvalidTSpanDataType';
+msg{i} = 'SDETools:sdearguments:InvalidTSpanDataType';
 
 % not non-empty
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,rand(0,9),0);';
-msg{i} = 'SDELab:sdearguments:InvalidTSpanSize';
+msg{i} = 'SDETools:sdearguments:InvalidTSpanSize';
 
 % not real
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,(0:0.1:1)+1i,0);';
-msg{i} = 'SDELab:sdearguments:InvalidTSpanDataType';
+msg{i} = 'SDETools:sdearguments:InvalidTSpanDataType';
 
 
 % y0:
@@ -374,14 +374,14 @@ st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,uint8(0));';
-msg{i} = 'SDELab:sdearguments:Y0EmptyOrNotFloat';
+msg{i} = 'SDETools:sdearguments:Y0EmptyOrNotFloat';
 
 % not non-empty
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,[]);';
-msg{i} = 'SDELab:sdearguments:Y0EmptyOrNotFloat';
+msg{i} = 'SDETools:sdearguments:Y0EmptyOrNotFloat';
 
 
 % options:
@@ -391,77 +391,77 @@ st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,0);';
-msg{i} = 'SDELab:sde_euler:InvalidSDESETStruct';
+msg{i} = 'SDETools:sde_euler:InvalidSDESETStruct';
 
 % invalid empty options
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,'''');';
-msg{i} = 'SDELab:sde_euler:InvalidSDESETStruct';
+msg{i} = 'SDETools:sde_euler:InvalidSDESETStruct';
 
 % invalid empty options
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,zeros(0,1));';
-msg{i} = 'SDELab:sde_euler:InvalidSDESETStruct';
+msg{i} = 'SDETools:sde_euler:InvalidSDESETStruct';
 
 % invalid empty options
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,zeros(0,0,0));';
-msg{i} = 'SDELab:sde_euler:InvalidSDESETStruct';
+msg{i} = 'SDETools:sde_euler:InvalidSDESETStruct';
 
 % inavlid RandSeed, not a matrix
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandSeed'',ones(1,1,2)));';
-msg{i} = 'SDELab:sdearguments:InvalidRandSeed';
+msg{i} = 'SDETools:sdearguments:InvalidRandSeed';
 
 % inavlid RandSeed, not a scalar
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandSeed'',[0,0]));';
-msg{i} = 'SDELab:sdearguments:InvalidRandSeed';
+msg{i} = 'SDETools:sdearguments:InvalidRandSeed';
 
 % inavlid RandSeed, not finite
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandSeed'',NaN));';
-msg{i} = 'SDELab:sdearguments:InvalidRandSeed';
+msg{i} = 'SDETools:sdearguments:InvalidRandSeed';
 
 % inavlid RandSeed, not real
 st = dbstack;
 i = i+1;
 lnum{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandSeed'',1i));';
-msg{i} = 'SDELab:sdearguments:InvalidRandSeed';
+msg{i} = 'SDETools:sdearguments:InvalidRandSeed';
 
 % inavlid RandSeed, not numeric
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandSeed'',logical(0)));';
-msg{i} = 'SDELab:sdearguments:InvalidRandSeed';
+msg{i} = 'SDETools:sdearguments:InvalidRandSeed';
 
 % RandSeed too small
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandSeed'',-1));';
-msg{i} = 'SDELab:sdearguments:InvalidRandSeed';
+msg{i} = 'SDETools:sdearguments:InvalidRandSeed';
 
 % RandSeed too large
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandSeed'',2^32));';
-msg{i} = 'SDELab:sdearguments:InvalidRandSeed';
+msg{i} = 'SDETools:sdearguments:InvalidRandSeed';
 
 
 % RandFUN:
@@ -471,7 +471,7 @@ st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandFUN'',0));';
-msg{i} = 'SDELab:sdearguments:RandFUNNotAFunctionHandle';
+msg{i} = 'SDETools:sdearguments:RandFUNNotAFunctionHandle';
 
 % undefined RandFUN
 st = dbstack;
@@ -485,112 +485,112 @@ st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = '[y,w]=sde_euler(@(t,x)x+1,@(t,x)[x,x]+1,0:0.1:1,0,sdeset(''Diagonal'',''no'',''RandFUN'',@(p,q)[]));';
-msg{i} = 'SDELab:sde_euler:RandFUNNot2DArray1';
+msg{i} = 'SDETools:sde_euler:RandFUNNot2DArray1';
 
 % non-matrix RandFUN output, D > N, nargout == 2
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = '[y,w]=sde_euler(@(t,x)x+1,@(t,x)[x,x]+1,0:0.1:1,0,sdeset(''Diagonal'',''no'',''RandFUN'',@(p,q)randn(p,q,2)));';
-msg{i} = 'SDELab:sde_euler:RandFUNNot2DArray1';
+msg{i} = 'SDETools:sde_euler:RandFUNNot2DArray1';
 
 % non-float RandFUN output, D > N, nargout == 2
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = '[y,w]=sde_euler(@(t,x)x+1,@(t,x)[x,x]+1,0:0.1:1,0,sdeset(''Diagonal'',''no'',''RandFUN'',@(p,q)uint8(randn(p,q))));';
-msg{i} = 'SDELab:sde_euler:RandFUNNot2DArray1';
+msg{i} = 'SDETools:sde_euler:RandFUNNot2DArray1';
 
 % RandFUN output size mismatch, D > N, nargout == 2
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = '[y,w]=sde_euler(@(t,x)x+1,@(t,x)[x,x]+1,0:0.1:1,0,sdeset(''Diagonal'',''no'',''RandFUN'',@(p,q)randn(1,q)));';
-msg{i} = 'SDELab:sde_euler:RandFUNDimensionMismatch1';
+msg{i} = 'SDETools:sde_euler:RandFUNDimensionMismatch1';
 
 % empty RandFUN output, D > N, nargout == 1
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)[x,x]+1,0:0.1:1,0,sdeset(''Diagonal'',''no'',''RandFUN'',@(p,q)[]));';
-msg{i} = 'SDELab:sde_euler:RandFUNNot2DArray2';
+msg{i} = 'SDETools:sde_euler:RandFUNNot2DArray2';
 
 % non-matrix RandFUN output, D > N, nargout == 1
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)[x,x]+1,0:0.1:1,0,sdeset(''Diagonal'',''no'',''RandFUN'',@(p,q)randn(p,q,2)));';
-msg{i} = 'SDELab:sde_euler:RandFUNNot2DArray2';
+msg{i} = 'SDETools:sde_euler:RandFUNNot2DArray2';
 
 % non-float RandFUN output, D > N, nargout == 1
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)[x,x]+1,0:0.1:1,0,sdeset(''Diagonal'',''no'',''RandFUN'',@(p,q)uint8(randn(p,q))));';
-msg{i} = 'SDELab:sde_euler:RandFUNNot2DArray2';
+msg{i} = 'SDETools:sde_euler:RandFUNNot2DArray2';
 
 % RandFUN output size mismatch, D > N, nargout == 1
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)[x,x]+1,0:0.1:1,0,sdeset(''Diagonal'',''no'',''RandFUN'',@(p,q)randn(p,1)));';
-msg{i} = 'SDELab:sde_euler:RandFUNDimensionMismatch2';
+msg{i} = 'SDETools:sde_euler:RandFUNDimensionMismatch2';
 
 % empty RandFUN output, D <= N
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,[0,0],sdeset(''RandFUN'',@(p,q)[]));';
-msg{i} = 'SDELab:sde_euler:RandFUNNot2DArray3';
+msg{i} = 'SDETools:sde_euler:RandFUNNot2DArray3';
 
 % non-matrix RandFUN output, D <= N
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,[0,0],sdeset(''RandFUN'',@(p,q)randn(p,q,2)));';
-msg{i} = 'SDELab:sde_euler:RandFUNNot2DArray3';
+msg{i} = 'SDETools:sde_euler:RandFUNNot2DArray3';
 
 % non-float RandFUN output, D <= N
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,[0,0],sdeset(''RandFUN'',@(p,q)uint8(randn(p,q))));';
-msg{i} = 'SDELab:sde_euler:RandFUNNot2DArray3';
+msg{i} = 'SDETools:sde_euler:RandFUNNot2DArray3';
 
 % RandFUN output size mismatch, D <= N
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,[0,0],sdeset(''RandFUN'',@(p,q)randn(1,q)));';
-msg{i} = 'SDELab:sde_euler:RandFUNDimensionMismatch3';
+msg{i} = 'SDETools:sde_euler:RandFUNDimensionMismatch3';
 
 % RandFUN only has one input
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandFUN'',@(p)randn(p)));';
-msg{i} = 'SDELab:sde_euler:RandFUNTooFewInputs';
+msg{i} = 'SDETools:sde_euler:RandFUNTooFewInputs';
 
 % RandFUN output not specified
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandFUN'',@r1));';
-msg{i} = 'SDELab:sde_euler:RandFUNNoOutput';
+msg{i} = 'SDETools:sde_euler:RandFUNNoOutput';
 
 % RandFUN output not assigned
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandFUN'',@r2));';
-msg{i} = 'SDELab:sde_euler:RandFUNUnassignedOutput';
+msg{i} = 'SDETools:sde_euler:RandFUNUnassignedOutput';
 
 % RandFUN requires more than two inputs
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandFUN'',@(m,n,p)p*randn(m,n)));';
-msg{i} = 'SDELab:sde_euler:RandFUNTooManyInputs';
+msg{i} = 'SDETools:sde_euler:RandFUNTooManyInputs';
 
 
 
@@ -3359,9 +3359,9 @@ for i = ts
                       ' of SDE_EULER_UNITTEST.m  for details.\n\n' nb nb ...
                       'Error ID:' nb nb nb msg{i} '\n' nb nb 'Expression:'...
                       nb cmd{i}];
-            me = MException('SDELab:sde_euler_unittest:AssertError',errmsg);
+            me = MException('SDETools:sde_euler_unittest:AssertError',errmsg);
             rep = getReport(err,'extended');
-            me2 = MException('SDELab:sde_euler_unittest:AssertErrorCause',rep);
+            me2 = MException('SDETools:sde_euler_unittest:AssertErrorCause',rep);
             throw(addCause(me,me2));
         end
         errv = false;
@@ -3371,9 +3371,9 @@ for i = ts
                   'triggered. See line ' num2str(lnum1{i}-1) ' of '...
                   'SDE_EULER_UNITTEST.m for details.\n\n' nb nb 'Error ID:'...
                   nb nb nb msg{i} '\n' nb nb 'Expression:' nb cmd{i}];
-        me = MException('SDELab:sde_euler_unittest:EvaluationError',errmsg);
+        me = MException('SDETools:sde_euler_unittest:EvaluationError',errmsg);
         rep = getReport(err,'extended');
-        me2 = MException('SDELab:sde_euler_unittest:EvaluationErrorCause',rep);
+        me2 = MException('SDETools:sde_euler_unittest:EvaluationErrorCause',rep);
         throw(addCause(me,me2));
     end
     num = num+1;
@@ -3590,9 +3590,9 @@ for j = ms
                           '. See lines ' num2str(lnum{j}) ' and '...
                           num2str(lnum2{i}-1) ' of SDE_EULER_UNITTEST.m for '...
                           'details.\n\n' nb nb 'Expression:' nb cmd{i}];
-                me = MException('SDELab:sde_euler_unittest:EvaluationError',errmsg);
+                me = MException('SDETools:sde_euler_unittest:EvaluationError',errmsg);
                 rep = getReport(err,'extended');
-                me2 = MException('SDELab:sde_euler_unittest:EvaluationErrorCause',rep);
+                me2 = MException('SDETools:sde_euler_unittest:EvaluationErrorCause',rep);
                 throw(addCause(me,me2));
             end
             errmsg = ['Unit test ' num2str(cnt+i) ' assertion failed. See lines '...
@@ -3625,7 +3625,7 @@ end
 
 % reset path to prior state if we added toolbox
 if pathadded
-    rmpath SDELab
+    rmpath SDETools
 end
 
 

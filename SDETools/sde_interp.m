@@ -31,7 +31,7 @@ function xi=sde_interp(varargin)
 % Some code based on version 5.41.4.18 of Matlab's INTERP1
 
 %   Andrew D. Horchler, adh9@case.edu, Created 2-26-12
-%   Revision: 1.0, 3-3-12
+%   Revision: 1.0, 4-11-12
 
 %XI = SDE_INTERP(T,X,TI) nargin=3, offset=1
 %XI = SDE_INTERP(T,X,'linear',NT) nargin=4, offset=1
@@ -42,10 +42,10 @@ function xi=sde_interp(varargin)
 %XI = SDE_INTERP(X,TI,'extrap',EXTRAPVAL) nargin=4, offset=0
 
 if nargin < 2
-    error('SDELab:sde_interp:TooFewInputs','Not enough input arguments.');
+    error('SDETools:sde_interp:TooFewInputs','Not enough input arguments.');
 end
 if nargin > 5
-    error('SDELab:sde_interp:TooManyInputs','Too many input arguments.');
+    error('SDETools:sde_interp:TooManyInputs','Too many input arguments.');
 end
 
 % Handle linearly-spaced parameter and optional extrapolation value
@@ -55,7 +55,7 @@ offset=1;
 if nargin == 5
     str=varargin{4};
     if ~ischar(str) || ~strcmp(str,'extrap')
-        error('SDELab:sde_interp:InvalidExtrapString',...
+        error('SDETools:sde_interp:InvalidExtrapString',...
              ['The parameter string ''extrap'' must be used to specify an '...
               'optional EXTRAPVAL in the subsequent input argument.']);
     end
@@ -64,7 +64,7 @@ if nargin == 5
 elseif nargin == 4
     str=varargin{3};
     if ~ischar(str) || ~any(strcmp(str,{'linear','extrap'}))
-        error('SDELab:sde_interp:InvalidParameterString',...
+        error('SDETools:sde_interp:InvalidParameterString',...
              ['The parameter strings ''linear'' or ''extrap'' must be used '...
               'to specify the the number of linearly-spaced interpolation '...
               'points, NT, or an optional EXTRAPVAL in the subsequent input '...
@@ -80,7 +80,7 @@ elseif nargin == 4
     end
 elseif nargin == 3 && ischar(varargin{2})
     if ~strcmp(varargin{2},'linear')
-        error('SDELab:sde_interp:InvalidLinearString',...
+        error('SDETools:sde_interp:InvalidLinearString',...
              ['The parameter string ''linear'' must be used to specify the '...
               'the number of linearly-spaced interpolation points, NT, in '...
               'the subsequent input argument.']);
@@ -94,13 +94,13 @@ end
 
 if extrap
     if ndims(extrapval) ~= 2 || numel(extrapval) ~= 1
-        error('SDELab:sde_interp:NonScalarExtrapVal',...
+        error('SDETools:sde_interp:NonScalarExtrapVal',...
               'The input EXTRAPVAL must be a scalar value.');
     end
 elseif linspc
     if ndims(nt) ~= 2 || ~isnumeric(nt) || ~isreal(nt) || ~isempty(nt) && ...
             (~isfinite(nt) || (~isinteger(nt) && nt-floor(nt) ~= 0) || nt < 0)
-        error('SDELab:sde_interp:InvalidNT',...
+        error('SDETools:sde_interp:InvalidNT',...
               'The input NT must be finite real positive scalar value.');
     end
 end
@@ -108,7 +108,7 @@ end
 % Check X
 x=varargin{offset+1};
 if isempty(x) || ~isfloat(x)
-    error('SDELab:sde_interp:XEmptyOrNotFloat',...
+    error('SDETools:sde_interp:XEmptyOrNotFloat',...
           'The input X must be a non-empty array of singles or doubles.');
 end
 szx=size(x);
@@ -125,7 +125,7 @@ else
     x=reshape(x,[M NN]);
 end
 if M < 2
-    error('SDELab:sde_interp:XNotLongEnough',...
+    error('SDETools:sde_interp:XNotLongEnough',...
 	      'The input X should contain at least two points.');
 end
 
@@ -138,25 +138,25 @@ else
     t=varargin{offset};
     szt=size(t);
     if ndims(t) ~= 2 || all(szt ~= 1)
-        error('SDELab:sde_interp:TNotVector','The input T must be a vector.');
+        error('SDETools:sde_interp:TNotVector','The input T must be a vector.');
     end
     if length(t) ~= M
         if N == 1
-            error('SDELab:sde_interp:XVectorDimensionMismatch',...
+            error('SDETools:sde_interp:XVectorDimensionMismatch',...
                  ['If the input X is a vector, it must have the same length '...
                   'as the input T.']);
         else
-            error('SDELab:sde_interp:XArrayDimensionMismatch',...
+            error('SDETools:sde_interp:XArrayDimensionMismatch',...
                  ['If the input X is an array, size(X,1) must equal the '...
                   'length of the input T.']);
         end
     end
     if ~isfloat(t) || ~isreal(t)
-        error('SDELab:sde_interp:InvalidTDataType',...
+        error('SDETools:sde_interp:InvalidTDataType',...
               'Datatype of input vector T must be real single or real double.');
     end
     if any(~isfinite(t))
-        error('SDELab:sde_interp:TNotNaN',...
+        error('SDETools:sde_interp:TNotNaN',...
               'One or more elements of the input T are not finite.');
     end
     t=t(:);
@@ -175,7 +175,7 @@ else
     end
     
     if any(dt == 0)
-        error('SDELab:sde_interp:TNotDistinct',...
+        error('SDETools:sde_interp:TNotDistinct',...
               'The entries in the input vector T must be distinct.');
     end
     
@@ -241,7 +241,7 @@ else
     ti=varargin{offset+2};
 
     if ~isfloat(ti) || ~isreal(ti)
-        error('SDELab:sde_interp:InvalidTiDataType',...
+        error('SDETools:sde_interp:InvalidTiDataType',...
               'Datatype of input Ti must be real single or real double.');
     end
     szti=size(ti);

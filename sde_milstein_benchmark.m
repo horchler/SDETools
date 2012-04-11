@@ -2,7 +2,7 @@ function sde_milstein_benchmark(tests,N,Tol)
 %SDE_MILSTEIN_BENCHMARK  Performance tests for SDE_MILSTEIN solver function.
 %   SDE_MILSTEIN_BENCHMARK will perform all tests. See code (type 'edit
 %   SDE_MILSTEIN_BENCHMARK' in the command window) for test details or to add
-%   additional tests. The SDELab Toolbox must be on the Matlab path or in the
+%   additional tests. The SDETools Toolbox must be on the Matlab path or in the
 %   same directory as this function.
 %
 %   SDE_MILSTEIN_BENCHMARK(TESTS) where TESTS = [N1 N2 ... NM] is a vector of
@@ -12,35 +12,35 @@ function sde_milstein_benchmark(tests,N,Tol)
 %   SDE_MILSTEIN_BENCHMARK(TESTS,N)
 %   SDE_MILSTEIN_BENCHMARK(TESTS,N,TOL)
 %
-%   Not part of the the SDELab Toolbox; used only for development.
+%   Not part of the the SDETools Toolbox; used only for development.
 %   
 %   See also: SDE_MILSTEIN, SDEARGUMENTS, SDE_MILSTEIN_UNITTEST,
 %       SDE_MILSTEIN_VALIDATE, SDE_EULER_BENCHMARK
 
 %   Andrew D. Horchler, adh9@case.edu, Created 4-2-11
-%   Revision: 1.0, 4-4-12
+%   Revision: 1.0, 4-11-12
 
 
 % Make sure toolbox on path, otherwise ensure we're in right location and add it
-if strfind(path,'SDELab')
+if strfind(path,'SDETools')
     if exist('sde_milstein','file') ~= 2
-        error(  'SDELab:sde_milstein_benchmark:FunctionNotFound',...
-               ['The SDELab Toolbox is appears to be on the Matlab path, '...
+        error(  'SDETools:sde_milstein_benchmark:FunctionNotFound',...
+               ['The SDETools Toolbox is appears to be on the Matlab path, '...
                 'but the SDE_MILSTEIN solver function cannot be found.']);
     end
     PathAdded = false;
 else
-    if exist('SDELab','dir') ~= 7
-        error(  'SDELab:sde_milstein_benchmark:ToolboxNotFound',...
-               ['The SDELab Toolbox is not be on the Matlab path and the '...
-                'root directory of the of the toolbox, SDELab, is in the '...
+    if exist('SDETools','dir') ~= 7
+        error(  'SDETools:sde_milstein_benchmark:ToolboxNotFound',...
+               ['The SDETools Toolbox is not be on the Matlab path and the '...
+                'root directory of the of the toolbox, SDETools, is in the '...
                 'same directory as this function.']);
     end
-    addpath SDELab
+    addpath SDETools
     if exist('sde_milstein','file') ~= 2
-        rmpath SDELab
-        error(  'SDELab:sde_milstein_benchmark:FunctionNotFoundAfterAdd',...
-               ['The SDELab Toolbox was added to the Matlab path, but the '...
+        rmpath SDETools
+        error(  'SDETools:sde_milstein_benchmark:FunctionNotFoundAfterAdd',...
+               ['The SDETools Toolbox was added to the Matlab path, but the '...
                 'SDE_MILSTEIN solver function cannot be found.']);
     end
     PathAdded = true;   % Path will be reset at end
@@ -49,11 +49,11 @@ end
 % Validate input argument if it exists
 if nargin >= 1
     if isempty(tests) || ~isnumeric(tests) || ~all(isfinite(tests))
-        error('SDELab:sde_milstein_benchmark:InvalidArg1',...
+        error('SDETools:sde_milstein_benchmark:InvalidArg1',...
               'Invalid argument 1.');
     end
     if any(tests < 1)
-        error(  'SDELab:sde_milstein_benchmark:NotAnIndex',...
+        error(  'SDETools:sde_milstein_benchmark:NotAnIndex',...
                 'Tests are numbered as indices, from 1 to N.');
     end
     tests = floor(tests);
@@ -64,7 +64,7 @@ end
 
 if nargin >= 2
     if isempty(N) || ~isnumeric(N) || ~all(isfinite(N))
-        error('SDELab:sde_milstein_benchmark:InvalidArg2',...
+        error('SDETools:sde_milstein_benchmark:InvalidArg2',...
               'Invalid argument 2.');
     end
     N = floor(N);
@@ -75,7 +75,7 @@ end
 if nargin == 3
     if isempty(Tol) || length(Tol) ~= 1 || ~isnumeric(Tol) || ...
             ~all(isfinite(Tol)) || Tol <= 0
-        error('SDELab:sde_milstein_benchmark:InvalidArg2',...
+        error('SDETools:sde_milstein_benchmark:InvalidArg2',...
               'Invalid argument 2.');
     end
     Tol = floor(Tol);
@@ -430,5 +430,5 @@ fprintf(1,'Total mean time for all %d tests: %4.4f +/- %4.4f sec.\n',...
 
 % Reset path to prior state if we added toolbox
 if PathAdded
-    rmpath SDELab
+    rmpath SDETools
 end

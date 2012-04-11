@@ -105,7 +105,7 @@ function options = sdeset(varargin)
 %   SDESET is based on an updating of version 1.46.4.10 of Matlab's ODESET.
 
 %   Andrew D. Horchler, adh9@case.edu, 10-27-10
-%   Revision: 1.0, 4-10-12
+%   Revision: 1.0, 4-11-12
 
 
 Names = {   'SDEType'
@@ -161,9 +161,9 @@ while i<=nargin
 	end
 	if ~isempty(arg)	% [] is a valid options argument
         if ~isa(arg,'struct')
-            error(  'SDELab:sdeset:NoPropertyNameOrStruct',...
-                   ['Expected argument %d to be a string property name '...
-                    'or an options structure created with SDESET.'],i);
+            error('SDETools:sdeset:NoPropertyNameOrStruct',...
+                 ['Expected argument %d to be a string property name or an '...
+                  'options structure created with SDESET.'],i);
         end
         for j=1:m
             Name = Names{j};
@@ -182,28 +182,29 @@ end
 
 % A finite state machine to parse name-value pairs
 if rem(nargin-i+1,2) ~= 0
-	error(  'SDELab:sdeset:ArgNameValueMismatch',...
-            'Arguments must occur in name-value pairs.');
+	error('SDETools:sdeset:ArgNameValueMismatch',...
+          'Arguments must occur in name-value pairs.');
 end
 while i<=nargin
 	arg = varargin{i};
     if ~ischar(arg)
-        error(  'SDELab:sdeset:NoPropertyName',...
-                'Expected argument %d to be a string property name.',i);
+        error('SDETools:sdeset:NoPropertyName',...
+              'Expected argument %d to be a string property name.',i);
     end
     j = find(strncmpi(arg,Names,length(arg)));
     if isempty(j)	% if no matches
-        error(  'SDELab:sdeset:InvalidPropertyName',['Unrecognized property '...
-                'name ''%s''.  See SDESET for possibilities.'],name);
+        error('SDETools:sdeset:InvalidPropertyName',...
+             ['Unrecognized property name ''%s''.  See SDESET for '...
+              'possibilities.'],name);
     elseif length(j) > 1	% if more than one match
         k = find(strcmpi(arg,Names));
         if length(k) == 1
             j = k;
         else
             msg = [Names{j(1)} cell2mat(strcat({', '},Names(j(2:end)))')];
-            error(  'SDELab:sdeset:AmbiguousPropertyName',...
-                   ['Ambiguous property name abbreviation ''%s'' '...
-                    '(' msg ').'],arg);
+            error('SDETools:sdeset:AmbiguousPropertyName',...
+                 ['Ambiguous property name abbreviation ''%s'' '...
+                  '(' msg ').'],arg);
         end
     end
     options.(Names{j}) = varargin{i+1};

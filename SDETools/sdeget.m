@@ -19,7 +19,7 @@ function opts = sdeget(options,name,default,noErrorCheck)
 %   SDEGET is based on an updating of version 1.37.4.5 of Matlab's ODEGET
 
 %   Andrew D. Horchler, adh9@case.edu, 10-28-10
-%   Revision: 1.0, 4-10-12
+%   Revision: 1.0, 4-11-12
 
 
 % Undocumented usage for fast access with no error checking
@@ -29,11 +29,11 @@ if nargin == 4 && strcmp(noErrorCheck,'flag')
 end
 
 if nargin < 2
-	error('SDELab:sdeget:NotEnoughInputs','Not enough input arguments.');
+	error('SDETools:sdeget:NotEnoughInputs','Not enough input arguments.');
 end
 if ~isempty(options) && ~isa(options,'struct')
-	error(  'SDELab:sdeget:Arg1NotSDESETStruct',...
-            'First argument must be an options structure created with SDESET.');
+	error('SDETools:sdeget:Arg1NotSDESETStruct',...
+          'First argument must be an options structure created with SDESET.');
 end
 
 if nargin < 3
@@ -60,17 +60,17 @@ Names = {   'SDEType'
 
 j = find(strncmpi(name,Names,length(name)));
 if isempty(j)           % if no matches
-	error(  'SDELab:sdeget:InvalidPropertyName',...
-           ['Unrecognized property name ''%s''.  See SDESET for '...
-            'possibilities.'],name);
+	error('SDETools:sdeget:InvalidPropertyName',...
+         ['Unrecognized property name ''%s''.  See SDESET for '...
+          'possibilities.'],name);
 elseif length(j) > 1	% if more than one match
     k = find(strcmpi(name,Names));
     if length(k) == 1
         j = k;
     else
         msg = [Names{j(1)} cell2mat(strcat({', '},Names(j(2:end)))')];
-        error(  'SDELab:sdeget:AmbiguousPropertyName',...
-               ['Ambiguous property name abbreviation ''%s'' (' msg ').'],name);
+        error('SDETools:sdeget:AmbiguousPropertyName',...
+             ['Ambiguous property name abbreviation ''%s'' (' msg ').'],name);
     end
 end
 if any(strcmp(fieldnames(options),Names{j}))
