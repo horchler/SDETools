@@ -3,12 +3,12 @@ function sde_interpqn_unittest
 %
 
 %   Andrew D. Horchler, adh9@case.edu, Created 3-4-12
-%   Revision: 1.0, 3-4-12
+%   Revision: 1.0, 4-21-12
 
 % Vector X, M = 2
 t=[1 2]';x=[3 4]';nt=-Inf;
 xi=sde_interpqn(t,x,nt);
-assert(ndims(xi) == 2 && all(size(xi) == [0 1]) )
+assert(ndims(xi) == 2 && all(size(xi) == [0 1]) )	%#ok<*ISMAT>
 
 t=[1 2]';x=[3 4]';nt=-1;
 xi=sde_interpqn(t,x,nt);

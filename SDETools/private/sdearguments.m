@@ -9,7 +9,7 @@ function [N D tspan tdir lt y0 f0 g0 h ConstStep dataType idxNonNegative ...
 %       RANDSTREAM
         
 %   Andrew D. Horchler, adh9@case.edu, Created 12-12-11
-%   Revision: 1.0, 4-11-12
+%   Revision: 1.0, 4-21-12
 
 %   SDEARGUMENTS is partially based on an updating of version 1.12.4.15 of
 %   Matlab's ODEARGUMENTS.
@@ -89,7 +89,7 @@ end
 
 % Ensure first solver input is function handle, or matrix for constant function
 if ~isa(f,'function_handle')
-    if isempty(f) && ndims(f) == 2 && all(size(f) == 0) && isnumeric(f)
+    if isempty(f) && ndims(f) == 2 && all(size(f) == 0) && isnumeric(f)	%#ok<*ISMAT>
         f0 = 0;
     elseif ~isempty(f) && ndims(f) == 2 && isfloat(f)
         f0 = f;

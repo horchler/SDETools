@@ -3,12 +3,12 @@ function sde_interpq_unittest
 %
 
 %   Andrew D. Horchler, adh9@case.edu, Created 3-3-12
-%   Revision: 1.0, 3-4-12
+%   Revision: 1.0, 4-21-12
 
 % Scalar TI, vector X, M = 2
 t=[1 2]';x=[3 4]';ti=-Inf;
 xi=sde_interpq(t,x,ti);
-assert(ndims(xi) == 2 && all(size(xi) == [1 1]) && isnan(xi))
+assert(ndims(xi) == 2 && all(size(xi) == [1 1]) && isnan(xi))	%#ok<*ISMAT>
 
 t=[1 2]';x=[3 4]';ti=-1;
 xi=sde_interpq(t,x,ti);

@@ -29,7 +29,8 @@ function xi=sde_interpqn(t,x,nt)
 % Some code based on version 1.15.4.4 of Matlab's INTERP1Q
 
 %   Andrew D. Horchler, adh9@case.edu, Created 2-29-12
-%   Revision: 1.0, 3-4-12
+%   Revision: 1.0, 4-21-12
+
 
 dtype=superiorfloat(t,x,nt);
 if isempty(nt) || nt < 0
@@ -90,7 +91,7 @@ else
             dt=diff(t);
             sig=sqrt((1-mu).*mu.*dt(i));
         end
-        i=i(j)
+        i=i(j);
         dx=diff(x);
         
         xi(j,:)

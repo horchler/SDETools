@@ -31,7 +31,8 @@ function xi=sde_interp(varargin)
 % Some code based on version 5.41.4.18 of Matlab's INTERP1
 
 %   Andrew D. Horchler, adh9@case.edu, Created 2-26-12
-%   Revision: 1.0, 4-11-12
+%   Revision: 1.0, 4-21-12
+
 
 %XI = SDE_INTERP(T,X,TI) nargin=3, offset=1
 %XI = SDE_INTERP(T,X,'linear',NT) nargin=4, offset=1
@@ -93,7 +94,7 @@ elseif nargin == 2
 end
 
 if extrap
-    if ndims(extrapval) ~= 2 || numel(extrapval) ~= 1
+    if ndims(extrapval) ~= 2 || numel(extrapval) ~= 1	%#ok<*ISMAT>
         error('SDETools:sde_interp:NonScalarExtrapVal',...
               'The input EXTRAPVAL must be a scalar value.');
     end

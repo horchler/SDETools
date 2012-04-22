@@ -57,7 +57,7 @@ function [Y W] = sde_gbm(mu,sig,tspan,y0,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9@case.edu, Created 4-4-12
-%   Revision: 1.0, 4-11-12
+%   Revision: 1.0, 4-21-12
 
 
 func = 'SDE_GBM';
@@ -77,7 +77,7 @@ if nargin < 5
     options = [];
 elseif isempty(options) && (ndims(options) ~= 2 || ...
         any(size(options) ~= 0) || ~(isstruct(options) || iscell(options) || ...
-        isnumeric(options))) || ~isempty(options) && ~isstruct(options)
+        isnumeric(options))) || ~isempty(options) && ~isstruct(options)	%#ok<*ISMAT>
 	error(  'SDETools:sde_gbm:InvalidSDESETStruct',...
             'Invalid SDE options structure.  See SDESET.');
 end

@@ -71,7 +71,7 @@ function [Y W] = sde_euler(f,g,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9@case.edu, Created 10-28-10
-%   Revision: 1.0, 4-11-12
+%   Revision: 1.0, 4-21-12
 
 
 solver = 'SDE_EULER';
@@ -91,7 +91,7 @@ if nargin < 5
     options = [];
 elseif isempty(options) && (ndims(options) ~= 2 || ...
         any(size(options) ~= 0) || ~(isstruct(options) || iscell(options) || ...
-        isnumeric(options))) || ~isempty(options) && ~isstruct(options)
+        isnumeric(options))) || ~isempty(options) && ~isstruct(options)	%#ok<*ISMAT>
 	error(  'SDETools:sde_euler:InvalidSDESETStruct',...
             'Invalid SDE options structure.  See SDESET.');
 end
