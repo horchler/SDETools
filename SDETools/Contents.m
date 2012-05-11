@@ -1,5 +1,5 @@
 %SDETools
-%   Version 1.0, 4-21-12
+%   Version 1.0, 5-10-12
 %
 %   Stochastic differential equation (SDE) solvers.
 %       sde_euler       - Euler-Maruyama (Ito) and Euler-Heun (Stratonovich) 
@@ -24,4 +24,10 @@
 %   Compatibility maintained back through Matlab 7.4 (R2007a)
 
 %   Andrew D. Horchler, adh9@case.edu, Created 12-18-11
-%   Revision: 1.0, 4-21-12
+%   Revision: 1.0, 5-10-12
+
+%   Acknowledgment of support: This material is based upon work supported by the
+%   National Science Foundation under Grant No. 1065489. Disclaimer: Any
+%   opinions, findings, and conclusions or recommendations expressed in this
+%   material are those of the author(s) and do not necessarily reflect the views
+%   of the National Science Foundation.
