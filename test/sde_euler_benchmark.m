@@ -17,33 +17,31 @@ function sde_euler_benchmark(tests,N,Tol)
 %   See also: SDE_EULER, SDEARGUMENTS, SDE_EULER_UNITTEST, SDE_EULER_VALIDATE,
 %       SDE_MILSTEIN_BENCHMARK
 
-%   Andrew D. Horchler, adh9@case.edu, Created 1-2-11
-%   Revision: 1.0, 4-11-12
+%   Andrew D. Horchler, adh9 @ case . edu, Created 1-2-11
+%   Revision: 1.0, 6-30-12
 
 
 % Make sure toolbox on path, otherwise ensure we're in right location and add it
-if strfind(path,'SDETools')
+if ~isempty(strfind(path,'SDETools'))
     if exist('sde_euler','file') ~= 2
-        error(  'SDETools:sde_euler_benchmark:FunctionNotFound',...
-               ['The SDETools Toolbox is appears to be on the Matlab path, '...
-                'but the SDE_EULER solver function cannot be found.']);
+        error('SDETools:sde_euler_benchmark:FunctionNotFound',...
+             ['The SDETools Toolbox is appears to be on the Matlab path, '...
+              'but the SDE_EULER solver function cannot be found.']);
     end
-    PathAdded = false;
 else
-    if exist('SDETools','dir') ~= 7
-        error(  'SDETools:sde_euler_benchmark:ToolboxNotFound',...
-               ['The SDETools Toolbox is not be on the Matlab path and the '...
-                'root directory of the of the toolbox, SDETools, is in the '...
-                'same directory as this function.']);
+    if exist('../SDETools','dir') ~= 7
+        error('SDETools:sde_euler_benchmark:ToolboxNotFound',...
+             ['The SDETools Toolbox is not be on the Matlab path and the '...
+              'root directory of the of the toolbox, SDETools, is not in '...
+              'the same directory as the ''test'' directory.']);
     end
-    addpath SDETools
+    addpath('../SDETools');
+    Cleanup = onCleanup(@()rmpath('../SDETools'));  % Make sure path is reset
     if exist('sde_euler','file') ~= 2
-        rmpath SDETools
-        error(  'SDETools:sde_euler_benchmark:FunctionNotFoundAfterAdd',...
-               ['The SDETools Toolbox was added to the Matlab path, but the '...
-                'SDE_EULER solver function cannot be found.']);
+        error('SDETools:sde_euler_benchmark:FunctionNotFoundAfterAdd',...
+             ['The SDETools Toolbox was added to the Matlab path, but the '...
+              'SDE_EULER solver function cannot be found.']);
     end
-    PathAdded = true;   % Path will be reset at end
 end
 
 % Validate input argument if it exists
@@ -52,8 +50,8 @@ if nargin >= 1
         error('SDETools:sde_euler_benchmark:InvalidArg1','Invalid argument 1.');
     end
     if any(tests < 1)
-        error(  'SDETools:sde_euler_benchmark:NotAnIndex',...
-                'Tests are numbered as indices, from 1 to N.');
+        error('SDETools:sde_euler_benchmark:NotAnIndex',...
+              'Tests are numbered as indices, from 1 to N.');
     end
     tests = floor(tests);
     RunTests = true;
@@ -180,7 +178,7 @@ i = i+1;
 fi{i} = ones(1000,1);
 gi{i} = ones(1000,1);
 tspani{i} = 0:0.001:1;
-y0i{i} = zeros(1,1000);
+y0i{i}(1,1000) = 0;
 optsi{i} = [];
 paramsi{i} = [];
 oneout{i} = false;
@@ -190,7 +188,7 @@ i = i+1;
 fi{i} = ones(1000,1);
 gi{i} = ones(1000,1);
 tspani{i} = 0:0.5:500;
-y0i{i} = zeros(1,1000);
+y0i{i}(1,1000) = 0;
 optsi{i} = [];
 paramsi{i} = [];
 oneout{i} = false;
@@ -200,7 +198,7 @@ i = i+1;
 fi{i} = @(t,x)x+1;
 gi{i} = @(t,x)x+1;
 tspani{i} = 0:0.001:1;
-y0i{i} = zeros(1,1000);
+y0i{i}(1,1000) = 0;
 optsi{i} = sdeset('ConstFFUN','yes','ConstGFUN','yes');
 paramsi{i} = [];
 oneout{i} = false;
@@ -210,7 +208,7 @@ i = i+1;
 fi{i} = @(t,x)x+1;
 gi{i} = @(t,x)x+1;
 tspani{i} = 0:0.5:500;
-y0i{i} = zeros(1,1000);
+y0i{i}(1,1000) = 0;
 optsi{i} = sdeset('ConstFFUN','yes','ConstGFUN','yes');
 paramsi{i} = [];
 oneout{i} = false;
@@ -221,7 +219,7 @@ i = i+1;
 fi{i} = ones(1000,1);
 gi{i} = 1;
 tspani{i} = 0:0.001:1;
-y0i{i} = zeros(1,1000);
+y0i{i}(1,1000) = 0;
 optsi{i} = sdeset('Diagonal','no');
 paramsi{i} = [];
 oneout{i} = false;
@@ -231,7 +229,7 @@ i = i+1;
 fi{i} = ones(1000,1);
 gi{i} = 1;
 tspani{i} = 0:0.5:500;
-y0i{i} = zeros(1,1000);
+y0i{i}(1,1000) = 0;
 optsi{i} = sdeset('Diagonal','no');
 paramsi{i} = [];
 oneout{i} = false;
@@ -241,7 +239,7 @@ i = i+1;
 fi{i} = @(t,x)x+1;
 gi{i} = @(t,x)x(1)+1;
 tspani{i} = 0:0.001:1;
-y0i{i} = zeros(1,1000);
+y0i{i}(1,1000) = 0;
 optsi{i} = sdeset('Diagonal','no','ConstFFUN','yes','ConstGFUN','yes');
 paramsi{i} = [];
 oneout{i} = false;
@@ -251,7 +249,7 @@ i = i+1;
 fi{i} = @(t,x)x+1;
 gi{i} = @(t,x)x(1)+1;
 tspani{i} = 0:0.5:500;
-y0i{i} = zeros(1,1000);
+y0i{i}(1,1000) = 0;
 optsi{i} = sdeset('Diagonal','no','ConstFFUN','yes','ConstGFUN','yes');
 paramsi{i} = [];
 oneout{i} = false;
@@ -300,6 +298,18 @@ oneout{i} = false;
 description{i} = 'Scalar, Ito type, diagonal diffusion function, fixed step-size';
 
 
+% Memory allocation
+i = i+1;
+fi{i} = ones(500000,1);
+gi{i} = ones(500000,1);
+tspani{i} = 0:0.5:5;
+y0i{i}(1,500000) = 0;
+optsi{i} = [];
+paramsi{i} = [];
+oneout{i} = false;
+description{i} = 'Memory allocation: vector, constant drift and diffusion, fixed step-size';
+
+
 m = length(fi);
 if RunTests
     ts = tests(tests<=m);
@@ -310,10 +320,10 @@ end
 Stream = RandStream('mt19937ar','Seed',0);
 
 sp = ' ';
-t = zeros(1,N);
+t(1,N) = 0;
 lts = length(ts);
-mt = zeros(1,lts);
-st = zeros(1,lts);
+mt(1,lts) = 0;
+st(1,lts) = 0;
 ost = ceil(log10((lts+1)));
 for k=1:lts
     i = ts(k);
@@ -336,7 +346,7 @@ for k=1:lts
     % Warm up function before timing
     if oneout{i}
         if isempty(opts) && isempty(params)
-            y = sde_euler(f,g,tspan,y0);    %#ok<*NASGU>
+            y = sde_euler(f,g,tspan,y0);        %#ok<*NASGU>
         elseif ~isempty(opts) && isempty(params)
             y = sde_euler(f,g,tspan,y0,opts);
         elseif isempty(opts) && ~isempty(params)
@@ -346,7 +356,7 @@ for k=1:lts
         end
     else
         if isempty(opts) && isempty(params)
-            [y w] = sde_euler(f,g,tspan,y0); %#ok<*ASGLU>
+            [y w] = sde_euler(f,g,tspan,y0);	%#ok<*ASGLU>
         elseif ~isempty(opts) && isempty(params)
             [y w] = sde_euler(f,g,tspan,y0,opts);
         elseif isempty(opts) && ~isempty(params)
@@ -423,9 +433,4 @@ for k=1:lts
               sp(ones(1,ost-ceil(log10((i+1))))),i,mt(k),mt(k)/length(tspan),j);
 end
 fprintf(1,'Total mean time for all %d tests: %4.4f +/- %4.4f sec.\n',...
-        lts,sum(mt),mean(st));
-
-% Reset path to prior state if we added toolbox
-if PathAdded
-    rmpath SDETools
-end
+	lts,sum(mt),mean(st));

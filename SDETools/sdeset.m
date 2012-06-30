@@ -104,8 +104,8 @@ function options = sdeset(varargin)
 
 %   SDESET is based on an updating of version 1.46.4.10 of Matlab's ODESET.
 
-%   Andrew D. Horchler, adh9@case.edu, 10-27-10
-%   Revision: 1.0, 4-11-12
+%   Andrew D. Horchler, adh9 @ case . edu, 10-27-10
+%   Revision: 1.0, 6-30-12
 
 
 Names = {   'SDEType'
@@ -138,14 +138,11 @@ m = length(Names);
 
 % Print out possible values of properties.
 if nargin == 0 && nargout == 0
-    len = zeros(m,1);
-    for i=1:m
-        len(i) = length(Names{i});
-    end
+    len = cellfun(@length,Names);
     blanks = max(len)-len;
-    out = cell(1,m);
-    for i=1:m
-        out{i} = [char(32*ones(1,blanks(i))) Names{i} ': [ ' Values{i} ' ]\n'];
+    sp = ' ';
+    for i=m:-1:1
+        out{i} = [sp(ones(1,blanks(i))) Names{i} ': [ ' Values{i} ' ]\n'];
     end
     fprintf([cell2mat(out) '\n']);
     return;
@@ -156,7 +153,7 @@ options = cell2struct(cell(m,1),Names,1);
 i = 1;
 while i<=nargin
 	arg = varargin{i};
-	if ischar(arg)	% arg is an option name
+	if ischar(arg)      % arg is an option name
         break;
 	end
 	if ~isempty(arg)	% [] is a valid options argument
@@ -192,7 +189,7 @@ while i<=nargin
               'Expected argument %d to be a string property name.',i);
     end
     j = find(strncmpi(arg,Names,length(arg)));
-    if isempty(j)	% if no matches
+    if isempty(j)           % if no matches
         error('SDETools:sdeset:InvalidPropertyName',...
              ['Unrecognized property name ''%s''.  See SDESET for '...
               'possibilities.'],name);

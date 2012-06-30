@@ -29,8 +29,8 @@ function xi=sde_interpq(t,x,ti)
 
 % Some code based on version 1.15.4.4 of Matlab's INTERP1Q
 
-%   Andrew D. Horchler, adh9@case.edu, Created 2-28-12
-%   Revision: 1.0, 3-4-12
+%   Andrew D. Horchler, adh9 @ case . edu, Created 2-28-12
+%   Revision: 1.0, 6-30-12
 
 [M N]=size(x);
 dtype=superiorfloat(t,x,ti);

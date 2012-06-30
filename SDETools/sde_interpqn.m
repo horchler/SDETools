@@ -28,8 +28,8 @@ function xi=sde_interpqn(t,x,nt)
 
 % Some code based on version 1.15.4.4 of Matlab's INTERP1Q
 
-%   Andrew D. Horchler, adh9@case.edu, Created 2-29-12
-%   Revision: 1.0, 4-21-12
+%   Andrew D. Horchler, adh9 @ case . edu, Created 2-29-12
+%   Revision: 1.0, 6-30-12
 
 
 dtype=superiorfloat(t,x,nt);
@@ -99,6 +99,7 @@ else
         bsxfun(@times,dx(i,:),mu)
         bsxfun(@times,randn(D,N,dtype),sig)
         % Calculate XI, output is a D-by-N matrix or D-by-1 column vector
-        xi(j,:)=x(i,:)+bsxfun(@times,dx(i,:),mu)+bsxfun(@times,randn(D,N,dtype),sig);
+        xi(j,:)=x(i,:)+bsxfun(@times,dx(i,:),mu)+bsxfun(@times,...
+            randn(D,N,dtype),sig);
     end
 end

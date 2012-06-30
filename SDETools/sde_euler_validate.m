@@ -13,8 +13,8 @@ function varargout=sde_euler_validate(dt,n,a,b,options)
 %   Platen, "Numerical solution of Stochastic Differential Equations,"
 %   Springer-Verlag, 1992.
 
-%   Andrew D. Horchler, adh9@case.edu, Created 11-1-10
-%   Revision: 1.0, 4-21-12
+%   Andrew D. Horchler, adh9 @ case . edu, Created 11-1-10
+%   Revision: 1.0, 6-30-12
 
 
 close all
@@ -31,10 +31,10 @@ else
         end
         options = [];
     elseif nargin == 5
-        if isempty(options) && (ndims(options) ~= 2 || ...
-                any(size(options) ~= 0) || ~(isstruct(options) || ...
-                iscell(options) || isnumeric(options))) || ...
-                ~isempty(options) && ~isstruct(options)	%#ok<*ISMAT>
+        if isempty(options) && (~sde_ismatrix(options) ...
+                || any(size(options) ~= 0) || ~(isstruct(options) ...
+                || iscell(options) || isnumeric(options))) ...
+                || ~isempty(options) && ~isstruct(options)
             error('SDETools:sde_euler_validate:InvalidSDESETStruct',...
                   'Invalid SDE options structure.  See SDESET.');
         end
@@ -50,35 +50,35 @@ end
 
 % Check DT
 if ~isvector(dt) || ~isfloat(dt) || ~isreal(dt) || ~all(isfinite(dt))
-    error(  'SDETools:sde_euler_validate:InvalidDT',...
-            'DT must be a finite real floating-point vector.');
+    error('SDETools:sde_euler_validate:InvalidDT',...
+          'DT must be a finite real floating-point vector.');
 end
 ldt = length(dt);
 if length(dt) < 2
-    error(  'SDETools:sde_euler_validate:BadInputSizeDT',...
-            'Input vector DT must have length >= 2.');
+    error('SDETools:sde_euler_validate:BadInputSizeDT',...
+          'Input vector DT must have length >= 2.');
 end
 dt = sort(dt);
 
 % Check N
 if ~isscalar(n) || ~isfloat(n) || ~isreal(n) || ~isfinite(n)
-    error(  'SDETools:sde_euler_validate:InvalidN',...
-            'N must be a finite real floating-point scalar.');
+    error('SDETools:sde_euler_validate:InvalidN',...
+          'N must be a finite real floating-point scalar.');
 end
 if isempty(n) || n < 1 || n-floor(n) ~= 0
-    error(  'SDETools:sde_euler_validate:BadInputSizeN',...
-            'Input N must be an integer >= 1.');
+    error('SDETools:sde_euler_validate:BadInputSizeN',...
+          'Input N must be an integer >= 1.');
 end
 
 % Check A and B
 if nargin >= 4
     if ~isscalar(a) || isempty(a) || ~isfloat(a) || ~isreal(a) || ~isfinite(a)
-        error(  'SDETools:sde_euler_validate:InvalidA',...
-                'A must be a finite real floating-point scalar.');
+        error('SDETools:sde_euler_validate:InvalidA',...
+              'A must be a finite real floating-point scalar.');
     end
     if ~isscalar(b) || isempty(b) || ~isfloat(b) || ~isreal(b) || ~isfinite(b)
-        error(  'SDETools:sde_euler_validate:InvalidB',...
-                'B must be a finite real floating-point scalar.');
+        error('SDETools:sde_euler_validate:InvalidB',...
+              'B must be a finite real floating-point scalar.');
     end
 else
     a = 1;
@@ -87,13 +87,13 @@ end
 
 % Integration method is dependent on if SDE is Stratonovich or Ito form
 Stratonovich = strcmp(sdeget(options,'SDEType','Stratonovich','flag'),...
-        'Stratonovich');
+	'Stratonovich');
 
 % Create random number stream
 RandSeed = sdeget(options,'RandSeed',[],'flag');
 if ~isempty(RandSeed)
-    if ~isscalar(RandSeed) || ~isnumeric(RandSeed) || ~isreal(RandSeed) || ...
-            ~isfinite(RandSeed) || RandSeed >= 2^32 || RandSeed < 0
+    if ~isscalar(RandSeed) || ~isnumeric(RandSeed) || ~isreal(RandSeed) ...
+            || ~isfinite(RandSeed) || RandSeed >= 2^32 || RandSeed < 0
         error('SDETools:sde_euler_validate:InvalidRandSeed',...
               'RandSeed must be a non-negative integer value less than 2^32.');
     end
@@ -113,7 +113,7 @@ options = sdeset(options,'RandFun',@(M,N)randn(Stream,M,N));
 
 % Override non-diagonal noise, ConstFFUN, and ConstGFUN settings
 options = sdeset(options,'DiagonalNoise','yes','ConstFFUN','no',...
-                 'ConstGFUN','no');
+    'ConstGFUN','no');
 
 t0 = 0;
 tf = 20*dt(end);
@@ -121,8 +121,8 @@ y0 = ones(n,1);
 
 f = @(t,y)a*y;
 g = @(t,y)b*y;
-Ym = zeros(ldt,1);
-Yv = zeros(ldt,1);
+Ym(ldt,1) = 0;
+Yv(ldt,1) = 0;
 if Stratonovich
     c = a;
     SDEType = 'Stratonovich';

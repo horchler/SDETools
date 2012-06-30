@@ -6,7 +6,8 @@ function xi=sde_interp(varargin)
 %
 %   If X is a vector, then it must also have length M, and XI will be the same
 %   size as TI. If X is an array of size [M,D1,D2,...,Dk], then the
-%   interpolation is performed for each D1-by-D2-by-...-Dk value in X(i,:,:,...,:).
+%   interpolation is performed for each D1-by-D2-by-...-Dk value in
+%   X(i,:,:,...,:).
 %
 %   If TI is a vector of length N, then XI has size [N,D1,D2,...,Dk].
 %
@@ -16,9 +17,9 @@ function xi=sde_interp(varargin)
 %   XI = SDE_INTERP(X,TI) assumes T = 0:M-1, where M = LENGTH(X) for vector X
 %   or M = SIZE(X,1) for array X.
 %
-%   XI = SDE_INTERP(T,X,'linear',NT) creates TI internally ...... returns NT linearly-spaced interpolated
-%   values betwen each subinterval of T. NT must be a finite real positive
-%   scalar.
+%   XI = SDE_INTERP(T,X,'linear',NT) creates TI internally ...... returns NT
+%   linearly-spaced interpolated values betwen each subinterval of T. NT must be
+%   a finite real positive scalar.
 %
 %   XI = SDE_INTERP(T,X,TI,'extrap',EXTRAPVAL) replaces values outside of the
 %   interval spanned by T with the scalar EXTRAPVAL instead of the default NaN.
@@ -30,8 +31,8 @@ function xi=sde_interp(varargin)
 
 % Some code based on version 5.41.4.18 of Matlab's INTERP1
 
-%   Andrew D. Horchler, adh9@case.edu, Created 2-26-12
-%   Revision: 1.0, 4-21-12
+%   Andrew D. Horchler, adh9 @ case . edu, Created 2-26-12
+%   Revision: 1.0, 6-30-12
 
 
 %XI = SDE_INTERP(T,X,TI) nargin=3, offset=1
@@ -94,13 +95,14 @@ elseif nargin == 2
 end
 
 if extrap
-    if ndims(extrapval) ~= 2 || numel(extrapval) ~= 1	%#ok<*ISMAT>
+    if numel(extrapval) ~= 1
         error('SDETools:sde_interp:NonScalarExtrapVal',...
               'The input EXTRAPVAL must be a scalar value.');
     end
 elseif linspc
-    if ndims(nt) ~= 2 || ~isnumeric(nt) || ~isreal(nt) || ~isempty(nt) && ...
-            (~isfinite(nt) || (~isinteger(nt) && nt-floor(nt) ~= 0) || nt < 0)
+    if ~iscalar(nt) || ~isnumeric(nt) || ~isreal(nt) || ~isempty(nt) ...
+            && (~isfinite(nt) || (~isinteger(nt) && nt-floor(nt) ~= 0) ...
+            || nt < 0)
         error('SDETools:sde_interp:InvalidNT',...
               'The input NT must be finite real positive scalar value.');
     end
@@ -113,7 +115,7 @@ if isempty(x) || ~isfloat(x)
           'The input X must be a non-empty array of singles or doubles.');
 end
 szx=size(x);
-isVecX=(ndims(x) == 2 && any(szx == 1));
+isVecX=(isvector(x) && ~isempty(x));
 if isVecX
     M=length(x);
     N=1;
@@ -137,8 +139,7 @@ if offset == 0
     eqsp=true;
 else
     t=varargin{offset};
-    szt=size(t);
-    if ndims(t) ~= 2 || all(szt ~= 1)
+    if ~isvector(t)
         error('SDETools:sde_interp:TNotVector','The input T must be a vector.');
     end
     if length(t) ~= M
@@ -258,14 +259,19 @@ else
             case -1
                 xi=-ones(D,NN,dtype);
             case 0
-                xi=zeros(D,NN,dtype);
+                if isempty(D)
+                    xi=zeros(D,NN,dtype);
+                elseif strcmp(dtype,'double');
+                    xi(D,NN)=0;
+                else
+                    xi(D,NN)=single(0);
+                end
             case 1
                 xi=ones(D,NN,dtype);
             case Inf
                 xi=Inf(D,NN,dtype);
             otherwise
-                xi=zeros(D,NN,dtype);
-                xi(:)=extrapval;
+                xi=zeros(D,NN,dtype)+extrapval;
         end
     else
         xi=NaN(D,NN,dtype);
@@ -311,7 +317,8 @@ else
             dx=dx(bsxfun(@plus,ii,0:(M-1):(M-1)*(NN-1)));
 
             % Calculate XI, use sort indices for TI to reduce dimensions
-            xi(p,:)=x+bsxfun(@times,dx,mu)+bsxfun(@times,randn(lp,NN,dtype),sig);
+            xi(p,:)=x+bsxfun(@times,dx,mu)+bsxfun(@times,randn(lp,NN,dtype),...
+                sig);
         end
     end
 end

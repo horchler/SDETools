@@ -1,5 +1,5 @@
 %SDETools
-%   Version 1.0, 5-26-12
+%   Version 1.0, 6-30-12
 %
 %   Stochastic differential equation (SDE) solvers.
 %       sde_euler       - Euler-Maruyama (Ito) and Euler-Heun (Stratonovich) 
@@ -20,11 +20,11 @@
 %       sde_euler_validate  - Test sde_euler performance and convergence order.
 
 %   Tested with Matlab 7.14.0.739 (R2012a)
-%   Mac OS X 10.6.8 (Build: 10K549), Java 1.6.0_31-b04-415-10M3635
+%   Mac OS X 10.6.8 (Build: 10K549), Java 1.6.0_33-b03-424-10M3720
 %   Compatibility maintained back through Matlab 7.4 (R2007a)
 
 %   Andrew D. Horchler, adh9 @ case . edu
-%   Created: 12-18-11, Revision: 1.0, 5-26-12
+%   Created: 12-18-11, Revision: 1.0, 6-30-12
 
 
 %   Acknowledgment of support: This material is based upon work supported by the
@@ -39,14 +39,14 @@
 %
 %  Redistribution and use in source and binary forms, with or without
 %  modification, are permitted provided that the following conditions are met:
-%   * Redistributions of source code must retain the above copyright
-%     notice, this list of conditions and the following disclaimer.
-%   * Redistributions in binary form must reproduce the above copyright
-%     notice, this list of conditions and the following disclaimer in the
-%     documentation and/or other materials provided with the distribution.
-%   * Neither the name of Case Western Reserve University nor the
-%     names of its contributors may be used to endorse or promote products
-%     derived from this software without specific prior written permission.
+%   * Redistributions of source code must retain the above copyright notice,
+%     this list of conditions and the following disclaimer.
+%   * Redistributions in binary form must reproduce the above copyright notice,
+%     this list of conditions and the following disclaimer in the documentation
+%     and/or other materials provided with the distribution.
+%   * Neither the name of Case Western Reserve University nor the names of its
+%     contributors may be used to endorse or promote products derived from this
+%     software without specific prior written permission.
 %
 %  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 %  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
