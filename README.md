@@ -5,17 +5,17 @@ SDETools
 &nbsp;  
 
 Stochastic differential equation solvers.  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_euler```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_euler.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Euler-Maruyama (Ito) and Euler-Heun (Stratonovich)  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_milstein```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_milstein.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Milstein method, derivative and derivative-free.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_euler```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_euler.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Euler-Maruyama (Ito) and Euler-Heun (Stratonovich)  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_milstein```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_milstein.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Milstein method, derivative and derivative-free.
 
 Stochastic differential equation processes.  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_gbm```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_gbm.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Geometric Brownian motion process, analytic solution.  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_ou```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_ou.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Ornstein-Uhlenbeck process, analytic solution.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_gbm```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_gbm.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Geometric Brownian motion process, analytic solution.  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_ou```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_ou.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Ornstein-Uhlenbeck process, analytic solution.
 
 Stochastic interpolatolation and SDE solver utilities.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_interp```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_interp.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Brownian bridge interpolation.  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_interpq```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_interpq.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Quick Brownian bridge interpolation.  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_interpqn```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_interpqn.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Quick linearly-spaced Brownian bridge interpolation.  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_interpq```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_interpq.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Quick Brownian bridge interpolation.  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_interpqn```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_interpqn.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Quick linearly-spaced Brownian bridge interpolation.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdeget```](https://github.com/horchler/SDETools/blob/master/SDETools/sdeget.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Get SDE OPTIONS structure parameters.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdeset```](https://github.com/horchler/SDETools/blob/master/SDETools/sdeset.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Create/alter SDE OPTIONS structure.
 
