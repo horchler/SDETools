@@ -105,22 +105,23 @@ function options = sdeset(varargin)
 %   SDESET is based on an updating of version 1.46.4.10 of Matlab's ODESET.
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-27-10
-%   Revision: 1.0, 6-30-12
+%   Revision: 1.0, 7-1-12
 
 
-Names = {   'SDEType'
-            'DFFUN'
-            'DGFUN'
-            'RandSeed'
-            'Antithetic'
-            'RandStream'
-            'RandFUN'
-            'DiagonalNoise'
-            'ConstFFUN'
-            'ConstGFUN'
-            'ConstDGFUN'
-            'NonNegative'
-        };
+options = struct(	'SDEType',          [],...
+                    'DFFUN',            [],...
+                    'DGFUN',            [],...
+                    'RandSeed',         [],...
+                    'Antithetic',       [],...
+                    'RandStream',       [],...
+                    'RandFUN',          [],...
+                    'DiagonalNoise',	[],...
+                    'ConstFFUN',        [],...
+                    'ConstGFUN',        [],...
+                    'ConstDGFUN',       [],...
+                    'NonNegative',      []...
+                );
+
 Values = {	'{Stratonovich} | Ito'
             'function_handle | vector'
             'function_handle | matrix'
@@ -134,24 +135,26 @@ Values = {	'{Stratonovich} | Ito'
             ' yes  | {no}'
             ' yes  | {no} | vector'
          };
+
+Names = fieldnames(options);
 m = length(Names);
 
-% Print out possible values of properties.
+% Print out possible values of properties in the form of a struct
 if nargin == 0 && nargout == 0
     len = cellfun(@length,Names);
-    blanks = max(len)-len;
+    blanks = max(len)-len+4;
     sp = ' ';
-    for i=m:-1:1
+    for i = m:-1:1
         out{i} = [sp(ones(1,blanks(i))) Names{i} ': [ ' Values{i} ' ]\n'];
     end
-    fprintf([cell2mat(out) '\n']);
+    fprintf(1,[out{:} '\n']);
+    clear options;
     return;
 end
 
 % Combine all leading options structures opt1, opt2,... in sdeset(opt1,opt2,...)
-options = cell2struct(cell(m,1),Names,1);
 i = 1;
-while i<=nargin
+while i <= nargin
 	arg = varargin{i};
 	if ischar(arg)      % arg is an option name
         break;
@@ -162,15 +165,10 @@ while i<=nargin
                  ['Expected argument %d to be a string property name or an '...
                   'options structure created with SDESET.'],i);
         end
-        for j=1:m
+        for j = 1:m
             Name = Names{j};
             if any(strcmp(fieldnames(arg),Name))
-                val = arg.(Name);
-            else
-                val = [];
-            end
-            if ~isempty(val)
-                options.(Name) = val;
+                options.(Name) = arg.(Name);
             end
         end
 	end
@@ -182,26 +180,26 @@ if rem(nargin-i+1,2) ~= 0
 	error('SDETools:sdeset:ArgNameValueMismatch',...
           'Arguments must occur in name-value pairs.');
 end
-while i<=nargin
+while i <= nargin
 	arg = varargin{i};
     if ~ischar(arg)
         error('SDETools:sdeset:NoPropertyName',...
               'Expected argument %d to be a string property name.',i);
     end
     j = find(strncmpi(arg,Names,length(arg)));
-    if isempty(j)           % if no matches
+    if isempty(j)           % If no matches
         error('SDETools:sdeset:InvalidPropertyName',...
              ['Unrecognized property name ''%s''.  See SDESET for '...
               'possibilities.'],name);
-    elseif length(j) > 1	% if more than one match
+    elseif length(j) > 1	% If more than one match
         k = find(strcmpi(arg,Names));
         if length(k) == 1
             j = k;
         else
             msg = [Names{j(1)} cell2mat(strcat({', '},Names(j(2:end)))')];
             error('SDETools:sdeset:AmbiguousPropertyName',...
-                 ['Ambiguous property name abbreviation ''%s'' '...
-                  '(' msg ').'],arg);
+                 ['Ambiguous property name abbreviation ''%s'' (' msg ').'],...
+                 arg);
         end
     end
     options.(Names{j}) = varargin{i+1};

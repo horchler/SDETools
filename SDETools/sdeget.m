@@ -83,7 +83,7 @@ else
 end
 
 
-function v = getknownfield(s,f,d)
+function v=getknownfield(s,f,d)
 %GETKNOWNFIELD	Get field f from struct s, or else yield default d.
 
 if isfield(s,f)	% s could be empty.

@@ -49,13 +49,12 @@ function [Y W] = sde_ou(th,mu,sig,tspan,y0,options)
 %       Y = Y0*exp(-THETA*t)+MU*(1-exp(-THETA*t))
 %           +(SIG/sqrt(2*THETA))*exp(-THETA*t)*W(exp(2*THETA*t)-1),
 %   where W() is a scaled time-transformed Wiener process.
-
-%   For details of this integration method, see: Peter E. Kloeden and Eckhard
-%   Platen, "Numerical solution of Stochastic Differential Equations,"
-%   Springer-Verlag, 1992.
+%
+%   From: J. L. Doob, "The Brownian Movement and Stochastic Equations," Annals
+%   of Mathematics, Vol. 43, No. 2, pp. 351-369, April 1942.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-8-12
-%   Revision: 1.0, 6-30-12
+%   Revision: 1.0, 9-10-12
 
 
 func = 'SDE_OU';
