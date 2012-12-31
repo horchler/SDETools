@@ -19,7 +19,23 @@ function [Y,W,TE,YE,IE] = sde_gbm(mu,sig,tspan,y0,options,varargin)
 %   or the default 'Stratonovich', can be specified via the SDEType property.
 %   Another commonly used option is to manually specify the random seed via the
 %   RandSeed property, which creates a new random number stream, instead of
-%   using the default stream, to generate the Wiener increments.
+%   using the default stream, to generate the Wiener increments. If the
+%   DiagonalNoise property is set to 'no' to specify the more general correlated
+%   noise case, SIG may be an N-by-D matrix, and a numerical solution will be
+%   returned.
+%
+%   [YOUT, W, TE, YE, IE] = SDE_GBM(MU,SIG,TSPAN,Y0,OPTIONS) with the Events
+%   property set to a function handle, EventsFUN, solves as above while also
+%   finding zero-crossings. EventsFUN, must take at least two inputs and output
+%   three vectors: [Value, IsTerminal, Direction] = EventsFUN(T,Y). The scalar
+%   input T is the current integration time and the vector Y is the current
+%   state. For the i-th event, Value(i) is the value of the zero-crossing
+%   function and IsTerminal(i) = 1 specifies that integration is to terminate at
+%   a zero or to continue if IsTerminal(i) = 0. If Direction(i) = 1, only zeros
+%   where Value(i) is increasing are found, if Direction(i) = -1, only zeros
+%   where Value(i) is decreasing are found, otherwise if Direction(i) = 0, all
+%   zeros are found. If Direction is set to the empty matrix, [], all zeros are
+%   found for all events. Direction and IsTerminal may also be scalars.
 %
 %   Example:
 %       % Compare analytical and simulated Geometric Brownian motion

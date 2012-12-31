@@ -1,5 +1,5 @@
-function reset_stream(Stream)
-%RESET_STREAM  Reset global stream or delete custom random stream.
+function sdereset_stream(Stream)
+%SDERESET_STREAM  Reset global stream or delete custom random stream.
 %
 %   See also:
 %       SDEARGUMENTS, SDEARGUMENTS_SPECIAL, FUNCTION_HANDLE, RANDSTREAM

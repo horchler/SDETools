@@ -4,18 +4,19 @@ function [Y,W,TE,YE,IE] = sde_milstein(f,g,tspan,y0,options,varargin)
 %   integrates the N-dimensional system of stochastic differential equations
 %   dy = f(t,y)*dt + g(t,y)*dW with N-dimensional diagonal noise from time T0 to
 %   TFINAL (all increasing or all decreasing with arbitrary step size) with
-%   initial conditions Y0. FFUN and GFUN are function handles or floating-point
-%   matrices. For scalar T and vector Y, FFUN(T,Y) and GFUN(T,Y) return column
-%   vectors corresponding to f(t,y) and g(t,y), the deterministic and stochastic
-%   parts of the SDE, respectively. GFUN may also return a scalar to be used
-%   across all N dimensions. FFUN may also be a vector the same length as Y0, a
-%   scalar, or the empty matrix, []. GFUN may also be a matrix, a scalar, or the
-%   empty matrix, []. If FFUN or GFUN is not a function handle, the
-%   corresponding function (and its derivative) are assumed constant. If FFUN or
-%   GFUN is a vector or matrix of all zeros or the empty matrix, [], the
-%   corresponding function is neglected entirely. TSPAN is a length M vector. Y0
-%   is a length N vector. Each row in the M-by-N solution array YOUT corresponds
-%   to a time in TSPAN.
+%   initial conditions Y0. TSPAN is a length M vector. Y0 is a length N vector.
+%   Each row in the M-by-N solution array YOUT corresponds to a time in TSPAN.
+%   FFUN and GFUN are function handles or floating-point matrices. For scalar T
+%   and vector Y, FFUN(T,Y) and GFUN(T,Y) return length N column vectors
+%   corresponding to f(t,y) and g(t,y), the deterministic and stochastic parts
+%   of the SDE, respectively. GFUN may also return a scalar to be used across
+%   all N dimensions. FFUN may also be a vector the same length as Y0, a scalar,
+%   or the empty matrix, []. GFUN may also be a matrix, a scalar, or the empty
+%   matrix, []. If FFUN or GFUN is not a function handle, the corresponding
+%   function (and its derivative) are assumed constant. If FFUN or GFUN is a
+%   vector or matrix of all zeros or the empty matrix, [], the corresponding
+%   function is neglected entirely. Each row in the M-by-N solution array YOUT
+%   corresponds to a time in TSPAN.
 %
 %   [YOUT, W] = SDE_MILSTEIN(FFUN,GFUN,TSPAN,Y0) outputs the M-by-N matrix W of
 %   integrated Weiner increments that were used by the solver. Each row of W
@@ -29,10 +30,11 @@ function [Y,W,TE,YE,IE] = sde_milstein(f,g,tspan,y0,options,varargin)
 %   applied, but if the if the DGFUN property is set to a function handle or
 %   floating point matrix to specify the derivative of the noise function
 %   g(t,y), then the general Milstein method is used. The DiagonalNoise property
-%   must be set to 'no' in order to apply the more general correlated noise
-%   case. Another commonly used option is to manually specify the random seed
-%   via the RandSeed property, which creates a new random number stream, instead
-%   of using the default stream, to generate the Wiener increments.
+%   must be set to 'no' in order to apply the more general correlated noise case
+%   where GFUN may return (or is) an N-by-D matrix, where D is the dimension of
+%   the noise. Another commonly used option is to manually specify the random
+%   seed via the RandSeed property, which creates a new random number stream,
+%   instead of using the default stream, to generate the Wiener increments.
 %
 %   [YOUT, W, TE, YE, IE] = SDE_MILSTEIN(FFUN,GFUN,TSPAN,Y0,OPTIONS) with the
 %   Events property set to a function handle, EventsFUN, solves as above while
@@ -41,7 +43,7 @@ function [Y,W,TE,YE,IE] = sde_milstein(f,g,tspan,y0,options,varargin)
 %   scalar input T is the current integration time and the vector Y is the
 %   current state. For the i-th event, Value(i) is the value of the
 %   zero-crossing function and IsTerminal(i) = 1 specifies that integration is
-%   to terminate at at a zero or to continue if IsTerminal(i) = 0. If
+%   to terminate at a zero or to continue if IsTerminal(i) = 0. If
 %   Direction(i) = 1, only zeros where Value(i) is increasing are found, if
 %   Direction(i) = -1, only zeros where Value(i) is decreasing are found,
 %   otherwise if Direction(i) = 0, all zeros are found. If Direction is set to

@@ -105,7 +105,7 @@ else    % Use Matlab's random number generator for normal variates
     CustomRandFUN = false;
     
     % Function to be called on completion or early termination of integration
-    ResetStream = onCleanup(@()reset_stream(Stream));
+    ResetStream = onCleanup(@()sdereset_stream(Stream));
 end
 
 % Solution method is dependent on if SDE is Stratonovich or Ito form
