@@ -1,18 +1,19 @@
-function [Y W] = sde_gbm(mu,sig,tspan,y0,options)
+function [Y,W,TE,YE,IE] = sde_gbm(mu,sig,tspan,y0,options,varargin)
 %SDE_GBM  Geometric Brownian motion process, analytic solution.
 %   YOUT = SDE_GBM(MU,SIG,TSPAN,Y0) with TSPAN = [T0 T1 ... TFINAL] returns the
-%   analytic solution of the system of stochastic differential equations for
-%   geometric Brownian motion, dY = MU*Y*dt + SIG*Y*dW, with diagonal noise from
-%   time T0 to TFINAL (all increasing or all decreasing with arbitrary step
-%   size) with initial conditions Y0. The drift parameter MU and the diffusion
-%   (volatility) parameter SIG are scalars or vectors of LENGTH(Y0). Each row in
-%   the solution array YOUT corresponds to a time in the input vector TSPAN.
+%   analytic solution of the N-dimensional system of stochastic differential
+%   equations for geometric Brownian motion, dY = MU*Y*dt + SIG*Y*dW, with
+%   N-dimensional diagonal noise from time T0 to TFINAL (all increasing or all
+%   decreasing with arbitrary step size) with initial conditions Y0. TSPAN is a
+%   length M vector. Y0 is a length N vector. The drift parameter MU and the
+%   diffusion (volatility) parameter SIG are scalars or vectors of N. Each row
+%   in the M-by-N solution array YOUT corresponds to a time in TSPAN.
 %
-%   [YOUT, W] = SDE_GBM(MU,SIG,TSPAN,Y0,...) outputs the matrix W of integrated
-%   Weiner increments that were used. W is LENGTH(Y0) rows by LENGTH(TSPAN)
-%   columns, corresponding to [T0 T1 T2 ... TFINAL].
+%   [YOUT, W] = SDE_GBM(MU,SIG,TSPAN,Y0,...) outputs the M-by-N matrix W of
+%   integrated Weiner increments that were used by the solver. Each row of W
+%   corresponds to a time in TSPAN.
 %
-%   [...] = SDE_GBM(MU,SIG,TSPAN,Y0,OPTIONS) returns the above with default
+%   [...] = SDE_GBM(MU,SIG,TSPAN,Y0,OPTIONS) returns as above with default
 %   properties replaced by values in OPTIONS, an argument created with the
 %   SDESET function. See SDESET for details. The type of SDE to be solved, 'Ito'
 %   or the default 'Stratonovich', can be specified via the SDEType property.
@@ -57,7 +58,7 @@ function [Y W] = sde_gbm(mu,sig,tspan,y0,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
-%   Revision: 1.0, 6-30-12
+%   Revision: 1.0, 12-31-12
 
 
 func = 'SDE_GBM';
@@ -104,8 +105,9 @@ end
 isDouble = strcmp(dataType,'double');
 
 % Handle function arguments
-[N tspan tdir lt y0 h ConstStep Stratonovich RandFUN CustomRandFUN] ...
-	= sdearguments_special(func,tspan,y0,options,dataType);
+[N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,CustomRandFUN,...
+    ResetStream,EventsFUN,EventsValue]...
+	= sdearguments_special(func,tspan,y0,dataType,options,varargin);
 
 % Check mu and sig
 if ~any(length(mu) == [1 N])
@@ -124,6 +126,36 @@ if any(sig < 0)
           'or equal to zero.  See %s.'],func);
 end
 
+% Initialize outputs for zero-crossing events
+isEvents = ~isempty(EventsFUN);
+if isEvents
+    if nargout > 5
+        error('SDETools:sde_gbm:EventsTooManyOutputs',...
+              'Too many output arguments.  See %s.',func);
+    else
+        if nargout >= 3
+            TE = [];
+            if nargout >= 4
+                YE = [];
+                if nargout >= 5
+                    IE = [];
+                end
+            end
+        end
+    end
+else
+    if nargout > 2
+        if nargout <= 5
+            error('SDETools:sde_gbm:NoEventsTooManyOutputs',...
+                 ['Too many output arguments. An events function has not '...
+                  'been specified.  See %s.'],func);
+        else
+            error('SDETools:sde_gbm:TooManyOutputs',...
+                  'Too many output arguments.  See %s.',func);
+        end
+    end
+end
+
 % State array
 if isDouble
     Y(lt,N) = 0;
@@ -133,7 +165,7 @@ end
 
 % Diffusion parameters aren't all zero
 if ~all(sig == 0)
-    % Calculate Wiener increments from normal variates, store in state if possible
+    % Wiener increments from normal variates, store in state if possible
     if CustomRandFUN    % check output of alternative RandFUN
         try
             % Store Wiener increments in Y indirectly
@@ -143,7 +175,7 @@ if ~all(sig == 0)
                      ['RandFUN must return a non-empty matrix of floating '...
                       'point values.  See %s.'],solver);
             end
-            [m n] = size(r);
+            [m,n] = size(r);
             if m ~= lt-1 || n ~= N
                 error('SDETools:sde_gbm:RandFUNDimensionMismatch3',...
                      ['The specified alternative RandFUN did not output a '...
@@ -188,7 +220,7 @@ if ~all(sig == 0)
     
     if Stratonovich
         % Only allocate W matrix if requested as output
-        if nargout == 2
+        if nargout >= 2
             W = cumsum(Y,1);
             if N == 1
                 Y = exp(tspan*(mu-0.5*sig^2)+sig*W)*y0;
@@ -218,7 +250,7 @@ if ~all(sig == 0)
         end
     else
         % Only allocate W matrix if requested as output
-        if nargout == 2
+        if nargout >= 2
             W = cumsum(Y,1);
             if N == 1
                 Y = exp(tspan*mu+sig*W)*y0;
@@ -251,7 +283,7 @@ if ~all(sig == 0)
     end
 else
     % Only allocate W matrix if requested as output
-    if nargout == 2
+    if nargout >= 2
         if isDouble
             W(lt,N) = 0;
         else

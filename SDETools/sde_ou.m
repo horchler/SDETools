@@ -1,19 +1,20 @@
-function [Y W] = sde_ou(th,mu,sig,tspan,y0,options)
+function [Y,W,TE,YE,IE] = sde_ou(th,mu,sig,tspan,y0,options,varargin)
 %SDE_OU  Ornstein-Uhlenbeck process, analytic solution.
 %   YOUT = SDE_OU(THETA,MU,SIG,TSPAN,Y0) with TSPAN = [T0 T1 ... TFINAL] returns
-%   the analytic solution of the system of stochastic differential equations for
-%   the Ornstein-Uhlenbeck process, dY = THETA*(MU-Y)*dt + SIG*dW, with diagonal
-%   noise from time T0 to TFINAL (all increasing or all decreasing with
-%   arbitrary step size) with initial conditions Y0. The drift rate parameter
-%   THETA, the drift mean parameter MU, and the diffusion parameter SIG are
-%   scalars or vectors of LENGTH(Y0). Each row in the solution array YOUT
-%   corresponds to a time in the input vector TSPAN.
+%   the analytic solution of the N-dimensional system of stochastic differential
+%   equations for the Ornstein-Uhlenbeck process, dY = THETA*(MU-Y)*dt + SIG*dW,
+%   with N-dimensional diagonal noise from time T0 to TFINAL (all increasing or 
+%   all decreasing with arbitrary step size) with initial conditions Y0. TSPAN
+%   is a length M vector. Y0 is a length N vector. The drift rate parameter
+%   THETA, the drift mean parameter MU, and the diffusion parameter SIG may be
+%   scalars or vectors of N. Each row in the M-by-N solution array YOUT
+%   corresponds to a time in TSPAN.
 %
-%   [YOUT, W] = SDE_OU(THETA,MU,SIG,TSPAN,Y0,...) outputs the matrix W of
-%   integrated Weiner increments that were used. W is LENGTH(Y0) rows by
-%   LENGTH(TSPAN) columns, corresponding to [T0 T1 T2 ... TFINAL].
+%   [YOUT, W] = SDE_OU(THETA,MU,SIG,TSPAN,Y0,...) outputs the M-by-N matrix W of
+%   integrated Weiner increments that were used by the solver. Each row of W
+%   corresponds to a time in TSPAN.
 %
-%   [...] = SDE_OU(THETA,MU,SIG,TSPAN,Y0,OPTIONS) returns the above with default
+%   [...] = SDE_OU(THETA,MU,SIG,TSPAN,Y0,OPTIONS) returns as above with default
 %   properties replaced by values in OPTIONS, an argument created with the
 %   SDESET function. See SDESET for details. A commonly used option is to
 %   manually specify the random seed via the RandSeed property, which creates a
@@ -49,13 +50,12 @@ function [Y W] = sde_ou(th,mu,sig,tspan,y0,options)
 %       Y = Y0*exp(-THETA*t)+MU*(1-exp(-THETA*t))
 %           +(SIG/sqrt(2*THETA))*exp(-THETA*t)*W(exp(2*THETA*t)-1),
 %   where W() is a scaled time-transformed Wiener process.
-
-%   For details of this integration method, see: Peter E. Kloeden and Eckhard
-%   Platen, "Numerical solution of Stochastic Differential Equations,"
-%   Springer-Verlag, 1992.
+%
+%   From: J. L. Doob, "The Brownian Movement and Stochastic Equations," Annals
+%   of Mathematics, Vol. 43, No. 2, pp. 351-369, April 1942.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-8-12
-%   Revision: 1.0, 6-30-12
+%   Revision: 1.0, 12-31-12
 
 
 func = 'SDE_OU';
@@ -108,8 +108,9 @@ end
 isDouble = strcmp(dataType,'double');
 
 % Handle function arguments
-[N tspan tdir lt y0 h ConstStep Stratonovich RandFUN CustomRandFUN] ...
-	= sdearguments_special(func,tspan,y0,options,dataType);	%#ok<ASGLU>
+[N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,CustomRandFUN,...
+    ResetStream,EventsFUN,EventsValue]...
+	= sdearguments_special(func,tspan,y0,dataType,options,varagrin);
 
 % Check th, mu, and sig sizes
 if ~any(length(th) == [1 N])
@@ -140,7 +141,35 @@ if any(sig < 0)
           'zero.  See %s.'],func);
 end
 
-Y = zeros(lt,N,dataType);   % State array
+% Initialize outputs for zero-crossing events
+isEvents = ~isempty(EventsFUN);
+if isEvents
+    if nargout > 5
+        error('SDETools:sde_ou:EventsTooManyOutputs',...
+              'Too many output arguments.  See %s.',func);
+    else
+        if nargout >= 3
+            TE = [];
+            if nargout >= 4
+                YE = [];
+                if nargout >= 5
+                    IE = [];
+                end
+            end
+        end
+    end
+else
+    if nargout > 2
+        if nargout <= 5
+            error('SDETools:sde_ou:NoEventsTooManyOutputs',...
+                 ['Too many output arguments. An events function has not '...
+                  'been specified.  See %s.'],func);
+        else
+            error('SDETools:sde_ou:TooManyOutputs',...
+                  'Too many output arguments.  See %s.',func);
+        end
+    end
+end
 
 % State array
 if isDouble
@@ -151,7 +180,7 @@ end
 
 % Diffusion parameters aren't all zero
 if ~all(sig == 0)
-    % Calculate Wiener increments from normal variates, store in state if possible
+    % Wiener increments from normal variates, store in state if possible
     if CustomRandFUN    % check output of alternative RandFUN
         try
             % Store scaled time-transformed Wiener increments in Y indirectly
@@ -161,7 +190,7 @@ if ~all(sig == 0)
                      ['RandFUN must return a non-empty matrix of floating '...
                       'point values.  See %s.'],solver);
             end
-            [m n] = size(r);
+            [m,n] = size(r);
             if m ~= lt-1 || n ~= N
                 error('SDETools:sde_ou:RandFUNDimensionMismatch3',...
                      ['The specified alternative RandFUN did not output a '...
@@ -212,7 +241,7 @@ if ~all(sig == 0)
     
     % Only allocate W matrix if requested as output
     ett = exp(tt);
-    if nargout == 2
+    if nargout >= 2
         W = cumsum(Y,1);
         if N == 1 || isscalar(th) && ~isscalar(mu) && ~isscalar(sig)
             Y = ett*y0'-expm1(tt)*mu(:)'+ett*(sig(:)'/sqrt(2*th)).*W;
@@ -248,7 +277,7 @@ if ~all(sig == 0)
     end
 else
     % Only allocate W matrix if requested as output
-    if nargout == 2
+    if nargout >= 2
         if isDouble
             W(lt,N) = 0;
         else

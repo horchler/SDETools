@@ -19,7 +19,7 @@ function opts = sdeget(options,name,default,noErrorCheck)
 %   SDEGET is based on an updating of version 1.37.4.5 of Matlab's ODEGET
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-28-10
-%   Revision: 1.0, 6-30-12
+%   Revision: 1.0, 12-30-12
 
 
 % Undocumented usage for fast access with no error checking
@@ -56,6 +56,7 @@ Names = {   'SDEType'
             'ConstGFUN'
             'ConstDGFUN'
             'NonNegative'
+            'Events'
         };
 
 j = find(strncmpi(name,Names,length(name)));
@@ -83,7 +84,7 @@ else
 end
 
 
-function v = getknownfield(s,f,d)
+function v=getknownfield(s,f,d)
 %GETKNOWNFIELD	Get field f from struct s, or else yield default d.
 
 if isfield(s,f)	% s could be empty.

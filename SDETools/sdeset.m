@@ -75,16 +75,21 @@ function options = sdeset(varargin)
 %   components of the Wiener process. In this case, the stochastic function
 %   argument, GFUN (and DGFUN, if specified), must return a N-by-D matrix.
 %
-%ConstFFUN - Deterministic function is constant  [ yes | {no} ]
+%ConstFFUN - Deterministic function constant  [ yes | {no} | vector of indices ]
 %   Set this property to 'yes' if the determinstic function, f(t,y), of the SDE
 %   is constant and therefore not a function of time or state. The function is
 %   then evaluated only once by the integration routine, improving performance.
+%   A vector of indices specifies individual components of the deterministic
+%   function, f(t,y), that are constant. An empty vector, [], is equivalent to
+%   'no'.
 %
-%ConstGFUN - Stochastic function is constant, additive noise  [ yes | {no} ]
+%ConstGFUN - Stochastic function is constant [ yes | {no} | vector of indices ]
 %   Set this property to 'yes' in the case of time-independent additive noise,
 %   i.e., if the stochastic function, g(t,y), of the SDE is constant and
 %   therefore not a function of time or state. The function is then evaluated
-%   only once by the integration routine, improving performance.
+%   only once by the integration routine, improving performance. A vector of
+%   indices specifies individual components of the stochastic function, g(t,y),
+%   that are constant. An empty vector, [], is equivalent to 'no'.
 %
 %ConstDGFUN - Derivative of stochastic function is constant  [ yes | {no} ]
 %   Set this property to 'yes' if the derivative of th stochastic function,
@@ -97,6 +102,20 @@ function options = sdeset(varargin)
 %   non-negative. A vector of indices specifies individual components of the
 %   solution vector that must be non-negative. An empty vector, [], is
 %   equivalent to 'no'.
+%
+%Events - Locate multiple zero-crossing events  [ function_handle ]
+%   Set this property to a function handle in order to specify an events
+%   function. The corresponding function, EventsFUN, must take two inputs and
+%   output three vectors: [Value,IsTerminal,Direction] = EventsFUN(T,Y). The
+%   scalar input T is the current integration time and the vector Y is the
+%   current state. For the i-th event, Value(i) is the value of the
+%   zero-crossing function and IsTerminal(i) = 1 specifies that integration is
+%   to terminate at at a zero or to continue if IsTerminal(i) = 0. If
+%   Direction(i) = 1, only zeros where Value(i) is increasing are found, if
+%   Direction(i) = -1, only zeros where Value(i) is decreasing are found,
+%   otherwise if Direction(i) = 0, all zeros are found. If Direction is set to
+%   the empty matrix, [], all zeros are found for all events. Direction and
+%   IsTerminal may also be scalars.
 %   
 %   See also:
 %       SDEGET, SDE_EULER, SDE_MILSTEIN, SDE_GBM, SDE_OU, FUNCTION_HANDLE,
@@ -105,22 +124,24 @@ function options = sdeset(varargin)
 %   SDESET is based on an updating of version 1.46.4.10 of Matlab's ODESET.
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-27-10
-%   Revision: 1.0, 6-30-12
+%   Revision: 1.0, 12-31-12
 
 
-Names = {   'SDEType'
-            'DFFUN'
-            'DGFUN'
-            'RandSeed'
-            'Antithetic'
-            'RandStream'
-            'RandFUN'
-            'DiagonalNoise'
-            'ConstFFUN'
-            'ConstGFUN'
-            'ConstDGFUN'
-            'NonNegative'
-        };
+options = struct(	'SDEType',          [],...
+                    'DFFUN',            [],...
+                    'DGFUN',            [],...
+                    'RandSeed',         [],...
+                    'Antithetic',       [],...
+                    'RandStream',       [],...
+                    'RandFUN',          [],...
+                    'DiagonalNoise',	[],...
+                    'ConstFFUN',        [],...
+                    'ConstGFUN',        [],...
+                    'ConstDGFUN',       [],...
+                    'NonNegative',      [],...
+                    'Events',           []...
+                );
+
 Values = {	'{Stratonovich} | Ito'
             'function_handle | vector'
             'function_handle | matrix'
@@ -129,29 +150,32 @@ Values = {	'{Stratonovich} | Ito'
             'RandStream object'
             'function_handle'
             '{yes} |  no '
-            ' yes  | {no}'
-            ' yes  | {no}'
+            ' yes  | {no} | vector'
+            ' yes  | {no} | vector'
             ' yes  | {no}'
             ' yes  | {no} | vector'
+            'function_handle'
          };
+
+Names = fieldnames(options);
 m = length(Names);
 
-% Print out possible values of properties.
+% Print out possible values of properties in the form of a struct
 if nargin == 0 && nargout == 0
     len = cellfun(@length,Names);
-    blanks = max(len)-len;
+    blanks = max(len)-len+4;
     sp = ' ';
-    for i=m:-1:1
+    for i = m:-1:1
         out{i} = [sp(ones(1,blanks(i))) Names{i} ': [ ' Values{i} ' ]\n'];
     end
-    fprintf([cell2mat(out) '\n']);
+    fprintf(1,[out{:} '\n']);
+    clear options;
     return;
 end
 
 % Combine all leading options structures opt1, opt2,... in sdeset(opt1,opt2,...)
-options = cell2struct(cell(m,1),Names,1);
 i = 1;
-while i<=nargin
+while i <= nargin
 	arg = varargin{i};
 	if ischar(arg)      % arg is an option name
         break;
@@ -162,15 +186,10 @@ while i<=nargin
                  ['Expected argument %d to be a string property name or an '...
                   'options structure created with SDESET.'],i);
         end
-        for j=1:m
+        for j = 1:m
             Name = Names{j};
             if any(strcmp(fieldnames(arg),Name))
-                val = arg.(Name);
-            else
-                val = [];
-            end
-            if ~isempty(val)
-                options.(Name) = val;
+                options.(Name) = arg.(Name);
             end
         end
 	end
@@ -182,26 +201,26 @@ if rem(nargin-i+1,2) ~= 0
 	error('SDETools:sdeset:ArgNameValueMismatch',...
           'Arguments must occur in name-value pairs.');
 end
-while i<=nargin
+while i <= nargin
 	arg = varargin{i};
     if ~ischar(arg)
         error('SDETools:sdeset:NoPropertyName',...
               'Expected argument %d to be a string property name.',i);
     end
     j = find(strncmpi(arg,Names,length(arg)));
-    if isempty(j)           % if no matches
+    if isempty(j)           % If no matches
         error('SDETools:sdeset:InvalidPropertyName',...
              ['Unrecognized property name ''%s''.  See SDESET for '...
               'possibilities.'],name);
-    elseif length(j) > 1	% if more than one match
+    elseif length(j) > 1	% If more than one match
         k = find(strcmpi(arg,Names));
         if length(k) == 1
             j = k;
         else
             msg = [Names{j(1)} cell2mat(strcat({', '},Names(j(2:end)))')];
             error('SDETools:sdeset:AmbiguousPropertyName',...
-                 ['Ambiguous property name abbreviation ''%s'' '...
-                  '(' msg ').'],arg);
+                 ['Ambiguous property name abbreviation ''%s'' (' msg ').'],...
+                 arg);
         end
     end
     options.(Names{j}) = varargin{i+1};

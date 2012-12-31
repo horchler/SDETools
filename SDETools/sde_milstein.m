@@ -1,32 +1,52 @@
-function [Y W] = sde_milstein(f,g,tspan,y0,options,varargin)
+function [Y,W,TE,YE,IE] = sde_milstein(f,g,tspan,y0,options,varargin)
 %SDE_MILSTEIN  Solve stochastic differential equations, Milstein method.
 %   YOUT = SDE_MILSTEIN(FFUN,GFUN,TSPAN,Y0) with TSPAN = [T0 T1 ... TFINAL]
 %   integrates the N-dimensional system of stochastic differential equations
 %   dy = f(t,y)*dt + g(t,y)*dW with N-dimensional diagonal noise from time T0 to
-%   TFINAL (all increasing or all decreasing) with initial conditions Y0. FFUN
-%   and GFUN are function handles or floating point matrices. For scalar T and
-%   vector Y, FFUN(T,Y) and GFUN(T,Y) return column vectors corresponding to
-%   f(t,y) and g(t,y), the deterministic and stochastic parts of the SDE,
-%   respectively. GFUN(T,Y) can also return a scalar, in which case this value
-%   is used across all N dimensions. TSPAN is a length M vector. Y0 is a length
-%   N vector. Each row in the M-by-N solution array YOUT corresponds to a time
-%   in TSPAN.
+%   TFINAL (all increasing or all decreasing with arbitrary step size) with
+%   initial conditions Y0. FFUN and GFUN are function handles or floating-point
+%   matrices. For scalar T and vector Y, FFUN(T,Y) and GFUN(T,Y) return column
+%   vectors corresponding to f(t,y) and g(t,y), the deterministic and stochastic
+%   parts of the SDE, respectively. GFUN may also return a scalar to be used
+%   across all N dimensions. FFUN may also be a vector the same length as Y0, a
+%   scalar, or the empty matrix, []. GFUN may also be a matrix, a scalar, or the
+%   empty matrix, []. If FFUN or GFUN is not a function handle, the
+%   corresponding function (and its derivative) are assumed constant. If FFUN or
+%   GFUN is a vector or matrix of all zeros or the empty matrix, [], the
+%   corresponding function is neglected entirely. TSPAN is a length M vector. Y0
+%   is a length N vector. Each row in the M-by-N solution array YOUT corresponds
+%   to a time in TSPAN.
 %
 %   [YOUT, W] = SDE_MILSTEIN(FFUN,GFUN,TSPAN,Y0) outputs the M-by-N matrix W of
-%   integrated Weiner increments that were used by the solver. Each row of W to
-%   a time in TSPAN.
+%   integrated Weiner increments that were used by the solver. Each row of W
+%   corresponds to a time in TSPAN.
 %
-%   YOUT = SDE_MILSTEIN(FFUN,GFUN,TSPAN,Y0,OPTIONS) solves the above with
+%   [...] = SDE_MILSTEIN(FFUN,GFUN,TSPAN,Y0,OPTIONS) solves as above with
 %   default integration properties replaced by values in OPTIONS, an argument
 %   created with the SDESET function. See SDESET for details. The type of SDE to
 %   be integrated, 'Ito' or the default 'Stratonovich', can be specified via the
 %   SDEType property. By default, the derivative-free Milstein method is
 %   applied, but if the if the DGFUN property is set to a function handle or
 %   floating point matrix to specify the derivative of the noise function
-%   g(t,y), then the general Milstein method is used. Another commonly used
-%   option is to manually specify the random seed via the  RandSeed property,
-%   which creates a new random number stream, instead of using the default
-%   stream, to generate the Wiener increments.
+%   g(t,y), then the general Milstein method is used. The DiagonalNoise property
+%   must be set to 'no' in order to apply the more general correlated noise
+%   case. Another commonly used option is to manually specify the random seed
+%   via the RandSeed property, which creates a new random number stream, instead
+%   of using the default stream, to generate the Wiener increments.
+%
+%   [YOUT, W, TE, YE, IE] = SDE_MILSTEIN(FFUN,GFUN,TSPAN,Y0,OPTIONS) with the
+%   Events property set to a function handle, EventsFUN, solves as above while
+%   also finding zero-crossings. EventsFUN, must take at least two inputs and
+%   output three vectors: [Value, IsTerminal, Direction] = EventsFUN(T,Y). The
+%   scalar input T is the current integration time and the vector Y is the
+%   current state. For the i-th event, Value(i) is the value of the
+%   zero-crossing function and IsTerminal(i) = 1 specifies that integration is
+%   to terminate at at a zero or to continue if IsTerminal(i) = 0. If
+%   Direction(i) = 1, only zeros where Value(i) is increasing are found, if
+%   Direction(i) = -1, only zeros where Value(i) is decreasing are found,
+%   otherwise if Direction(i) = 0, all zeros are found. If Direction is set to
+%   the empty matrix, [], all zeros are found for all events. Direction and
+%   IsTerminal may also be scalars.
 %
 %   Example:
 %       % Solve 2-D Stratonovich SDE using Milstein method with derivative
@@ -70,7 +90,7 @@ function [Y W] = sde_milstein(f,g,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-25-10
-%   Revision: 1.0, 6-30-12
+%   Revision: 1.0, 12-31-12
 
 
 solver = 'SDE_MILSTEIN';
@@ -96,10 +116,10 @@ elseif isempty(options) && (~sde_ismatrix(options) ...
 end
 
 % Handle solver arguments
-[N D tspan tdir lt y0 fout gout h ConstStep dataType idxNonNegative ...
-    NonNegative DiagonalNoise ScalarNoise ConstFFUN ConstGFUN Stratonovich ...
-    RandFUN CustomRandFUN ResetAntithetic] ...
-    = sdearguments(solver,f,g,tspan,y0,options,varargin);
+[N,D,D0,tspan,tdir,lt,y0,fout,gout,h,ConstStep,dataType,idxNonNegative,...
+    NonNegative,DiagonalNoise,ScalarNoise,idxConstFFUN,ConstFFUN,...
+    idxConstGFUN,ConstGFUN,Stratonovich,RandFUN,CustomRandFUN,ResetStream,...
+    EventsFUN,EventsValue] = sdearguments(solver,f,g,tspan,y0,options,varargin);
 
 % If optional derivative function property is set
 if ~ConstGFUN
@@ -163,7 +183,7 @@ if ~ConstGFUN
                  ['DGFUN must return a non-empty matrix of floating point '...
                   'values.  See %s.'],solver);
         end
-        [m n] = size(dgout);
+        [m,n] = size(dgout);
         if DiagonalNoise
             if n ~= 1 || ~(m == N || m == 1)
                 error('SDETools:sde_milstein:DGFUNNotColumnVector',...
@@ -182,10 +202,38 @@ if ~ConstGFUN
     end
 end
 
-isDouble = strcmp(dataType,'double');
+% Initialize outputs for zero-crossing events
+isEvents = ~isempty(EventsFUN);
+if isEvents
+    if nargout > 5
+        error('SDETools:sde_milstein:EventsTooManyOutputs',...
+              'Too many output arguments.  See %s.',solver);
+    else
+        if nargout >= 3
+            TE = [];
+            if nargout >= 4
+                YE = [];
+                if nargout >= 5
+                    IE = [];
+                end
+            end
+        end
+    end
+else
+    if nargout > 2
+        if nargout <= 5
+            error('SDETools:sde_milstein:NoEventsTooManyOutputs',...
+                 ['Too many output arguments. An events function has not '...
+                  'been specified.  See %s.'],solver);
+        else
+            error('SDETools:sde_milstein:TooManyOutputs',...
+                  'Too many output arguments.  See %s.',solver);
+        end
+    end
+end
 
 % State array
-if isDouble
+if strcmp(dataType,'double')
     Y(lt,N) = 0;
 else
     Y(lt,N) = single(0);
@@ -197,14 +245,14 @@ h = tdir*h;
 if CustomRandFUN    % check output of alternative RandFUN
     try
         if D > N
-            if nargout == 2 % Store Wiener increments in W
+            if nargout >= 2 % Store Wiener increments in W
                 W = feval(RandFUN,lt,D);
                 if ~sde_ismatrix(W) || isempty(W) || ~isfloat(W)
                     error('SDETools:sde_milstein:RandFUNNot2DArray1',...
                          ['RandFUN must return a non-empty matrix of '...
                           'floating point values.  See %s.'],solver);
                 end
-                [m n] = size(W);
+                [m,n] = size(W);
                 if m ~= lt || n ~= D
                     error('SDETools:sde_milstein:RandFUNDimensionMismatch1',...
                          ['The specified alternative RandFUN did not output '...
@@ -224,7 +272,7 @@ if CustomRandFUN    % check output of alternative RandFUN
                          ['RandFUN must return a non-empty matrix of '...
                           'floating point values.  See %s.'],solver);
                 end
-                [m n] = size(dW);
+                [m,n] = size(dW);
                 if m ~= 1 || n ~= D
                     error('SDETools:sde_milstein:RandFUNDimensionMismatch2',...
                          ['The specified alternative RandFUN did not output '...
@@ -240,7 +288,7 @@ if CustomRandFUN    % check output of alternative RandFUN
                      ['RandFUN must return a non-empty matrix of floating '...
                       'point values.  See %s.'],solver);
             end
-            [m n] = size(r);
+            [m,n] = size(r);
             if m ~= lt-1 || n ~= D
                 error('SDETools:sde_milstein:RandFUNDimensionMismatch3',...
                      ['The specified alternative RandFUN did not output a '...
@@ -276,7 +324,7 @@ if CustomRandFUN    % check output of alternative RandFUN
     end
 else    % No error checking needed if default RANDN used
     if D > N
-        if nargout == 2 % Store Wiener increments in W
+        if nargout >= 2 % Store Wiener increments in W
             if ConstStep
                 W = sh*feval(RandFUN,lt,D);
                 W(1,1:D) = zeros(1,D,dataType);
@@ -296,12 +344,12 @@ else    % No error checking needed if default RANDN used
 end
 
 % Only allocate W matrix if requested as output
-if nargout == 2 && D <= N
+if nargout >= 2 && D <= N
 	W = cumsum(Y(:,1:D),1);
 end
 
 % Integration loop
-if ConstFFUN && ConstGFUN && (D <= N || nargout == 2) && ~NonNegative	% no FOR loop needed
+if ConstFFUN && ConstGFUN && (D <= N || nargout >= 2) && ~NonNegative && ~isEvents	% no FOR loop needed
     if ScalarNoise
         if ConstStep
             Y(2:end,:) = bsxfun(@plus,y0',cumsum(bsxfun(@plus,fout'*h,Y(2:end,ones(1,N))*gout),1));
@@ -361,6 +409,29 @@ else
             Y(2) = max(Y(2),0);
         end
         
+        % Check for and handle zero-crossing events
+        if isEvents
+            [te,ye,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(2),Y(2),EventsValue,varargin);
+            if ~isempty(te)
+                if nargout >= 3
+                    TE = [TE;te];
+                    if nargout >= 4
+                        YE = [YE;ye];
+                        if nargout >= 5
+                            IE = [IE;ie];
+                        end
+                    end
+                end
+                if IsTerminal
+                    Y = Y(1:2);
+                    if nargout >= 2
+                        W = W(1:2);
+                    end
+                    return;
+                end
+            end
+        end
+        
         % Integration loop using Weiner increments stored in Y(i+1)
         for i = 2:lt-1
             % Step size and Wiener increments
@@ -401,13 +472,36 @@ else
             if NonNegative
                 Y(i+1) = max(Y(i+1),0);
             end
+            
+            % Check for and handle zero-crossing events
+            if isEvents
+                [te,ye,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i+1),Y(i+1),EventsValue,varargin);
+                if ~isempty(te)
+                    if nargout >= 3
+                        TE = [TE;te];           %#ok<AGROW>
+                        if nargout >= 4
+                            YE = [YE;ye];       %#ok<AGROW>
+                            if nargout >= 5
+                                IE = [IE;ie];	%#ok<AGROW>
+                            end
+                        end
+                    end
+                    if IsTerminal
+                        Y = Y(1:i+1);
+                        if nargout >= 2
+                            W = W(1:i+1);
+                        end
+                        return;
+                    end
+                end
+            end
         end
     else
         % step size and Wiener increment for first time step
         dt = h(1);
         sdt = sh(1);
         if D > N 
-            if nargout == 2         % dW already exists if D > N && nargin == 1
+            if nargout >= 2         % dW already exists if D > N && nargin == 1
                 dW = W(2,:);
                 W(2,:) = W(1,:)+dW;	% integrate Wiener increments
             end
@@ -456,6 +550,29 @@ else
             Yi(idxNonNegative) = max(Yi(idxNonNegative),0);
         end
         Y(2,:) = Yi;
+        
+        % Check for and handle zero-crossing events
+        if isEvents
+            [te,ye,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(2),Yi,EventsValue,varargin);
+            if ~isempty(te)
+                if nargout >= 3
+                    TE = [TE;te];
+                    if nargout >= 4
+                        YE = [YE;ye];
+                        if nargout >= 5
+                            IE = [IE;ie];
+                        end
+                    end
+                end
+                if IsTerminal
+                    Y = Y(1:2,:);
+                    if nargout >= 2
+                        W = W(1:2,:);
+                    end
+                    return;
+                end
+            end
+        end
 
         % Integration loop using cached state, Yi, and increment, dW
         for i = 2:lt-1
@@ -465,7 +582,7 @@ else
                 sdt = sh(i);
             end
             if D > N
-                if nargout == 2
+                if nargout >= 2
                     dW = W(i+1,:);
                     W(i+1,:) = W(i,:)+dW;     	% Integrate Wiener increments
                 else
@@ -522,16 +639,29 @@ else
                 Yi(idxNonNegative) = max(Yi(idxNonNegative),0);
             end
             Y(i+1,:) = Yi;
+            
+            % Check for and handle zero-crossing events
+            if isEvents
+                [te,ye,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i+1),Yi,EventsValue,varargin);
+                if ~isempty(te)
+                    if nargout >= 3
+                        TE = [TE;te];           %#ok<AGROW>
+                        if nargout >= 4
+                            YE = [YE;ye];       %#ok<AGROW>
+                            if nargout >= 5
+                                IE = [IE;ie];	%#ok<AGROW>
+                            end
+                        end
+                    end
+                    if IsTerminal
+                        Y = Y(1:i+1,:);
+                        if nargout >= 2
+                            W = W(1:i+1,:);
+                        end
+                        return;
+                    end
+                end
+            end
         end
     end
-end
-
-% Reset antihetic property if global stream was used
-if ResetAntithetic
-    try
-        Stream = RandStream.getGlobalStream;
-    catch                                       %#ok<CTCH>
-        Stream = RandStream.getDefaultStream;	%#ok<GETRS>
-    end
-    set(Stream,'Antithetic',~Stream.Antithetic);
 end
