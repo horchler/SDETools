@@ -10,7 +10,7 @@ function [N,D,D0,tspan,tdir,lt,y0,f0,g0,h,ConstStep,dataType,idxNonNegative,...
 %       RANDSTREAM
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 12-12-11
-%   Revision: 1.0, 12-31-12
+%   Revision: 1.0, 1-1-13
 
 %   SDEARGUMENTS is partially based on an updating of version 1.12.4.15 of
 %   Matlab's ODEARGUMENTS.
@@ -272,7 +272,6 @@ else
     ScalarNoise = false;
     D = n;
 end
-
 if ConstGFUN
     D0 = find(g0(idxConstGFUN) ~= 0);
     D = length(D0);
@@ -333,7 +332,7 @@ else                % Use Matlab's random number generator for normal variates
     RandFUN = @(M,N)randn(Stream,M,N,dataType);
 	CustomRandFUN = false;
     
-    % Function to be called on completion or early termination of integration
+    % Function to be call on completion or early termination of integration
     ResetStream = onCleanup(@()sdereset_stream(Stream));
 end
 
@@ -347,7 +346,7 @@ else
 end
 
 % Check for events function
-EventsFUN = sdeget(options,'Events',[],'flag');
+EventsFUN = sdeget(options,'EventsFUN',[],'flag');
 if ~isempty(EventsFUN)
     if ~isa(EventsFUN,'function_handle')
         error('SDETools:sdearguments:EventsFUNNotAFunctionHandle',...

@@ -38,18 +38,18 @@ function [Y,W,TE,YE,IE] = sde_euler(f,g,tspan,y0,options,varargin)
 %   of using the default stream, to generate the Wiener increments.
 %
 %   [YOUT, W, TE, YE, IE] = SDE_EULER(FFUN,GFUN,TSPAN,Y0,OPTIONS) with the
-%   Events property set to a function handle, EventsFUN, solves as above while
-%   also finding zero-crossings. EventsFUN, must take at least two inputs and
-%   output three vectors: [Value, IsTerminal, Direction] = EventsFUN(T,Y). The
-%   scalar input T is the current integration time and the vector Y is the
-%   current state. For the i-th event, Value(i) is the value of the
-%   zero-crossing function and IsTerminal(i) = 1 specifies that integration is
-%   to terminate at a zero or to continue if IsTerminal(i) = 0. If
-%   Direction(i) = 1, only zeros where Value(i) is increasing are found, if
-%   Direction(i) = -1, only zeros where Value(i) is decreasing are found,
-%   otherwise if Direction(i) = 0, all zeros are found. If Direction is set to
-%   the empty matrix, [], all zeros are found for all events. Direction and
-%   IsTerminal may also be scalars.
+%   EventsFUN property set to a function handle, in order to specify an events
+%   function, solves as above while also finding zero-crossings. The
+%   corresponding function must take at least two inputs and output three
+%   vectors: [Value, IsTerminal, Direction] = Events(T,Y). The scalar input T is
+%   the current integration time and the vector Y is the current state. For the
+%   i-th event, Value(i) is the value of the zero-crossing function and
+%   IsTerminal(i) = 1 specifies that integration is to terminate at a zero or to
+%   continue if IsTerminal(i) = 0. If Direction(i) = 1, only zeros where
+%   Value(i) is increasing are found, if Direction(i) = -1, only zeros where
+%   Value(i) is decreasing are found, otherwise if Direction(i) = 0, all zeros
+%   are found. If Direction is set to the empty matrix, [], all zeros are found
+%   for all events. Direction and IsTerminal may also be scalars.
 %
 %   Example:
 %       % Solve 2-D Stratonovich SDE using Euler-Heun method

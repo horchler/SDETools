@@ -103,10 +103,10 @@ function options = sdeset(varargin)
 %   solution vector that must be non-negative. An empty vector, [], is
 %   equivalent to 'no'.
 %
-%Events - Locate multiple zero-crossing events  [ function_handle ]
+%EventsFUN - Locate multiple zero-crossing events  [ function_handle ]
 %   Set this property to a function handle in order to specify an events
-%   function. The corresponding function, EventsFUN, must take two inputs and
-%   output three vectors: [Value,IsTerminal,Direction] = EventsFUN(T,Y). The
+%   function. The corresponding function must take at least two inputs and
+%   output three vectors: [Value,IsTerminal,Direction] = Events(T,Y). The
 %   scalar input T is the current integration time and the vector Y is the
 %   current state. For the i-th event, Value(i) is the value of the
 %   zero-crossing function and IsTerminal(i) = 1 specifies that integration is
@@ -124,7 +124,7 @@ function options = sdeset(varargin)
 %   SDESET is based on an updating of version 1.46.4.10 of Matlab's ODESET.
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-27-10
-%   Revision: 1.0, 12-31-12
+%   Revision: 1.0, 1-1-13
 
 
 options = struct(	'SDEType',          [],...
@@ -139,7 +139,7 @@ options = struct(	'SDEType',          [],...
                     'ConstGFUN',        [],...
                     'ConstDGFUN',       [],...
                     'NonNegative',      [],...
-                    'Events',           []...
+                    'EventsFUN',        []...
                 );
 
 Values = {	'{Stratonovich} | Ito'

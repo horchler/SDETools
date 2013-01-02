@@ -7,7 +7,7 @@ function [Y,W,TE,YE,IE] = sde_ou(th,mu,sig,tspan,y0,options,varargin)
 %   all decreasing with arbitrary step size) with initial conditions Y0. TSPAN
 %   is a length M vector. Y0 is a length N vector. The drift rate parameter
 %   THETA, the drift mean parameter MU, and the diffusion parameter SIG may be
-%   scalars or vectors of N. Each row in the M-by-N solution array YOUT
+%   scalars or length N vectors. Each row in the M-by-N solution array YOUT
 %   corresponds to a time in TSPAN.
 %
 %   [YOUT, W] = SDE_OU(THETA,MU,SIG,TSPAN,Y0,...) outputs the M-by-N matrix W of
@@ -24,18 +24,18 @@ function [Y,W,TE,YE,IE] = sde_ou(th,mu,sig,tspan,y0,options,varargin)
 %   and a numerical solution will be returned.
 %
 %   [YOUT, W, TE, YE, IE] = SDE_OU(THETA,MU,SIG,TSPAN,Y0,OPTIONS) with the
-%   Events property set to a function handle, EventsFUN, solves as above while
-%   also finding zero-crossings. EventsFUN, must take at least two inputs and
-%   output three vectors: [Value, IsTerminal, Direction] = EventsFUN(T,Y). The
-%   scalar input T is the current integration time and the vector Y is the
-%   current state. For the i-th event, Value(i) is the value of the
-%   zero-crossing function and IsTerminal(i) = 1 specifies that integration is
-%   to terminate at a zero or to continue if IsTerminal(i) = 0. If
-%   Direction(i) = 1, only zeros where Value(i) is increasing are found, if
-%   Direction(i) = -1, only zeros where Value(i) is decreasing are found,
-%   otherwise if Direction(i) = 0, all zeros are found. If Direction is set to
-%   the empty matrix, [], all zeros are found for all events. Direction and
-%   IsTerminal may also be scalars.
+%   EventsFUN property set to a function handle, in order to specify an events
+%   function, solves as above while also finding zero-crossings. The
+%   corresponding function, must take at least two inputs and output three 
+%   vectors: [Value, IsTerminal, Direction] = EventsFUN(T,Y). The scalar input T
+%   is the current integration time and the vector Y is the current state. For
+%   the i-th event, Value(i) is the value of the zero-crossing function and
+%   IsTerminal(i) = 1 specifies that integration is to terminate at a zero or to
+%   continue if IsTerminal(i) = 0. If Direction(i) = 1, only zeros where
+%   Value(i) is increasing are found, if Direction(i) = -1, only zeros where
+%   Value(i) is decreasing are found, otherwise if Direction(i) = 0, all zeros
+%   are found. If Direction is set to the empty matrix, [], all zeros are found
+%   for all events. Direction and IsTerminal may also be scalars.
 %
 %   Example:
 %       % Compare analytical and simulated Ornstein-Uhlenbeck processes
@@ -71,7 +71,7 @@ function [Y,W,TE,YE,IE] = sde_ou(th,mu,sig,tspan,y0,options,varargin)
 %   of Mathematics, Vol. 43, No. 2, pp. 351-369, April 1942.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-8-12
-%   Revision: 1.0, 12-31-12
+%   Revision: 1.0, 1-1-13
 
 
 func = 'SDE_OU';
@@ -123,10 +123,10 @@ if ~all(strcmp(dataType,{class(th),class(mu),class(sig),class(tspan),...
 end
 isDouble = strcmp(dataType,'double');
 
-% Handle function arguments
+% Handle function arguments (NOTE: ResetStream is called by onCleanup())
 [N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,CustomRandFUN,...
     ResetStream,EventsFUN,EventsValue]...
-	= sdearguments_special(func,tspan,y0,dataType,options,varagrin);
+	= sdearguments_special(func,tspan,y0,dataType,options,varargin);	%#ok<ASGLU>
 
 % Check th, mu, and sig sizes
 if ~any(length(th) == [1 N])
@@ -145,12 +145,7 @@ if ~any(length(sig) == [1 N])
           'same length as Y0.  See %s.'],func);
 end
 
-% Check signs of th and sig
-if any(th < 0)
-    error('SDETools:sde_ou:ThetaNegative',...
-         ['The drift rate parameter, THETA, must be greater than or equal '...
-          'than or equal to zero.  See %s.'],func);
-end
+% Check sign of sig
 if any(sig < 0)
     error('SDETools:sde_ou:SigNegative',...
          ['The diffusion parameter, SIG, must be greater than or equal to '...
@@ -212,7 +207,7 @@ if ~all(sig == 0)
                      ['The specified alternative RandFUN did not output a '...
                       '%d by %d matrix as requested.   See %s.',N,lt-1,solver]);
             end
-            if N == 1 || ~isscalar(th)
+            if N == 1 || isscalar(th)
                 tt = -tspan*th;
                 Y(2:end,:) = tdir*sqrt(diff(expm1(-2*tt),1,1)).*r;
             else
@@ -245,7 +240,7 @@ if ~all(sig == 0)
         end
     else    % No error checking needed if default RANDN used
         % Store scaled time-transformed Wiener increments in Y
-        if N == 1 || ~isscalar(th)
+        if N == 1 || isscalar(th)
             tt = -tspan*th;
             Y(2:end,:) = tdir*sqrt(diff(expm1(-2*tt),1,1)).*feval(RandFUN,lt-1,N);
         else
@@ -315,6 +310,31 @@ else
         else
             tt = -tspan*th(:)';
             Y = bsxfun(@times,y0',exp(tt))-bsxfun(@times,expm1(tt),mu(:)');
+        end
+    end
+end
+
+% Check for and handle zero-crossing events
+if isEvents
+    for i = 2:lt
+        [te,ye,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i),Y(i,:),EventsValue,varargin);
+        if ~isempty(te)
+            if nargout >= 3
+                TE = [TE;te];           %#ok<AGROW>
+                if nargout >= 4
+                    YE = [YE;ye];       %#ok<AGROW>
+                    if nargout >= 5
+                        IE = [IE;ie];	%#ok<AGROW>
+                    end
+                end
+            end
+            if IsTerminal
+                Y = Y(1:i,:);
+                if nargout >= 2
+                    W = W(1:i,:);
+                end
+                return;
+            end
         end
     end
 end

@@ -24,18 +24,19 @@ function [Y,W,TE,YE,IE] = sde_gbm(mu,sig,tspan,y0,options,varargin)
 %   noise case, SIG may be an N-by-D matrix, and a numerical solution will be
 %   returned.
 %
-%   [YOUT, W, TE, YE, IE] = SDE_GBM(MU,SIG,TSPAN,Y0,OPTIONS) with the Events
-%   property set to a function handle, EventsFUN, solves as above while also
-%   finding zero-crossings. EventsFUN, must take at least two inputs and output
-%   three vectors: [Value, IsTerminal, Direction] = EventsFUN(T,Y). The scalar
-%   input T is the current integration time and the vector Y is the current
-%   state. For the i-th event, Value(i) is the value of the zero-crossing
-%   function and IsTerminal(i) = 1 specifies that integration is to terminate at
-%   a zero or to continue if IsTerminal(i) = 0. If Direction(i) = 1, only zeros
-%   where Value(i) is increasing are found, if Direction(i) = -1, only zeros
-%   where Value(i) is decreasing are found, otherwise if Direction(i) = 0, all
-%   zeros are found. If Direction is set to the empty matrix, [], all zeros are
-%   found for all events. Direction and IsTerminal may also be scalars.
+%   [YOUT, W, TE, YE, IE] = SDE_GBM(MU,SIG,TSPAN,Y0,OPTIONS) with the EventsFUN
+%   property set to a function handle, in order to specify an events function,
+%   solves as above while also finding zero-crossings. The corresponding
+%   function, must take at least two inputs and output three vectors:
+%   [Value, IsTerminal, Direction] = Events(T,Y). The scalar input T is the
+%   current integration time and the vector Y is the current state. For the i-th
+%   event, Value(i) is the value of the zero-crossing function and
+%   IsTerminal(i) = 1 specifies that integration is to terminate at a zero or to
+%   continue if IsTerminal(i) = 0. If Direction(i) = 1, only zeros where
+%   Value(i) is increasing are found, if Direction(i) = -1, only zeros where
+%   Value(i) is decreasing are found, otherwise if Direction(i) = 0, all zeros
+%   are found. If Direction is set to the empty matrix, [], all zeros are found
+%   for all events. Direction and IsTerminal may also be scalars.
 %
 %   Example:
 %       % Compare analytical and simulated Geometric Brownian motion
@@ -74,7 +75,7 @@ function [Y,W,TE,YE,IE] = sde_gbm(mu,sig,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
-%   Revision: 1.0, 12-31-12
+%   Revision: 1.0, 1-1-13
 
 
 func = 'SDE_GBM';
@@ -120,10 +121,10 @@ if ~all(strcmp(dataType,{class(mu),class(sig),class(tspan),class(y0)}))
 end
 isDouble = strcmp(dataType,'double');
 
-% Handle function arguments
+% Handle function arguments (NOTE: ResetStream is called by onCleanup())
 [N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,CustomRandFUN,...
     ResetStream,EventsFUN,EventsValue]...
-	= sdearguments_special(func,tspan,y0,dataType,options,varargin);
+	= sdearguments_special(func,tspan,y0,dataType,options,varargin);	%#ok<ASGLU>
 
 % Check mu and sig
 if ~any(length(mu) == [1 N])
@@ -312,5 +313,30 @@ else
         Y = exp(tspan*mu)*y0';
     else
         Y = bsxfun(@times,y0',exp(tspan*mu(:)'));
+    end
+end
+
+% Check for and handle zero-crossing events
+if isEvents
+    for i = 2:lt
+        [te,ye,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i),Y(i,:),EventsValue,varargin);
+        if ~isempty(te)
+            if nargout >= 3
+                TE = [TE;te];           %#ok<AGROW>
+                if nargout >= 4
+                    YE = [YE;ye];       %#ok<AGROW>
+                    if nargout >= 5
+                        IE = [IE;ie];	%#ok<AGROW>
+                    end
+                end
+            end
+            if IsTerminal
+                Y = Y(1:i,:);
+                if nargout >= 2
+                    W = W(1:i,:);
+                end
+                return;
+            end
+        end
     end
 end

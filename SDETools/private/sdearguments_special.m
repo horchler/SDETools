@@ -7,7 +7,7 @@ function [N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,CustomRandFUN,...
 %       SDE_GBM, SDE_OU, SDEARGUMENTS, SDEGET, FUNCTION_HANDLE, RANDSTREAM
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
-%   Revision: 1.0, 12-31-12
+%   Revision: 1.0, 1-1-13
 
 %   SDEARGUMENTS_SPECIAL is partially based on an updating of version 1.12.4.15
 %   of Matlab's ODEARGUMENTS.
@@ -104,7 +104,7 @@ else    % Use Matlab's random number generator for normal variates
     RandFUN = @(M,N)randn(Stream,M,N,dataType);
     CustomRandFUN = false;
     
-    % Function to be called on completion or early termination of integration
+    % Function to be call on completion or early termination of integration
     ResetStream = onCleanup(@()sdereset_stream(Stream));
 end
 
@@ -113,7 +113,7 @@ Stratonovich = strcmp(sdeget(options,'SDEType','Stratonovich','flag'),...
     'Stratonovich');
 
 % Check for events function
-EventsFUN = sdeget(options,'Events',[],'flag');
+EventsFUN = sdeget(options,'EventsFUN',[],'flag');
 if ~isempty(EventsFUN)
     if ~isa(EventsFUN,'function_handle')
         error('SDETools:sdearguments_special:EventsFUNNotAFunctionHandle',...
