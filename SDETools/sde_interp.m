@@ -24,95 +24,180 @@ function xi=sde_interp(varargin)
 %   XI = SDE_INTERP(T,X,TI,'extrap',EXTRAPVAL) replaces values outside of the
 %   interval spanned by T with the scalar EXTRAPVAL instead of the default NaN.
 %
-%   Class support for inputs T, X, TI, NT:
+%   Class support for inputs T, X, TI, NT, ETA:
 %       float: double, single
 %
 %   See also SDE_INTERPQ, SDE_INTERPNQ, INTERP1, INTERP1Q
 
-% Some code based on version 5.41.4.18 of Matlab's INTERP1
+%	Some code based on version 5.41.4.18 of Matlab's INTERP1
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 2-26-12
-%   Revision: 1.0, 6-30-12
+%   Revision: 1.0, 1-1-13
 
 
-%XI = SDE_INTERP(T,X,TI) nargin=3, offset=1
-%XI = SDE_INTERP(T,X,'linear',NT) nargin=4, offset=1
-%XI = SDE_INTERP(T,X,TI,'extrap',EXTRAPVAL) nargin=5, offset=1
+%XI = SDE_INTERP(T,X,TI)
+%XI = SDE_INTERP(T,X,TI)
+%XI = SDE_INTERP(T,X,TI,'extrap',EXTRAPVAL)
+%XI = SDE_INTERP(T,X,TI,'scaling',ETA)
+%XI = SDE_INTERP(T,X,TI,'extrap',EXTRAPVAL,'scaling',ETA)
+%XI = SDE_INTERP(T,X,TI,'scaling',ETA,'extrap',EXTRAPVAL)
+%XI = SDE_INTERP(X,TI)
+%XI = SDE_INTERP(X,TI,'extrap',EXTRAPVAL)
+%XI = SDE_INTERP(X,TI,'scaling',ETA)
+%XI = SDE_INTERP(X,TI,'extrap',EXTRAPVAL,'scaling',ETA)
+%XI = SDE_INTERP(X,TI,'scaling',ETA,'extrap',EXTRAPVAL)
 
-%XI = SDE_INTERP(X,TI) nargin=2, offset=0
-%XI = SDE_INTERP(X,'linear',NT) nargin=3, offset=0
-%XI = SDE_INTERP(X,TI,'extrap',EXTRAPVAL) nargin=4, offset=0
+%XI = SDE_INTERP(T,X,'linear',NT)
+%XI = SDE_INTERP(T,X,'linear',NT,'scaling',ETA)
+%XI = SDE_INTERP(X,'linear',NT)
+%XI = SDE_INTERP(X,'linear',NT,'scaling',ETA)
 
 if nargin < 2
     error('SDETools:sde_interp:TooFewInputs','Not enough input arguments.');
 end
-if nargin > 5
+if nargin > 7
     error('SDETools:sde_interp:TooManyInputs','Too many input arguments.');
 end
 
-% Handle linearly-spaced parameter and optional extrapolation value
+% Read variable inputs
+eqsp=false;
 extrap=false;
 linspc=false;
-offset=1;
-if nargin == 5
-    str=varargin{4};
-    if ~ischar(str) || ~strcmp(str,'extrap')
-        error('SDETools:sde_interp:InvalidExtrapString',...
-             ['The parameter string ''extrap'' must be used to specify an '...
-              'optional EXTRAPVAL in the subsequent input argument.']);
+scaling=false;
+if nargin == 2
+    x=varargin{1};
+	ti=varargin{2};
+    eqsp=true;
+else
+    for offset=2:nargin
+        if ischar(varargin{offset})
+            break;
+        end
     end
-    extrapval=varargin{5};
-    extrap=true;
-elseif nargin == 4
-    str=varargin{3};
-    if ~ischar(str) || ~any(strcmp(str,{'linear','extrap'}))
-        error('SDETools:sde_interp:InvalidParameterString',...
-             ['The parameter strings ''linear'' or ''extrap'' must be used '...
-              'to specify the the number of linearly-spaced interpolation '...
-              'points, NT, or an optional EXTRAPVAL in the subsequent input '...
-              'argument.']);
-    end
-    if strcmp(str,'extrap')
-        extrapval=varargin{4};
-        extrap=true;
-        offset=0;
-    else
-        nt=varargin{4};
+    if offset == 2
+        x=varargin{1};
+        if ~strcmp(varargin{2},'linear')
+            error('SDETools:sde_interp:InvalidLinearString',...
+                 ['The parameter string ''linear'' must be used to specify '...
+                  'the number of linearly-spaced interpolation points, NT, '...
+                  'in the subsequent input argument.']);
+        end
+        nt=varargin{3};
+        eqsp=true;
         linspc=true;
-    end
-elseif nargin == 3 && ischar(varargin{2})
-    if ~strcmp(varargin{2},'linear')
-        error('SDETools:sde_interp:InvalidLinearString',...
-             ['The parameter string ''linear'' must be used to specify the '...
-              'the number of linearly-spaced interpolation points, NT, in '...
-              'the subsequent input argument.']);
-    end
-    nt=varargin{3};
-    linspc=true;
-    offset=0;
-elseif nargin == 2
-    offset=0;
-end
-
-if extrap
-    if numel(extrapval) ~= 1
-        error('SDETools:sde_interp:NonScalarExtrapVal',...
-              'The input EXTRAPVAL must be a scalar value.');
-    end
-elseif linspc
-    if ~iscalar(nt) || ~isnumeric(nt) || ~isreal(nt) || ~isempty(nt) ...
-            && (~isfinite(nt) || (~isinteger(nt) && nt-floor(nt) ~= 0) ...
-            || nt < 0)
-        error('SDETools:sde_interp:InvalidNT',...
-              'The input NT must be finite real positive scalar value.');
+    elseif offset == 3
+        if nargin == 3
+            t=varargin{1};
+            x=varargin{2};
+            ti=varargin{3};
+        else
+            if nargin < 4
+                error('SDETools:sde_interp:PropertNameValueMismatch4',...
+              	     ['Property name string inputs must be followed by '...
+                      'property value inputs.']);
+            end
+            str={'extrap','scaling','linear'};
+            s=strcmp(varargin{3},str);
+            if s(3)
+                t=varargin{1};
+                x=varargin{2};
+                nt=varargin{4};
+                linspc=true;
+                if nargin > 4
+                    if nargin ~= 6
+                        error('SDETools:sde_interp:PropertNameValueMismatch46a',...
+                             ['Property name string inputs must be followed '...
+                              'by property value inputs.']);
+                    end
+                    if ~strcmp(varargin{5},str{2})
+                        error('SDETools:sde_interp:DoublePropertyNameScaling',...
+                             ['The last property name has already been '...
+                              'specified.']);
+                    end
+                    eta=varargin{6};
+                    scaling=true;
+                end
+            elseif s(1) || s(2)
+                x=varargin{1};
+                ti=varargin{2};
+                if s(1)
+                    extrapval=varargin{4};
+                    extrap=true;
+                else
+                    eta=varargin{4};
+                    scaling=true;
+                end
+                eqsp=true;
+                if nargin > 4
+                    if nargin ~= 6
+                        error('SDETools:sde_interp:PropertNameValueMismatch46b',...
+                             ['Property name string inputs must be followed '...
+                              'by property value inputs.']);
+                    end
+                    if ~strcmp(varargin{5},str{~s(1:2)})
+                        error('SDETools:sde_interp:DoublePropertyName5',...
+                             ['The last property name has already been '...
+                              'specified.']);
+                    end
+                    if s(2)
+                        extrapval=varargin{6};
+                        extrap=true;
+                    else
+                        eta=varargin{6};
+                        scaling=true;
+                    end
+                end
+            else 
+                error('SDETools:sde_interp:a',...
+                      '');
+            end
+        end
+    elseif offset == 4
+        if nargin < 5
+            error('SDETools:sde_interp:PropertNameValueMismatch45',...
+              	 ['Property name string inputs must be followed by property '...
+                   'value inputs.']);
+        end
+        t=varargin{1};
+        x=varargin{2};
+        ti=varargin{3};
+        str={'extrap','scaling'};
+        s=strcmp(varargin{4},str);
+        if s(1)
+            extrapval=varargin{5};
+            extrap=true;
+        else
+            eta=varargin{5};
+            scaling=true;
+        end
+        if nargin > 5
+            if nargin ~= 7
+                error('SDETools:sde_interp:PropertNameValueMismatch57',...
+              	     ['Property name string inputs must be followed by '...
+                      'property value inputs.']);
+            end
+            if ~strcmp(varargin{6},str{~s})
+                error('SDETools:sde_interp:DoublePropertyName6',...
+                      'The last property name has already been specified.');
+            end
+            if s(2)
+                extrapval=varargin{7};
+                extrap=true;
+            else
+                eta=varargin{7};
+                scaling=true;
+            end
+        end
+    else
+        error('SDETools:sde_interp:InvalidArguments',...
+              'Unknown input arguments.');
     end
 end
 
 % Check X
-x=varargin{offset+1};
 if isempty(x) || ~isfloat(x)
     error('SDETools:sde_interp:XEmptyOrNotFloat',...
-          'The input X must be a non-empty array of singles or doubles.');
+          'The input X must be a non-empty floating-point array.');
 end
 szx=size(x);
 isVecX=(isvector(x) && ~isempty(x));
@@ -133,12 +218,10 @@ if M < 2
 end
 
 % Construct effective T vector if not specified, otherwise check T
-if offset == 0
+if eqsp
     t=[0;M-1];
     dt=1;
-    eqsp=true;
 else
-    t=varargin{offset};
     if ~isvector(t)
         error('SDETools:sde_interp:TNotVector','The input T must be a vector.');
     end
@@ -171,7 +254,7 @@ else
         x=x(p,:);
         dt=-dt;
     elseif any(dt < 0)
-        [t p]=sort(t);
+        [t,p]=sort(t);
         x=x(p,:);
         dt=diff(t);
     end
@@ -188,9 +271,36 @@ else
     end
 end
 
-% Check TI or construct linearly-spaced TI from NT
+% Check extrapolation value if present
+if extrap && (~isscalar(extrapval) || ~isfloat(extrapval))
+    error('SDETools:sde_interp:InvalidExtrapval',...
+         ['The optional extrapolation value parameter must be a '...
+          'floating-point scalar.']);
+end
+
+% Check scaling parameter if present
+if scaling
+    if linspc
+        if ~isvector(eta) || ~isfloat(eta)
+            error('SDETools:sde_interp:InvalidScaling',...
+                 ['The optional scaling parameter must be a non-empty '...
+                  'floating-point scalar or vector equal in length to TI.']);
+        end
+    else
+        if ~isvector(eta) || ~isfloat(eta) || ~any(length(eta) == [N 1])
+            error('SDETools:sde_interp:InvalidScaling',...
+                 ['The optional scaling parameter must be a non-empty '...
+                  'floating-point scalar or vector equal in length to TI.']);
+        end
+    end
+    eta = eta(:);
+else
+    eta=1;
+end
+
+% Construct linearly-spaced TI from NT, otherwise check TI
 if linspc
-    dtype=superiorfloat(t,x,nt);
+    dtype=superiorfloat(t,x,nt,eta);
     if isempty(nt)
         xi=zeros(0,NN,dtype);
         D=0;
@@ -225,23 +335,25 @@ if linspc
             end
         end
         
+        dx=diff(x);
         if isVecX
             % Calculate XI, output is a D-by-1 column vector
-            xi=x+mu.*diff(x)+sig.*randn(D,1,dtype);
+            xi=x(ii)+mu.*dx(ii)+eta.*sig.*randn(D,1,dtype);
         else
             % Expand and re-index X, and dX, to match size of re-indexed XI
-            dx=diff(x);
             x=x(bsxfun(@plus,ii,0:M:M*(NN-1)));
             dx=dx(bsxfun(@plus,ii,0:(M-1):(M-1)*(NN-1)));
 
             % Calculate XI, output is a D-by-N matrix
-            xi=x+bsxfun(@times,dx,mu)+bsxfun(@times,randn(D,NN,dtype),sig);
+            if isscalar(eta)
+                xi=x+bsxfun(@times,dx,mu)+bsxfun(@times,randn(D,NN,dtype),eta.*sig);
+            else
+                xi=x+bsxfun(@times,dx,mu)+(sig*eta').*randn(D,NN,dtype);
+            end
         end
     end
     szti=[D 1];
 else
-    ti=varargin{offset+2};
-
     if ~isfloat(ti) || ~isreal(ti)
         error('SDETools:sde_interp:InvalidTiDataType',...
               'Datatype of input Ti must be real single or real double.');
@@ -251,7 +363,7 @@ else
     D=length(ti);
     
     % Allocate out of bounds values as NaN, or override default extrapolation
-    dtype=superiorfloat(t,x,ti);
+    dtype=superiorfloat(t,x,ti,eta);
     if extrap && ~isnan(extrapval)
         switch extrapval
             case -Inf
@@ -305,20 +417,23 @@ else
         
         % Mean and standard deviation of bridge values
         mu=dti./dt;
-        sig=0*sqrt((1-mu).*dti);
+        sig=sqrt((1-mu).*dti);
         
         dx=diff(x);
         if isVecX
             % Calculate XI, use sort indices for TI to reduce dimensions
-            xi(p)=x(ii)+mu.*dx(ii)+sig.*randn(lp,1,dtype);
+            xi(p)=x(ii)+mu.*dx(ii)+eta.*sig.*randn(lp,1,dtype);
         else
             % Expand and re-index X, and dX, to match size of re-indexed TI, XI
             x=x(bsxfun(@plus,ii,0:M:M*(NN-1)));
             dx=dx(bsxfun(@plus,ii,0:(M-1):(M-1)*(NN-1)));
 
             % Calculate XI, use sort indices for TI to reduce dimensions
-            xi(p,:)=x+bsxfun(@times,dx,mu)+bsxfun(@times,randn(lp,NN,dtype),...
-                sig);
+            if isscalar(eta)
+                xi(p,:)=x+bsxfun(@times,dx,mu)+bsxfun(@times,randn(lp,NN,dtype),eta.*sig);
+            else
+                xi(p,:)=x+bsxfun(@times,dx,mu)+sig*eta'.*randn(lp,NN,dtype);
+            end
         end
     end
 end
