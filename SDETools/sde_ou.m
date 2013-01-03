@@ -237,7 +237,7 @@ if any(sig ~= 0)
                 tt = -tspan*th;
                 Y(2:end,:) = tdir*sqrt(diff(expm1(-2*tt),1,1)).*r;
             else
-                th = th(:)';
+                th = th(:).';
                 tt = -tspan*th;
                 Y(2:end,:) = bsxfun(@times,tdir*sqrt(diff(expm1(-2*tt),1,1)),r);
             end
@@ -270,7 +270,7 @@ if any(sig ~= 0)
             tt = -tspan*th;
             Y(2:end,:) = tdir*sqrt(diff(expm1(-2*tt),1,1)).*feval(RandFUN,lt-1,N);
         else
-            th = th(:)';
+            th = th(:).';
             tt = -tspan*th;
             Y(2:end,:) = bsxfun(@times,tdir*sqrt(diff(expm1(-2*tt),1,1)),feval(RandFUN,lt-1,N));
         end
@@ -281,34 +281,34 @@ if any(sig ~= 0)
     if nargout >= 2
         W = cumsum(Y,1);
         if N == 1 || isscalar(th) && ~isscalar(mu) && ~isscalar(sig)
-            Y = ett*y0'-expm1(tt)*mu(:)'+ett*(sig(:)'/sqrt(2*th)).*W;
+            Y = ett*y0.'-expm1(tt)*mu(:).'+ett*(sig(:).'/sqrt(2*th)).*W;
         else
             if isscalar(th) && isscalar(mu) && isscalar(sig)
-                Y = bsxfun(@minus,ett*y0',expm1(tt)*mu)+bsxfun(@times,ett*(sig/sqrt(2*th)),W);
+                Y = bsxfun(@minus,ett*y0.',expm1(tt)*mu)+bsxfun(@times,ett*(sig/sqrt(2*th)),W);
             elseif isscalar(th) && isscalar(mu)
-                Y = bsxfun(@minus,ett*y0',expm1(tt)*mu)+ett*(sig(:)'/sqrt(2*th)).*W;
+                Y = bsxfun(@minus,ett*y0.',expm1(tt)*mu)+ett*(sig(:).'/sqrt(2*th)).*W;
             elseif isscalar(th) && isscalar(sig)
-                Y = ett*y0'-expm1(tt)*mu(:)'+bsxfun(@times,ett*(sig/sqrt(2*th)),W);
+                Y = ett*y0.'-expm1(tt)*mu(:).'+bsxfun(@times,ett*(sig/sqrt(2*th)),W);
             elseif isscalar(mu)
-                Y = bsxfun(@times,ett,y0')-expm1(tt)*mu+bsxfun(@times,ett,(sig(:)'./sqrt(2*th))).*W;
+                Y = bsxfun(@times,ett,y0.')-expm1(tt)*mu+bsxfun(@times,ett,(sig(:).'./sqrt(2*th))).*W;
             else
-                Y = bsxfun(@times,ett,y0')-bsxfun(@times,expm1(tt),mu(:)')+bsxfun(@times,ett,(sig(:)'./sqrt(2*th))).*W;
+                Y = bsxfun(@times,ett,y0.')-bsxfun(@times,expm1(tt),mu(:).')+bsxfun(@times,ett,(sig(:).'./sqrt(2*th))).*W;
             end
         end
     else
         if N == 1 || isscalar(th) && ~isscalar(mu) && ~isscalar(sig)
-            Y = ett*y0'-expm1(tt)*mu(:)'+ett*(sig(:)'/sqrt(2*th)).*cumsum(Y,1);
+            Y = ett*y0.'-expm1(tt)*mu(:).'+ett*(sig(:).'/sqrt(2*th)).*cumsum(Y,1);
         else
             if isscalar(th) && isscalar(mu) && isscalar(sig)
-                Y = bsxfun(@minus,ett*y0',expm1(tt)*mu)+bsxfun(@times,ett*(sig/sqrt(2*th)),cumsum(Y,1));
+                Y = bsxfun(@minus,ett*y0.',expm1(tt)*mu)+bsxfun(@times,ett*(sig/sqrt(2*th)),cumsum(Y,1));
             elseif isscalar(th) && isscalar(mu)
-                Y = bsxfun(@minus,ett*y0',expm1(tt)*mu)+ett*(sig(:)'/sqrt(2*th)).*cumsum(Y,1);
+                Y = bsxfun(@minus,ett*y0.',expm1(tt)*mu)+ett*(sig(:).'/sqrt(2*th)).*cumsum(Y,1);
             elseif isscalar(th) && isscalar(sig)
-                Y = ett*y0'-expm1(tt)*mu(:)'+bsxfun(@times,ett*(sig/sqrt(2*th)),cumsum(Y,1));
+                Y = ett*y0.'-expm1(tt)*mu(:).'+bsxfun(@times,ett*(sig/sqrt(2*th)),cumsum(Y,1));
             elseif isscalar(mu)
-                Y = bsxfun(@times,ett,y0')-expm1(tt)*mu+bsxfun(@times,ett,(sig(:)'./sqrt(2*th))).*cumsum(Y,1);
+                Y = bsxfun(@times,ett,y0.')-expm1(tt)*mu+bsxfun(@times,ett,(sig(:).'./sqrt(2*th))).*cumsum(Y,1);
             else
-                Y = bsxfun(@times,ett,y0')-bsxfun(@times,expm1(tt),mu(:)')+bsxfun(@times,ett,(sig(:)'./sqrt(2*th))).*cumsum(Y,1);
+                Y = bsxfun(@times,ett,y0.')-bsxfun(@times,expm1(tt),mu(:).')+bsxfun(@times,ett,(sig(:).'./sqrt(2*th))).*cumsum(Y,1);
             end
         end
     end
@@ -326,17 +326,17 @@ else
     if any(th ~= 0)
         if N == 1 || isscalar(th) && ~isscalar(mu)
             tt = -tspan*th;
-            Y = exp(tt)*y0'-expm1(tt)*mu(:)';
+            Y = exp(tt)*y0.'-expm1(tt)*mu(:).';
         else
             if isscalar(th) && isscalar(mu)
                 tt = -tspan*th;
-                Y = bsxfun(@minus,exp(tt)*y0',expm1(tt)*mu);
+                Y = bsxfun(@minus,exp(tt)*y0.',expm1(tt)*mu);
             elseif isscalar(mu)
-                tt = -tspan*th(:)';
-                Y = bsxfun(@minus,bsxfun(@times,y0',exp(tt)),expm1(tt)*mu);
+                tt = -tspan*th(:).';
+                Y = bsxfun(@minus,bsxfun(@times,y0.',exp(tt)),expm1(tt)*mu);
             else
-                tt = -tspan*th(:)';
-                Y = bsxfun(@times,y0',exp(tt))-bsxfun(@times,expm1(tt),mu(:)');
+                tt = -tspan*th(:).';
+                Y = bsxfun(@times,y0.',exp(tt))-bsxfun(@times,expm1(tt),mu(:).');
             end
         end
     end

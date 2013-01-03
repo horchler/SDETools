@@ -92,7 +92,7 @@ function [Y,W,TE,YE,IE] = sde_milstein(f,g,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-25-10
-%   Revision: 1.0, 1-1-13
+%   Revision: 1.0, 1-2-13
 
 
 solver = 'SDE_MILSTEIN';
@@ -354,28 +354,28 @@ end
 if ConstFFUN && ConstGFUN && (D <= N || nargout >= 2) && ~NonNegative	% no FOR loop needed
     if ScalarNoise
         if ConstStep
-            Y(2:end,:) = bsxfun(@plus,y0',cumsum(bsxfun(@plus,fout'*h,Y(2:end,ones(1,N))*gout),1));
+            Y(2:end,:) = bsxfun(@plus,y0.',cumsum(bsxfun(@plus,fout.'*h,Y(2:end,ones(1,N))*gout),1));
         else
-            Y(2:end,:) = bsxfun(@plus,y0',cumsum(h*fout'+Y(2:end,ones(1,N))*gout,1));
+            Y(2:end,:) = bsxfun(@plus,y0.',cumsum(h*fout.'+Y(2:end,ones(1,N))*gout,1));
         end
     elseif DiagonalNoise
         if ConstStep
-            Y(2:end,:) = bsxfun(@plus,y0',cumsum(bsxfun(@plus,h*fout',bsxfun(@times,gout',Y(2:end,:))),1));
+            Y(2:end,:) = bsxfun(@plus,y0.',cumsum(bsxfun(@plus,h*fout.',bsxfun(@times,gout.',Y(2:end,:))),1));
         else
-            Y(2:end,:) = bsxfun(@plus,y0',cumsum(h*fout'+bsxfun(@times,gout',Y(2:end,:)),1));
+            Y(2:end,:) = bsxfun(@plus,y0.',cumsum(h*fout.'+bsxfun(@times,gout.',Y(2:end,:)),1));
         end
     else
         if ConstStep
             if D > N
-                Y(2:end,:) = bsxfun(@plus,y0',cumsum(bsxfun(@plus,fout'*h,W(2:end,:)*gout'),1));
+                Y(2:end,:) = bsxfun(@plus,y0.',cumsum(bsxfun(@plus,fout.'*h,W(2:end,:)*gout.'),1));
             else
-                Y(2:end,:) = bsxfun(@plus,y0',cumsum(bsxfun(@plus,fout'*h,Y(2:end,1:D)*gout'),1));
+                Y(2:end,:) = bsxfun(@plus,y0.',cumsum(bsxfun(@plus,fout.'*h,Y(2:end,1:D)*gout.'),1));
             end
         else
             if D > N
-                Y(2:end,:) = bsxfun(@plus,y0',cumsum(h*fout'+W(2:end,:)*gout',1));
+                Y(2:end,:) = bsxfun(@plus,y0.',cumsum(h*fout.'+W(2:end,:)*gout.',1));
             else
-                Y(2:end,:) = bsxfun(@plus,y0',cumsum(bsxfun(@plus,h*fout',Y(2:end,1:D)*gout'),1));
+                Y(2:end,:) = bsxfun(@plus,y0.',cumsum(bsxfun(@plus,h*fout.',Y(2:end,1:D)*gout.'),1));
             end
         end
     end

@@ -32,7 +32,7 @@ function xi=sde_interp(varargin)
 %	Some code based on version 5.41.4.18 of Matlab's INTERP1
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 2-26-12
-%   Revision: 1.0, 1-1-13
+%   Revision: 1.0, 1-2-13
 
 
 %XI = SDE_INTERP(T,X,TI)
@@ -293,7 +293,7 @@ if scaling
                   'floating-point scalar or vector equal in length to TI.']);
         end
     end
-    eta = eta(:);
+    eta=eta(:);
 else
     eta=1;
 end
@@ -348,7 +348,7 @@ if linspc
             if isscalar(eta)
                 xi=x+bsxfun(@times,dx,mu)+bsxfun(@times,randn(D,NN,dtype),eta.*sig);
             else
-                xi=x+bsxfun(@times,dx,mu)+(sig*eta').*randn(D,NN,dtype);
+                xi=x+bsxfun(@times,dx,mu)+(sig*eta.').*randn(D,NN,dtype);
             end
         end
     end
@@ -432,7 +432,7 @@ else
             if isscalar(eta)
                 xi(p,:)=x+bsxfun(@times,dx,mu)+bsxfun(@times,randn(lp,NN,dtype),eta.*sig);
             else
-                xi(p,:)=x+bsxfun(@times,dx,mu)+sig*eta'.*randn(lp,NN,dtype);
+                xi(p,:)=x+bsxfun(@times,dx,mu)+sig*eta.'.*randn(lp,NN,dtype);
             end
         end
     end

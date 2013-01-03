@@ -249,12 +249,12 @@ if any(sig ~= 0)
                 Y = exp(tspan*(mu-0.5*sig^2)+sig*W)*y0;
             else
                 if isscalar(mu) && isscalar(sig)
-                    Y = bsxfun(@times,y0',exp(bsxfun(@plus,tspan*(mu-0.5*sig^2),sig*W)));
+                    Y = bsxfun(@times,y0.',exp(bsxfun(@plus,tspan*(mu-0.5*sig^2),sig*W)));
                 elseif isscalar(sig)
-                    Y = bsxfun(@times,y0',exp(tspan*(mu(:)'-0.5*sig^2)+sig*W));
+                    Y = bsxfun(@times,y0.',exp(tspan*(mu(:).'-0.5*sig^2)+sig*W));
                 else
                     sig = sig(:)';
-                    Y = bsxfun(@times,y0',exp(tspan*(mu(:)'-0.5*sig.^2)+bsxfun(@times,sig,W)));
+                    Y = bsxfun(@times,y0.',exp(tspan*(mu(:).'-0.5*sig.^2)+bsxfun(@times,sig,W)));
                 end
             end
         else
@@ -262,12 +262,12 @@ if any(sig ~= 0)
                 Y = exp(tspan*(mu-0.5*sig^2)+sig*cumsum(Y,1))*y0;
             else
                 if isscalar(mu) && isscalar(sig)
-                    Y = bsxfun(@times,y0',exp(bsxfun(@plus,tspan*(mu-0.5*sig^2),sig*cumsum(Y,1))));
+                    Y = bsxfun(@times,y0.',exp(bsxfun(@plus,tspan*(mu-0.5*sig^2),sig*cumsum(Y,1))));
                 elseif isscalar(sig)
-                    Y = bsxfun(@times,y0',exp(tspan*(mu(:)'-0.5*sig^2)+sig*cumsum(Y,1)));
+                    Y = bsxfun(@times,y0.',exp(tspan*(mu(:).'-0.5*sig^2)+sig*cumsum(Y,1)));
                 else
                     sig = sig(:)';
-                    Y = bsxfun(@times,y0',exp(tspan*(mu(:)'-0.5*sig.^2)+bsxfun(@times,sig,cumsum(Y,1))));
+                    Y = bsxfun(@times,y0.',exp(tspan*(mu(:).'-0.5*sig.^2)+bsxfun(@times,sig,cumsum(Y,1))));
                 end
             end
         end
@@ -279,13 +279,13 @@ if any(sig ~= 0)
                 Y = exp(tspan*mu+sig*W)*y0;
             else
                 if isscalar(mu) && isscalar(sig)
-                    Y = bsxfun(@times,y0',exp(bsxfun(@plus,tspan*mu,sig*W)));
+                    Y = bsxfun(@times,y0.',exp(bsxfun(@plus,tspan*mu,sig*W)));
                 elseif isscalar(mu)
-                    Y = bsxfun(@times,y0',exp(bsxfun(@plus,tspan*mu,bsxfun(@times,sig(:)',W))));
+                    Y = bsxfun(@times,y0.',exp(bsxfun(@plus,tspan*mu,bsxfun(@times,sig(:).',W))));
                 elseif isscalar(sig)
-                    Y = bsxfun(@times,y0',exp(tspan*mu(:)'+sig*W));
+                    Y = bsxfun(@times,y0.',exp(tspan*mu(:).'+sig*W));
                 else
-                    Y = bsxfun(@times,y0',exp(tspan*mu(:)'+bsxfun(@times,sig(:)',W)));
+                    Y = bsxfun(@times,y0.',exp(tspan*mu(:).'+bsxfun(@times,sig(:).',W)));
                 end
             end
         else
@@ -293,13 +293,13 @@ if any(sig ~= 0)
                 Y = exp(tspan*mu+sig*cumsum(Y,1))*y0;
             else
                 if isscalar(mu) && isscalar(sig)
-                    Y = bsxfun(@times,y0',exp(bsxfun(@plus,tspan*mu,sig*cumsum(Y,1))));
+                    Y = bsxfun(@times,y0.',exp(bsxfun(@plus,tspan*mu,sig*cumsum(Y,1))));
                 elseif isscalar(mu)
-                    Y = bsxfun(@times,y0',exp(bsxfun(@plus,tspan*mu,bsxfun(@times,sig(:)',cumsum(Y,1)))));
+                    Y = bsxfun(@times,y0.',exp(bsxfun(@plus,tspan*mu,bsxfun(@times,sig(:).',cumsum(Y,1)))));
                 elseif isscalar(sig)
-                    Y = bsxfun(@times,y0',exp(tspan*mu(:)'+sig*cumsum(Y,1)));
+                    Y = bsxfun(@times,y0.',exp(tspan*mu(:).'+sig*cumsum(Y,1)));
                 else
-                    Y = bsxfun(@times,y0',exp(tspan*mu(:)'+bsxfun(@times,sig(:)',cumsum(Y,1))));
+                    Y = bsxfun(@times,y0.',exp(tspan*mu(:).'+bsxfun(@times,sig(:).',cumsum(Y,1))));
                 end
             end
         end
@@ -317,9 +317,9 @@ else
     % Solution not a function of sig, Ito and Stratonovich coincide
     if any(mu ~= 0)
         if N == 1 || isscalar(mu)
-            Y = exp(tspan*mu)*y0';
+            Y = exp(tspan*mu)*y0.';
         else
-            Y = bsxfun(@times,y0',exp(tspan*mu(:)'));
+            Y = bsxfun(@times,y0.',exp(tspan*mu(:).'));
         end
     end
 end

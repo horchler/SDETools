@@ -10,17 +10,17 @@ function [te,ye,ie,vnew,stop] = sdezero(EventsFUN,t,y,value,args)
 %   SDEZERO is loosely based on Matlab's ODEZERO helper function.
 
 
-[vnew,isterminal,direction] = feval(EventsFUN,t,y,args{:});
+[vnew,isterminal,direction] = feval(EventsFUN,t,y(:),args{:});
 if isempty(direction)
     direction = 0;
 end
-z = sign(vnew).*sign(value) <= 0 & (direction == 0 | direction == 1 ...
+z = sign(vnew).*sign(value) < 0 & (direction == 0 | direction == 1 ...
     & vnew > value | direction == -1 & vnew < value);
 if any(z)
     ie = find(z(:));
     q = zeros(length(ie),1);
     te = t+q;
-    y = y(:)';
+    y = y.';
     ye = y(1+q,:);
     stop = any(isterminal & z);
 else
