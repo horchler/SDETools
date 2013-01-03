@@ -58,6 +58,12 @@ function [Y,W,TE,YE,IE] = sde_gbm(mu,sig,tspan,y0,options,varargin)
 %       converge to different solutions, so care should be taken to ensure that
 %       the form of SDEType matches the that of the desired solution.
 %
+%       Only diagonal noise is supported by this function. Setting the
+%       DiagonalNoise OPTIONS property to 'no' to specify the more general
+%       correlated noise case will result in an error. A numerical SDE solver
+%       such as SDE_EULER should be used in this case or for other
+%       generalizations, e.g., time-varying parameters.
+%
 %   See also:
 %       Explicit SDE solvers:	SDE_EULER, SDE_MILSTEIN
 %       Implicit SDE solvers:   
@@ -75,7 +81,7 @@ function [Y,W,TE,YE,IE] = sde_gbm(mu,sig,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
-%   Revision: 1.0, 1-1-13
+%   Revision: 1.0, 1-2-13
 
 
 func = 'SDE_GBM';
@@ -119,7 +125,6 @@ if ~all(strcmp(dataType,{class(mu),class(sig),class(tspan),class(y0)}))
            ['Mixture of single and double data for inputs MU, SIG, TSPAN, '...
             'and Y0.']);
 end
-isDouble = strcmp(dataType,'double');
 
 % Handle function arguments (NOTE: ResetStream is called by onCleanup())
 [N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,CustomRandFUN,...
@@ -174,6 +179,7 @@ else
 end
 
 % State array
+isDouble = strcmp(dataType,'double');
 if isDouble
     Y(lt,N) = 0;
 else
@@ -181,7 +187,7 @@ else
 end
 
 % Diffusion parameters aren't all zero
-if ~all(sig == 0)
+if any(sig ~= 0)
     % Wiener increments from normal variates, store in state if possible
     if CustomRandFUN    % check output of alternative RandFUN
         try
@@ -190,13 +196,13 @@ if ~all(sig == 0)
             if ~sde_ismatrix(r) || isempty(r) || ~isfloat(r)
                 error('SDETools:sde_gbm:RandFUNNot2DArray3',...
                      ['RandFUN must return a non-empty matrix of floating '...
-                      'point values.  See %s.'],solver);
+                      'point values.  See %s.'],func);
             end
             [m,n] = size(r);
             if m ~= lt-1 || n ~= N
                 error('SDETools:sde_gbm:RandFUNDimensionMismatch3',...
                      ['The specified alternative RandFUN did not output a '...
-                      '%d by %d matrix as requested.   See %s.',lt-1,N,solver]);
+                      '%d by %d matrix as requested.   See %s.',lt-1,N,func]);
             end
             if N == 1 || ConstStep
                 Y(2:end,:) = tdir*sqrt(h).*r;
@@ -209,19 +215,19 @@ if ~all(sig == 0)
                 case 'MATLAB:TooManyInputs'
                     error('SDETools:sde_gbm:RandFUNTooFewInputs',...
                           'RandFUN must have at least two inputs.  See %s.',...
-                          solver);
+                          func);
                 case 'MATLAB:TooManyOutputs'
                     error('SDETools:sde_gbm:RandFUNNoOutput',...
                          ['The output of RandFUN was not specified. RandFUN '...
-                          'must return a non-empty matrix.  See %s.'],solver);
+                          'must return a non-empty matrix.  See %s.'],func);
                 case 'MATLAB:unassignedOutputs'
                     error('SDETools:sde_gbm:RandFUNUnassignedOutput',...
                          ['The first output of RandFUN was not assigned.'...
-                          '  See %s.'],solver);
+                          '  See %s.'],func);
                 case 'MATLAB:minrhs'
                     error('SDETools:sde_gbm:RandFUNTooManyInputs',...
                          ['RandFUN must not require more than two inputs.'...
-                          '  See %s.'],solver);
+                          '  See %s.'],func);
                 otherwise
                     rethrow(err);
             end
@@ -309,10 +315,12 @@ else
     end
     
     % Solution not a function of sig, Ito and Stratonovich coincide
-    if N == 1 || isscalar(mu)
-        Y = exp(tspan*mu)*y0';
-    else
-        Y = bsxfun(@times,y0',exp(tspan*mu(:)'));
+    if any(mu ~= 0)
+        if N == 1 || isscalar(mu)
+            Y = exp(tspan*mu)*y0';
+        else
+            Y = bsxfun(@times,y0',exp(tspan*mu(:)'));
+        end
     end
 end
 

@@ -8,7 +8,10 @@ function [Y,W,TE,YE,IE] = sde_ou(th,mu,sig,tspan,y0,options,varargin)
 %   is a length M vector. Y0 is a length N vector. The drift rate parameter
 %   THETA, the drift mean parameter MU, and the diffusion parameter SIG may be
 %   scalars or length N vectors. Each row in the M-by-N solution array YOUT
-%   corresponds to a time in TSPAN.
+%   corresponds to a time in TSPAN. NaN is returned for any elements of the
+%   drift rate parameter, THETA, equal to zero, unless the corresponding SIG
+%   is also zero, as an analytical solution is not available for the driftless
+%   diffusion case.
 %
 %   [YOUT, W] = SDE_OU(THETA,MU,SIG,TSPAN,Y0,...) outputs the M-by-N matrix W of
 %   integrated Weiner increments that were used by the solver. Each row of W
@@ -19,9 +22,7 @@ function [Y,W,TE,YE,IE] = sde_ou(th,mu,sig,tspan,y0,options,varargin)
 %   SDESET function. See SDESET for details. A commonly used option is to
 %   manually specify the random seed via the RandSeed property, which creates a
 %   new random number stream, instead of using the default stream, to generate
-%   the Wiener increments. If the DiagonalNoise property is set to 'no' to
-%   specify the more general correlated noise case, SIG may be an N-by-D matrix,
-%   and a numerical solution will be returned.
+%   the Wiener increments.
 %
 %   [YOUT, W, TE, YE, IE] = SDE_OU(THETA,MU,SIG,TSPAN,Y0,OPTIONS) with the
 %   EventsFUN property set to a function handle, in order to specify an events
@@ -54,6 +55,13 @@ function [Y,W,TE,YE,IE] = sde_ou(th,mu,sig,tspan,y0,options,varargin)
 %       diffusion term, g(t,y) = SIG, is not a function of the state variables.
 %       In this case the Ito and Stratonovich interpretations are equivalent.
 %
+%       Only diagonal noise is supported by this function. Setting the
+%       DiagonalNoise OPTIONS property to 'no' to specify the more general
+%       correlated noise case will result in an error. A numerical SDE solver
+%       such as SDE_EULER should be used in this case as well as in the case of
+%       driftless diffusion, i.e., THETA = 0, or for other generalization, e.g.,
+%       time-varying parameters.
+%
 %   See also:
 %       Explicit SDE solvers:	SDE_EULER, SDE_MILSTEIN
 %       Implicit SDE solvers:   
@@ -71,7 +79,7 @@ function [Y,W,TE,YE,IE] = sde_ou(th,mu,sig,tspan,y0,options,varargin)
 %   of Mathematics, Vol. 43, No. 2, pp. 351-369, April 1942.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-8-12
-%   Revision: 1.0, 1-1-13
+%   Revision: 1.0, 1-2-13
 
 
 func = 'SDE_OU';
@@ -99,18 +107,18 @@ end
 % Check th, mu, and sig types
 if isempty(th) || ~isfloat(th) || ~isvector(th)
     error('SDETools:sde_ou:ThetaEmptyOrNotFloatVector',...
-         ['The drift rate parameter, THETA, must be non-empty vector of '...
-          'singles or doubles.  See %s.'],func);
+         ['The drift rate parameter, THETA, must be non-empty '...
+          'floating-point vector.  See %s.'],func);
 end
 if isempty(mu) || ~isfloat(mu) || ~isvector(mu)
     error('SDETools:sde_ou:MuEmptyOrNotFloatVector',...
-         ['The drift mean parameter, MU, must be non-empty vector of '...
-          'singles or doubles.  See %s.'],func);
+         ['The drift mean parameter, MU, must be non-empty floating-point '...
+          'vector.  See %s.'],func);
 end
 if isempty(sig) || ~isfloat(sig) || ~isvector(sig)
     error('SDETools:sde_ou:SigEmptyOrNotFloatVector',...
-         ['The diffusion parameter, SIG, must be non-empty vector of '...
-          'singles or doubles.  See %s.'],func);
+         ['The diffusion parameter, SIG, must be non-empty floating-point '...
+          'vector.  See %s.'],func);
 end
 
 % Determine the dominant data type, single or double
@@ -121,7 +129,6 @@ if ~all(strcmp(dataType,{class(th),class(mu),class(sig),class(tspan),...
            ['Mixture of single and double data for inputs THETA, MU, SIG, '...
             'TSPAN, and Y0.']);
 end
-isDouble = strcmp(dataType,'double');
 
 % Handle function arguments (NOTE: ResetStream is called by onCleanup())
 [N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,CustomRandFUN,...
@@ -150,6 +157,24 @@ if any(sig < 0)
     error('SDETools:sde_ou:SigNegative',...
          ['The diffusion parameter, SIG, must be greater than or equal to '...
           'zero.  See %s.'],func);
+end
+
+% Warn about driftless diffusion case
+th0 = (th == 0 & sig ~= 0);
+if any(th0)
+    if all(th0)
+        warning('SDETools:sde_ou:DriftlessDiffusion',...
+               ['The drift rate parameter, THETA, must be non-zero: NaN '...
+                'will be returned. The analytical solution does not support '...
+                'driftless diffusion.  See %s.'],func);
+    else
+        warning('SDETools:sde_ou:DriftlessDiffusion',...
+               ['Some elements of the drift rate parameter, THETA, are '...
+                'non-zero: NaN will be returned for these elements unless '...
+                'corresponding elements of SIG are also zero. The '...
+                'analytical solution does not support driftless diffusion.  '...
+                'See %s.'],func);
+    end
 end
 
 % Initialize outputs for zero-crossing events
@@ -183,14 +208,15 @@ else
 end
 
 % State array
+isDouble = strcmp(dataType,'double');
 if isDouble
     Y(lt,N) = 0;
 else
     Y(lt,N) = single(0);
 end
 
-% Diffusion parameters aren't all zero
-if ~all(sig == 0)
+% Diffusion parameters are not all zero
+if any(sig ~= 0)
     % Wiener increments from normal variates, store in state if possible
     if CustomRandFUN    % check output of alternative RandFUN
         try
@@ -199,13 +225,13 @@ if ~all(sig == 0)
             if ~sde_ismatrix(r) || isempty(r) || ~isfloat(r)
                 error('SDETools:sde_ou:RandFUNNot2DArray3',...
                      ['RandFUN must return a non-empty matrix of floating '...
-                      'point values.  See %s.'],solver);
+                      'point values.  See %s.'],func);
             end
             [m,n] = size(r);
             if m ~= lt-1 || n ~= N
                 error('SDETools:sde_ou:RandFUNDimensionMismatch3',...
                      ['The specified alternative RandFUN did not output a '...
-                      '%d by %d matrix as requested.   See %s.',N,lt-1,solver]);
+                      '%d by %d matrix as requested.   See %s.',N,lt-1,func]);
             end
             if N == 1 || isscalar(th)
                 tt = -tspan*th;
@@ -221,19 +247,19 @@ if ~all(sig == 0)
                 case 'MATLAB:TooManyInputs'
                     error('SDETools:sde_ou:RandFUNTooFewInputs',...
                           'RandFUN must have at least two inputs.  See %s.',...
-                          solver);
+                          func);
                 case 'MATLAB:TooManyOutputs'
                     error('SDETools:sde_ou:RandFUNNoOutput',...
                          ['The output of RandFUN was not specified. RandFUN '...
-                          'must return a non-empty matrix.  See %s.'],solver);
+                          'must return a non-empty matrix.  See %s.'],func);
                 case 'MATLAB:unassignedOutputs'
                     error('SDETools:sde_ou:RandFUNUnassignedOutput',...
                          ['The first output of RandFUN was not assigned.'...
-                          '  See %s.'],solver);
+                          '  See %s.'],func);
                 case 'MATLAB:minrhs'
                     error('SDETools:sde_ou:RandFUNTooManyInputs',...
                          ['RandFUN must not require more than two inputs.'...
-                          '  See %s.'],solver);
+                          '  See %s.'],func);
                 otherwise
                     rethrow(err);
             end
@@ -249,7 +275,7 @@ if ~all(sig == 0)
             Y(2:end,:) = bsxfun(@times,tdir*sqrt(diff(expm1(-2*tt),1,1)),feval(RandFUN,lt-1,N));
         end
     end
-    
+
     % Only allocate W matrix if requested as output
     ett = exp(tt);
     if nargout >= 2
@@ -295,21 +321,23 @@ else
             W(lt,N) = single(0);
         end
     end
-    
+
     % Solution not a function of sig
-    if N == 1 || isscalar(th) && ~isscalar(mu)
-        tt = -tspan*th;
-        Y = exp(tt)*y0'-expm1(tt)*mu(:)';
-    else
-        if isscalar(th) && isscalar(mu)
+    if any(th ~= 0)
+        if N == 1 || isscalar(th) && ~isscalar(mu)
             tt = -tspan*th;
-            Y = bsxfun(@minus,exp(tt)*y0',expm1(tt)*mu);
-        elseif isscalar(mu)
-            tt = -tspan*th(:)';
-            Y = bsxfun(@minus,bsxfun(@times,y0',exp(tt)),expm1(tt)*mu);
+            Y = exp(tt)*y0'-expm1(tt)*mu(:)';
         else
-            tt = -tspan*th(:)';
-            Y = bsxfun(@times,y0',exp(tt))-bsxfun(@times,expm1(tt),mu(:)');
+            if isscalar(th) && isscalar(mu)
+                tt = -tspan*th;
+                Y = bsxfun(@minus,exp(tt)*y0',expm1(tt)*mu);
+            elseif isscalar(mu)
+                tt = -tspan*th(:)';
+                Y = bsxfun(@minus,bsxfun(@times,y0',exp(tt)),expm1(tt)*mu);
+            else
+                tt = -tspan*th(:)';
+                Y = bsxfun(@times,y0',exp(tt))-bsxfun(@times,expm1(tt),mu(:)');
+            end
         end
     end
 end

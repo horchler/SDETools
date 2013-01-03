@@ -7,7 +7,7 @@ function [N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,CustomRandFUN,...
 %       SDE_GBM, SDE_OU, SDEARGUMENTS, SDEGET, FUNCTION_HANDLE, RANDSTREAM
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
-%   Revision: 1.0, 1-1-13
+%   Revision: 1.0, 1-2-13
 
 %   SDEARGUMENTS_SPECIAL is partially based on an updating of version 1.12.4.15
 %   of Matlab's ODEARGUMENTS.
@@ -106,6 +106,21 @@ else    % Use Matlab's random number generator for normal variates
     
     % Function to be call on completion or early termination of integration
     ResetStream = onCleanup(@()sdereset_stream(Stream));
+end
+
+% Check if noise is not specified as diagonal, i.e., uncorrelated
+if strcmp(sdeget(options,'DiagonalNoise','yes','flag'),'no');
+    error('SDETools:sdearguments_special:NonDiagonalNoiseUnsupported',...
+         ['The DiagonalNoise property is set to ''no'', but this function '...
+          'only supports diagonal noise, not the general correlated noise '...
+          'case.  See %s.'],func);
+end
+
+% Check if non-negative property is specified
+if ~strcmp(sdeget(options,'NonNegative','no','flag'),'no')
+    error('SDETools:sdearguments_special:NonNegativeUnsupported',...
+         ['The NonNegative property is set to a value other than ''no'', '...
+          'but this function does not support this option.  See %s.'],func);
 end
 
 % Solution method is dependent on if SDE is Stratonovich or Ito form

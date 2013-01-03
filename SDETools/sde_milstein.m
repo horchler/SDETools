@@ -351,7 +351,7 @@ if nargout >= 2 && D <= N
 end
 
 % Integration loop
-if ConstFFUN && ConstGFUN && (D <= N || nargout >= 2) && ~NonNegative && ~isEvents	% no FOR loop needed
+if ConstFFUN && ConstGFUN && (D <= N || nargout >= 2) && ~NonNegative	% no FOR loop needed
     if ScalarNoise
         if ConstStep
             Y(2:end,:) = bsxfun(@plus,y0',cumsum(bsxfun(@plus,fout'*h,Y(2:end,ones(1,N))*gout),1));
@@ -376,6 +376,31 @@ if ConstFFUN && ConstGFUN && (D <= N || nargout >= 2) && ~NonNegative && ~isEven
                 Y(2:end,:) = bsxfun(@plus,y0',cumsum(h*fout'+W(2:end,:)*gout',1));
             else
                 Y(2:end,:) = bsxfun(@plus,y0',cumsum(bsxfun(@plus,h*fout',Y(2:end,1:D)*gout'),1));
+            end
+        end
+    end
+    
+    % Check for and handle zero-crossing events
+    if isEvents
+        for i = 2:lt
+            [te,ye,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i),Y(i,:),EventsValue,varargin);
+            if ~isempty(te)
+                if nargout >= 3
+                    TE = [TE;te];           %#ok<AGROW>
+                    if nargout >= 4
+                        YE = [YE;ye];       %#ok<AGROW>
+                        if nargout >= 5
+                            IE = [IE;ie];	%#ok<AGROW>
+                        end
+                    end
+                end
+                if IsTerminal
+                    Y = Y(1:i,:);
+                    if nargout >= 2
+                        W = W(1:i,:);
+                    end
+                    return;
+                end
             end
         end
     end
