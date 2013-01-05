@@ -10,7 +10,7 @@ function [N,D,D0,tspan,tdir,lt,y0,f0,g0,h,ConstStep,dataType,idxNonNegative,...
 %       RANDSTREAM
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 12-12-11
-%   Revision: 1.0, 1-1-13
+%   Revision: 1.0, 1-4-13
 
 %   SDEARGUMENTS is partially based on an updating of version 1.12.4.15 of
 %   Matlab's ODEARGUMENTS.
@@ -272,9 +272,11 @@ else
     ScalarNoise = false;
     D = n;
 end
-if ConstGFUN
+if ConstGFUN && ~DiagonalNoise
     D0 = find(g0(idxConstGFUN) ~= 0);
     D = length(D0);
+else
+    D0 = 1:D;
 end
 
 % Determine the dominant data type, single or double

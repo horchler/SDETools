@@ -8,10 +8,7 @@ function [Y,W,TE,YE,IE] = sde_ou(th,mu,sig,tspan,y0,options,varargin)
 %   is a length M vector. Y0 is a length N vector. The drift rate parameter
 %   THETA, the drift mean parameter MU, and the diffusion parameter SIG may be
 %   scalars or length N vectors. Each row in the M-by-N solution array YOUT
-%   corresponds to a time in TSPAN. NaN is returned for any elements of the
-%   drift rate parameter, THETA, equal to zero, unless the corresponding SIG
-%   is also zero, as an analytical solution is not available for the driftless
-%   diffusion case.
+%   corresponds to a time in TSPAN.
 %
 %   [YOUT, W] = SDE_OU(THETA,MU,SIG,TSPAN,Y0,...) outputs the M-by-N matrix W of
 %   integrated Weiner increments that were used by the solver. Each row of W
@@ -58,9 +55,8 @@ function [Y,W,TE,YE,IE] = sde_ou(th,mu,sig,tspan,y0,options,varargin)
 %       Only diagonal noise is supported by this function. Setting the
 %       DiagonalNoise OPTIONS property to 'no' to specify the more general
 %       correlated noise case will result in an error. A numerical SDE solver
-%       such as SDE_EULER should be used in this case as well as in the case of
-%       driftless diffusion, i.e., THETA = 0, or for other generalization, e.g.,
-%       time-varying parameters.
+%       such as SDE_EULER should be used in this case or for other
+%       generalizations, e.g., time-varying parameters.
 %
 %   See also:
 %       Explicit SDE solvers:	SDE_EULER, SDE_MILSTEIN
@@ -70,16 +66,17 @@ function [Y,W,TE,YE,IE] = sde_ou(th,mu,sig,tspan,y0,options,varargin)
 %       SDE demos/validation:   SDE_EULER_VALIDATE, SDE_MILSTEIN_VALIDATE
 %   	Other:                  FUNCTION_HANDLE, RANDSTREAM
 
-%   The conditional analytic solution used is
+%   The conditional analytic solution used is for non-zero THETA
 %       Y = Y0*exp(-THETA*t)+MU*(1-exp(-THETA*t))
 %           +(SIG/sqrt(2*THETA))*exp(-THETA*t)*W(exp(2*THETA*t)-1),
-%   where W() is a scaled time-transformed Wiener process.
+%   where W() is a scaled time-transformed Wiener process. If THETA = 0 the
+%   analytic solution for a driftless Wiener process is used: Y = Y0+SIG*W(t).
 %
 %   From: J. L. Doob, "The Brownian Movement and Stochastic Equations," Annals
 %   of Mathematics, Vol. 43, No. 2, pp. 351-369, April 1942.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-8-12
-%   Revision: 1.0, 1-2-13
+%   Revision: 1.0, 1-4-13
 
 
 func = 'SDE_OU';
@@ -159,24 +156,6 @@ if any(sig < 0)
           'zero.  See %s.'],func);
 end
 
-% Warn about driftless diffusion case
-th0 = (th == 0 & sig ~= 0);
-if any(th0)
-    if all(th0)
-        warning('SDETools:sde_ou:DriftlessDiffusion',...
-               ['The drift rate parameter, THETA, must be non-zero: NaN '...
-                'will be returned. The analytical solution does not support '...
-                'driftless diffusion.  See %s.'],func);
-    else
-        warning('SDETools:sde_ou:DriftlessDiffusion',...
-               ['Some elements of the drift rate parameter, THETA, are '...
-                'non-zero: NaN will be returned for these elements unless '...
-                'corresponding elements of SIG are also zero. The '...
-                'analytical solution does not support driftless diffusion.  '...
-                'See %s.'],func);
-    end
-end
-
 % Initialize outputs for zero-crossing events
 isEvents = ~isempty(EventsFUN);
 if isEvents
@@ -215,32 +194,52 @@ else
     Y(lt,N) = single(0);
 end
 
+% Expand and orient parameter and y0 vectors, find non-zero values
+if N > 1 && isscalar(th)
+    if isscalar(sig)
+        sig = sig(ones(1,N));
+    end
+else
+    sig = sig(:).';
+end
+sig0 = (sig ~= 0);
+
+th = th(:).';
+th0 = (th ~= 0);
+
+mu = mu(:).';
+if ~isscalar(mu)
+    if ~isscalar(th) && any(th0) && any(~th0)
+        mu = mu(ones(1,N));
+    else
+        mu = mu(:).';
+    end
+end
+
+y0 = y0.';
+
 % Diffusion parameters are not all zero
-if any(sig ~= 0)
-    % Wiener increments from normal variates, store in state if possible
-    if CustomRandFUN    % check output of alternative RandFUN
+if any(sig0)
+    % Check output of alternative RandFUN if present
+    D = nnz(sig0);
+    if CustomRandFUN
         try
             % Store scaled time-transformed Wiener increments in Y indirectly
-            r = feval(RandFUN,lt-1,N);
+            r = feval(RandFUN,lt-1,D);
             if ~sde_ismatrix(r) || isempty(r) || ~isfloat(r)
                 error('SDETools:sde_ou:RandFUNNot2DArray3',...
                      ['RandFUN must return a non-empty matrix of floating '...
                       'point values.  See %s.'],func);
             end
             [m,n] = size(r);
-            if m ~= lt-1 || n ~= N
+            if m ~= lt-1 || n ~= D
                 error('SDETools:sde_ou:RandFUNDimensionMismatch3',...
                      ['The specified alternative RandFUN did not output a '...
-                      '%d by %d matrix as requested.   See %s.',N,lt-1,func]);
+                      '%d by %d matrix as requested.   See %s.',D,lt-1,func]);
             end
-            if N == 1 || isscalar(th)
-                tt = -tspan*th;
-                Y(2:end,:) = tdir*sqrt(diff(expm1(-2*tt),1,1)).*r;
-            else
-                th = th(:).';
-                tt = -tspan*th;
-                Y(2:end,:) = bsxfun(@times,tdir*sqrt(diff(expm1(-2*tt),1,1)),r);
-            end
+
+            % State array
+            Y(2:end,sig0) = r;
             clear r;    % remove large temporary variable to save memory
         catch err
             switch err.identifier
@@ -264,56 +263,95 @@ if any(sig ~= 0)
                     rethrow(err);
             end
         end
-    else    % No error checking needed if default RANDN used
-        % Store scaled time-transformed Wiener increments in Y
-        if N == 1 || isscalar(th)
-            tt = -tspan*th;
-            Y(2:end,:) = tdir*sqrt(diff(expm1(-2*tt),1,1)).*feval(RandFUN,lt-1,N);
-        else
-            th = th(:).';
-            tt = -tspan*th;
-            Y(2:end,:) = bsxfun(@times,tdir*sqrt(diff(expm1(-2*tt),1,1)),feval(RandFUN,lt-1,N));
-        end
+    else
+        % No error checking needed if default RANDN used
+        Y(2:end,sig0) = feval(RandFUN,lt-1,D);
     end
-
-    % Only allocate W matrix if requested as output
-    ett = exp(tt);
-    if nargout >= 2
-        W = cumsum(Y,1);
-        if N == 1 || isscalar(th) && ~isscalar(mu) && ~isscalar(sig)
-            Y = ett*y0.'-expm1(tt)*mu(:).'+ett*(sig(:).'/sqrt(2*th)).*W;
+    
+    % Store scaled time-transformed Wiener increments in Y
+    if all(th0)
+     	tt = -tspan*th;
+        if N == 1 || ~isscalar(th)
+            Y(2:end,:) = tdir*sqrt(diff(expm1(-2*tt),1,1)).*Y(2:end,:);
         else
-            if isscalar(th) && isscalar(mu) && isscalar(sig)
-                Y = bsxfun(@minus,ett*y0.',expm1(tt)*mu)+bsxfun(@times,ett*(sig/sqrt(2*th)),W);
-            elseif isscalar(th) && isscalar(mu)
-                Y = bsxfun(@minus,ett*y0.',expm1(tt)*mu)+ett*(sig(:).'/sqrt(2*th)).*W;
-            elseif isscalar(th) && isscalar(sig)
-                Y = ett*y0.'-expm1(tt)*mu(:).'+bsxfun(@times,ett*(sig/sqrt(2*th)),W);
-            elseif isscalar(mu)
-                Y = bsxfun(@times,ett,y0.')-expm1(tt)*mu+bsxfun(@times,ett,(sig(:).'./sqrt(2*th))).*W;
+            Y(2:end,:) = bsxfun(@times,tdir*sqrt(diff(expm1(-2*tt),1,1)),Y(2:end,:));
+        end
+	elseif all(~th0)
+        Y(2:end,:) = bsxfun(@times,tdir*sqrt(diff(tspan)),Y(2:end,:));
+    else
+        i = th0;
+        D = nnz(i);
+        
+        tt = -tspan*th(i);
+        if D == 1
+            Y(2:end,i) = tdir*sqrt(diff(expm1(-2*tt),1,1)).*Y(2:end,i);
+        else
+            Y(2:end,i) = bsxfun(@times,tdir*sqrt(diff(expm1(-2*tt),1,1)),Y(2:end,i));
+        end
+        
+        i = ~i;
+        Y(2:end,i) = bsxfun(@times,tdir*sqrt(diff(tspan)),Y(2:end,i));
+    end
+    
+    % Integrate Wiener increments
+    Y(:,sig0) = cumsum(Y(:,sig0),1);
+    
+    % Only allocate W matrix if requested as output
+    if nargout >= 2
+        W = Y;
+    end
+    
+    % Evaluate analytic solution
+    if all(th0)
+        % All th ~= 0
+        ett = exp(tt);
+        if N == 1
+            Y = ett.*(y0-mu+(sig/sqrt(2*th))*Y);
+        elseif isscalar(th)
+            if isscalar(mu)
+                Y = ett*(y0-mu)+mu+ett*(sig/sqrt(2*th)).*Y;
             else
-                Y = bsxfun(@times,ett,y0.')-bsxfun(@times,expm1(tt),mu(:).')+bsxfun(@times,ett,(sig(:).'./sqrt(2*th))).*W;
+                Y = ett*y0-expm1(tt)*mu+ett*(sig/sqrt(2*th)).*Y;
+            end
+        else
+            Y = ett.*(bsxfun(@plus,y0-mu,bsxfun(@times,sig./sqrt(2*th),Y)));
+        end
+	elseif all(~th0)
+        % All th = 0, driftless noise
+        if N == 1
+            Y = y0+sig*Y;
+        else
+            if isscalar(sig)
+                Y = bsxfun(@plus,y0,sig*Y);
+            else
+                Y = bsxfun(@plus,y0,bsxfun(@times,sig,Y));
             end
         end
     else
-        if N == 1 || isscalar(th) && ~isscalar(mu) && ~isscalar(sig)
-            Y = ett*y0.'-expm1(tt)*mu(:).'+ett*(sig(:).'/sqrt(2*th)).*cumsum(Y,1);
+        % Some th ~= 0
+        i = th0;
+        D = nnz(i);
+        th = th(i);
+        if D == 1
+            Y(:,i) = exp(-tspan*th).*(y0(i)-mu(i)+(sig(i)/sqrt(2*th))*Y(:,i));
         else
-            if isscalar(th) && isscalar(mu) && isscalar(sig)
-                Y = bsxfun(@minus,ett*y0.',expm1(tt)*mu)+bsxfun(@times,ett*(sig/sqrt(2*th)),cumsum(Y,1));
-            elseif isscalar(th) && isscalar(mu)
-                Y = bsxfun(@minus,ett*y0.',expm1(tt)*mu)+ett*(sig(:).'/sqrt(2*th)).*cumsum(Y,1);
-            elseif isscalar(th) && isscalar(sig)
-                Y = ett*y0.'-expm1(tt)*mu(:).'+bsxfun(@times,ett*(sig/sqrt(2*th)),cumsum(Y,1));
-            elseif isscalar(mu)
-                Y = bsxfun(@times,ett,y0.')-expm1(tt)*mu+bsxfun(@times,ett,(sig(:).'./sqrt(2*th))).*cumsum(Y,1);
+            Y(:,i) = exp(-tspan*th).*(bsxfun(@plus,y0(i)-mu(i),bsxfun(@times,sig(i)./sqrt(2*th),Y(:,i))));
+        end
+        
+        % Some th = 0, driftless noise
+        i = ~i;
+        if N-D == 1 && isscalar(sig)
+            Y(:,i) = y0(i)+sig*Y(:,i);
+        else
+            if isscalar(sig)
+                Y(:,i) = bsxfun(@plus,y0(i),sig*Y(:,i));
             else
-                Y = bsxfun(@times,ett,y0.')-bsxfun(@times,expm1(tt),mu(:).')+bsxfun(@times,ett,(sig(:).'./sqrt(2*th))).*cumsum(Y,1);
+                Y(:,i) = bsxfun(@plus,y0(i),bsxfun(@times,sig(i),Y(:,i)));
             end
         end
     end
 else
-    % Only allocate W matrix if requested as output
+    % Only allocate W matrix if requested as output (it will be all zero)
     if nargout >= 2
         if isDouble
             W(lt,N) = 0;
@@ -323,22 +361,36 @@ else
     end
 
     % Solution not a function of sig
-    if any(th ~= 0)
-        if N == 1 || isscalar(th) && ~isscalar(mu)
-            tt = -tspan*th;
-            Y = exp(tt)*y0.'-expm1(tt)*mu(:).';
-        else
-            if isscalar(th) && isscalar(mu)
-                tt = -tspan*th;
-                Y = bsxfun(@minus,exp(tt)*y0.',expm1(tt)*mu);
-            elseif isscalar(mu)
-                tt = -tspan*th(:).';
-                Y = bsxfun(@minus,bsxfun(@times,y0.',exp(tt)),expm1(tt)*mu);
+    if all(th0)
+        % All th ~= 0, pure drift, noise magnitude, sig, is zero
+        tt = -tspan*th;
+        ett = exp(tt);
+        if N == 1
+            Y = ett.*(y0-mu);
+        elseif isscalar(th)
+            if isscalar(mu)
+                Y = ett*(y0-mu)+mu;
             else
-                tt = -tspan*th(:).';
-                Y = bsxfun(@times,y0.',exp(tt))-bsxfun(@times,expm1(tt),mu(:).');
+                Y = ett*y0-expm1(tt)*mu;
             end
+        else
+            Y = bsxfun(@times,ett,y0-mu);
         end
+    elseif all(~th0)
+        % All th = 0, driftless noise, but noise magnitude, sig, is zero
+        Y = bsxfun(@plus,y0,Y);
+    else
+        % Some th ~= 0, pure drift, noise magnitude, sig, is zero
+        i = th0;
+        if nnz(i) == 1
+            Y(:,i) = exp(-tspan*th(i)).*(y0(i)-mu(i));
+        else
+            Y(:,i) = bsxfun(@times,exp(-tspan*th(i)),y0(i)-mu(i));
+        end
+        
+        % Some th = 0, driftless noise, but noise magnitude, sig, is zero
+        i = ~i;
+        Y(:,i) = bsxfun(@plus,y0(i),Y(:,i));
     end
 end
 

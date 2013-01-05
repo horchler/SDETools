@@ -81,7 +81,7 @@ function [Y,W,TE,YE,IE] = sde_gbm(mu,sig,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
-%   Revision: 1.0, 1-2-13
+%   Revision: 1.0, 1-3-13
 
 
 func = 'SDE_GBM';
@@ -321,6 +321,8 @@ else
         else
             Y = bsxfun(@times,y0.',exp(tspan*mu(:).'));
         end
+    else
+        Y = bsxfun(@plus,y0.',Y);
     end
 end
 
