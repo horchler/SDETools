@@ -1,11 +1,12 @@
 %SDETools
-%   Version 1.0, 12-31-12
+%   Version 1.0, 1-5-13
 %
 %   Stochastic differential equation (SDE) solvers.
 %       sde_euler       - Euler-Maruyama (Ito) and Euler-Heun (Stratonovich) 
 %       sde_milstein    - Milstein method, derivative and derivative-free.
 %
 %   Stochastic differential equation (SDE) processes.
+%       sde_bm          - Brownian motion process, exact numeric solution.
 %       sde_gbm         - Geometric Brownian motion process, analytic solution.
 %       sde_ou          - Ornstein-Uhlenbeck process, analytic solution.
 %
@@ -24,7 +25,7 @@
 %   Compatibility maintained back through Matlab 7.4 (R2007a)
 
 %   Andrew D. Horchler, adh9 @ case . edu
-%   Created: 12-18-11, Revision: 1.0, 12-31-12
+%   Created: 12-18-11, Revision: 1.0, 1-5-13
 
 
 %   Acknowledgment of support: This material is based upon work supported by the
@@ -34,7 +35,7 @@
 %   of the National Science Foundation.
 
 
-%  Copyright © 2012, Andrew D. Horchler
+%  Copyright © 2011-2013, Andrew D. Horchler
 %  All rights reserved.
 %
 %  Redistribution and use in source and binary forms, with or without

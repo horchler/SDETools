@@ -4,10 +4,11 @@ function [N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,CustomRandFUN,...
 %SDEARGUMENTS_SPECIAL  Process arguments for all SDE special functions.
 %
 %   See also:
-%       SDE_GBM, SDE_OU, SDEARGUMENTS, SDEGET, FUNCTION_HANDLE, RANDSTREAM
+%       SDE_BM, SDE_GBM, SDE_OU, SDEARGUMENTS, SDEGET, FUNCTION_HANDLE,
+%       RANDSTREAM
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
-%   Revision: 1.0, 1-2-13
+%   Revision: 1.0, 1-5-13
 
 %   SDEARGUMENTS_SPECIAL is partially based on an updating of version 1.12.4.15
 %   of Matlab's ODEARGUMENTS.

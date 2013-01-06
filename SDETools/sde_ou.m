@@ -1,5 +1,5 @@
 function [Y,W,TE,YE,IE] = sde_ou(th,mu,sig,tspan,y0,options,varargin)
-%SDE_OU  Ornstein-Uhlenbeck process, analytic solution.
+%SDE_OU  Ornstein-Uhlenbeck mean-reverting process, analytic solution.
 %   YOUT = SDE_OU(THETA,MU,SIG,TSPAN,Y0) with TSPAN = [T0 T1 ... TFINAL] returns
 %   the analytic solution of the N-dimensional system of stochastic differential
 %   equations for the Ornstein-Uhlenbeck process, dY = THETA*(MU-Y)*dt + SIG*dW,
@@ -11,8 +11,8 @@ function [Y,W,TE,YE,IE] = sde_ou(th,mu,sig,tspan,y0,options,varargin)
 %   corresponds to a time in TSPAN.
 %
 %   [YOUT, W] = SDE_OU(THETA,MU,SIG,TSPAN,Y0,...) outputs the M-by-N matrix W of
-%   integrated Weiner increments that were used by the solver. Each row of W
-%   corresponds to a time in TSPAN.
+%   integrated Weiner increments that were used. Each row of W corresponds to a
+%   time in TSPAN.
 %
 %   [...] = SDE_OU(THETA,MU,SIG,TSPAN,Y0,OPTIONS) returns as above with default
 %   properties replaced by values in OPTIONS, an argument created with the
@@ -50,7 +50,8 @@ function [Y,W,TE,YE,IE] = sde_ou(th,mu,sig,tspan,y0,options,varargin)
 %   Note:
 %       The Ornstein-Uhlenbeck process is based on additive noise, i.e., the
 %       diffusion term, g(t,y) = SIG, is not a function of the state variables.
-%       In this case the Ito and Stratonovich interpretations are equivalent.
+%       In this case the Ito and Stratonovich interpretations are equivalent and
+%       the SDEType OPTIONS property will have no effect.
 %
 %       Only diagonal noise is supported by this function. Setting the
 %       DiagonalNoise OPTIONS property to 'no' to specify the more general
@@ -58,10 +59,13 @@ function [Y,W,TE,YE,IE] = sde_ou(th,mu,sig,tspan,y0,options,varargin)
 %       such as SDE_EULER should be used in this case or for other
 %       generalizations, e.g., time-varying parameters.
 %
+%       In finance, the one-factor Hull-White and Vasicek (HMV) models are
+%       examples of Ornstein-Uhlenbeck mean-reverting processes.
+%
 %   See also:
 %       Explicit SDE solvers:	SDE_EULER, SDE_MILSTEIN
 %       Implicit SDE solvers:   
-%       Stochastic processes:	SDE_GBM
+%       Stochastic processes:	SDE_BM, SDE_GBM
 %       Option handling:        SDESET, SDEGET
 %       SDE demos/validation:   SDE_EULER_VALIDATE, SDE_MILSTEIN_VALIDATE
 %   	Other:                  FUNCTION_HANDLE, RANDSTREAM
@@ -69,14 +73,14 @@ function [Y,W,TE,YE,IE] = sde_ou(th,mu,sig,tspan,y0,options,varargin)
 %   The conditional analytic solution used is for non-zero THETA
 %       Y = Y0*exp(-THETA*t)+MU*(1-exp(-THETA*t))
 %           +(SIG/sqrt(2*THETA))*exp(-THETA*t)*W(exp(2*THETA*t)-1),
-%   where W() is a scaled time-transformed Wiener process. If THETA = 0 the
+%   where W() is a scaled time-transformed Wiener process. If THETA is zero, the
 %   analytic solution for a driftless Wiener process is used: Y = Y0+SIG*W(t).
 %
 %   From: J. L. Doob, "The Brownian Movement and Stochastic Equations," Annals
 %   of Mathematics, Vol. 43, No. 2, pp. 351-369, April 1942.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-8-12
-%   Revision: 1.0, 1-4-13
+%   Revision: 1.0, 1-5-13
 
 
 func = 'SDE_OU';
@@ -238,7 +242,7 @@ if any(sig0)
                       '%d by %d matrix as requested.   See %s.',D,lt-1,func]);
             end
 
-            % State array
+            % Store random variates in Y
             Y(2:end,sig0) = r;
             clear r;    % remove large temporary variable to save memory
         catch err
@@ -264,7 +268,7 @@ if any(sig0)
             end
         end
     else
-        % No error checking needed if default RANDN used
+        % Store random variates in Y, no error checking needed for default RANDN
         Y(2:end,sig0) = feval(RandFUN,lt-1,D);
     end
     
@@ -272,14 +276,18 @@ if any(sig0)
     if all(th0)
      	tt = -tspan*th;
         if N == 1 || ~isscalar(th)
-            Y(2:end,:) = tdir*sqrt(diff(expm1(-2*tt),1,1)).*Y(2:end,:);
+            Y(2:end,sig0) = tdir*sqrt(diff(expm1(-2*tt),1,1)).*Y(2:end,sig0);
         else
-            Y(2:end,:) = bsxfun(@times,tdir*sqrt(diff(expm1(-2*tt),1,1)),Y(2:end,:));
+            Y(2:end,sig0) = bsxfun(@times,tdir*sqrt(diff(expm1(-2*tt),1,1)),Y(2:end,sig0));
         end
 	elseif all(~th0)
-        Y(2:end,:) = bsxfun(@times,tdir*sqrt(diff(tspan)),Y(2:end,:));
+        if N == 1 || ConstStep
+            Y(2:end,sig0) = tdir*sqrt(h).*Y(2:end,sig0);
+        else
+            Y(2:end,sig0) = bsxfun(@times,tdir*sqrt(h),Y(2:end,sig0));
+        end
     else
-        i = th0;
+        i = th0 & sig0;
         D = nnz(i);
         
         tt = -tspan*th(i);
@@ -289,12 +297,16 @@ if any(sig0)
             Y(2:end,i) = bsxfun(@times,tdir*sqrt(diff(expm1(-2*tt),1,1)),Y(2:end,i));
         end
         
-        i = ~i;
-        Y(2:end,i) = bsxfun(@times,tdir*sqrt(diff(tspan)),Y(2:end,i));
+        i = ~th0 & sig0;
+        if N-D == 1 || ConstStep
+            Y(2:end,i) = tdir*sqrt(h).*Y(2:end,i);
+        else
+            Y(2:end,i) = bsxfun(@times,tdir*sqrt(h),Y(2:end,i));
+        end
     end
     
     % Integrate Wiener increments
-    Y(:,sig0) = cumsum(Y(:,sig0),1);
+    Y(2:end,sig0) = cumsum(Y(2:end,sig0),1);
     
     % Only allocate W matrix if requested as output
     if nargout >= 2
@@ -378,7 +390,11 @@ else
         end
     elseif all(~th0)
         % All th = 0, driftless noise, but noise magnitude, sig, is zero
-        Y = bsxfun(@plus,y0,Y);
+        if N == 1
+            Y = Y+y0;
+        else
+            Y = bsxfun(@plus,y0,Y);
+        end
     else
         % Some th ~= 0, pure drift, noise magnitude, sig, is zero
         i = th0;

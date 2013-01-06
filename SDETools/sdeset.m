@@ -118,13 +118,13 @@ function options = sdeset(varargin)
 %   IsTerminal may also be scalars.
 %   
 %   See also:
-%       SDEGET, SDE_EULER, SDE_MILSTEIN, SDE_GBM, SDE_OU, FUNCTION_HANDLE,
-%       RANDSTREAM
+%       SDEGET, SDE_EULER, SDE_MILSTEIN, SDE_BM, SDE_GBM, SDE_OU,
+%       FUNCTION_HANDLE, RANDSTREAM
 
 %   SDESET is based on an updating of version 1.46.4.10 of Matlab's ODESET.
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-27-10
-%   Revision: 1.0, 1-1-13
+%   Revision: 1.0, 1-5-13
 
 
 options = struct(	'SDEType',          [],...

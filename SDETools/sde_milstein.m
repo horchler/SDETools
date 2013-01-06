@@ -78,7 +78,7 @@ function [Y,W,TE,YE,IE] = sde_milstein(f,g,tspan,y0,options,varargin)
 %   See also:
 %       Other SDE solvers:      SDE_EULER
 %       Implicit SDE solvers:      
-%       Stochastic processes:	SDE_GBM, SDE_OU
+%       Stochastic processes:	SDE_BM, SDE_GBM, SDE_OU
 %       Option handling:        SDESET, SDEGET
 %       SDE demos/validation:	SDE_EULER_VALIDATE, SDE_MILSTEIN_VALIDATE
 %       Other:                  FUNCTION_HANDLE, RANDSTREAM
@@ -92,7 +92,7 @@ function [Y,W,TE,YE,IE] = sde_milstein(f,g,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-25-10
-%   Revision: 1.0, 1-2-13
+%   Revision: 1.0, 1-5-13
 
 
 solver = 'SDE_MILSTEIN';
@@ -352,33 +352,35 @@ end
 
 % Integration loop
 if ConstFFUN && ConstGFUN && (D <= N || nargout >= 2) && ~NonNegative	% no FOR loop needed
+    Y(1,:) = y0;
     if ScalarNoise
         if ConstStep
-            Y(2:end,:) = bsxfun(@plus,y0.',cumsum(bsxfun(@plus,fout.'*h,Y(2:end,ones(1,N))*gout),1));
+            Y(2:end,:) = bsxfun(@plus,h*fout.',Y(2:end,ones(1,N))*gout);
         else
-            Y(2:end,:) = bsxfun(@plus,y0.',cumsum(h*fout.'+Y(2:end,ones(1,N))*gout,1));
+            Y(2:end,:) = h*fout.'+Y(2:end,ones(1,N))*gout;
         end
     elseif DiagonalNoise
         if ConstStep
-            Y(2:end,:) = bsxfun(@plus,y0.',cumsum(bsxfun(@plus,h*fout.',bsxfun(@times,gout.',Y(2:end,:))),1));
+            Y(2:end,:) = bsxfun(@plus,h*fout.',bsxfun(@times,Y(2:end,:),gout.'));
         else
-            Y(2:end,:) = bsxfun(@plus,y0.',cumsum(h*fout.'+bsxfun(@times,gout.',Y(2:end,:)),1));
+            Y(2:end,:) = h*fout.'+bsxfun(@times,Y(2:end,D0),gout(D0).');
         end
     else
         if ConstStep
             if D > N
-                Y(2:end,:) = bsxfun(@plus,y0.',cumsum(bsxfun(@plus,fout.'*h,W(2:end,:)*gout.'),1));
+                Y(2:end,:) = bsxfun(@plus,h*fout.',W(2:end,:)*gout.');
             else
-                Y(2:end,:) = bsxfun(@plus,y0.',cumsum(bsxfun(@plus,fout.'*h,Y(2:end,1:D)*gout.'),1));
+                Y(2:end,:) = bsxfun(@plus,h*fout.',Y(2:end,1:D)*gout.');
             end
         else
             if D > N
-                Y(2:end,:) = bsxfun(@plus,y0.',cumsum(h*fout.'+W(2:end,:)*gout.',1));
+                Y(2:end,:) = h*fout.'+W(2:end,:)*gout.';
             else
-                Y(2:end,:) = bsxfun(@plus,y0.',cumsum(bsxfun(@plus,h*fout.',Y(2:end,1:D)*gout.'),1));
+                Y(2:end,:) = bsxfun(@plus,h*fout.',Y(2:end,1:D)*gout.');
             end
         end
     end
+    Y = cumsum(Y,1);
     
     % Check for and handle zero-crossing events
     if isEvents

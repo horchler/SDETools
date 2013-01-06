@@ -1,27 +1,27 @@
-function [Y,W,TE,YE,IE] = sde_gbm(mu,sig,tspan,y0,options,varargin)
-%SDE_GBM  Geometric Brownian motion process, analytic solution.
-%   YOUT = SDE_GBM(MU,SIG,TSPAN,Y0) with TSPAN = [T0 T1 ... TFINAL] returns the
-%   analytic solution of the N-dimensional system of stochastic differential
-%   equations for geometric Brownian motion, dY = MU*Y*dt + SIG*Y*dW, with
-%   N-dimensional diagonal noise from time T0 to TFINAL (all increasing or all
-%   decreasing with arbitrary step size) with initial conditions Y0. TSPAN is a
-%   length M vector. Y0 is a length N vector. The drift parameter MU and the
-%   diffusion (volatility) parameter SIG are scalars or vectors of N. Each row
-%   in the M-by-N solution array YOUT corresponds to a time in TSPAN.
+function [Y,W,TE,YE,IE] = sde_bm(mu,sig,tspan,y0,options,varargin)
+%SDE_BM  Brownian motion process, exact numeric solution.
+%   YOUT = SDE_BM(MU,SIG,TSPAN,Y0) with TSPAN = [T0 T1 ... TFINAL] returns the
+%   exact numeric solution of the N-dimensional system of stochastic differential
+%   equations for Brownian motion, dY = MU*dt + SIG*dW, with N-dimensional
+%   diagonal noise from time T0 to TFINAL (all increasing or all decreasing with
+%   arbitrary step size) with initial conditions Y0. TSPAN is a length M vector.
+%   Y0 is a length N vector. The drift parameter MU and the diffusion
+%   (volatility) parameter SIG are scalars or vectors of N. Each row in the
+%   M-by-N solution array YOUT corresponds to a time in TSPAN.
 %
-%   [YOUT, W] = SDE_GBM(MU,SIG,TSPAN,Y0,...) outputs the M-by-N matrix W of
-%   integrated Weiner increments that were used. Each row of W corresponds to a
-%   time in TSPAN.
+%   [YOUT, W] = SDE_BM(MU,SIG,TSPAN,Y0,...) outputs the M-by-N matrix W of
+%   integrated Weiner increments that were used by the solver. Each row of W
+%   corresponds to a time in TSPAN.
 %
-%   [...] = SDE_GBM(MU,SIG,TSPAN,Y0,OPTIONS) returns as above with default
+%   [...] = SDE_BM(MU,SIG,TSPAN,Y0,OPTIONS) returns as above with default
 %   properties replaced by values in OPTIONS, an argument created with the
-%   SDESET function. See SDESET for details. The type of SDE to be solved, 'Ito'
-%   or the default 'Stratonovich', can be specified via the SDEType property.
-%   Another commonly used option is to manually specify the random seed via the
-%   RandSeed property, which creates a new random number stream, instead of
-%   using the default stream, to generate the Wiener increments.
+%   SDESET function. See SDESET for details. A commonly used option is to
+%   manually specify the random seed via the RandSeed property, which creates a
+%   new random number stream, instead of using the default stream, to generate
+%   the Wiener increments. The DiagonalNoise and NonNegative OPTIONS properties
+%   are not supported.
 %
-%   [YOUT, W, TE, YE, IE] = SDE_GBM(MU,SIG,TSPAN,Y0,OPTIONS) with the EventsFUN
+%   [YOUT, W, TE, YE, IE] = SDE_BM(MU,SIG,TSPAN,Y0,OPTIONS) with the EventsFUN
 %   property set to a function handle, in order to specify an events function,
 %   solves as above while also finding zero-crossings. The corresponding
 %   function, must take at least two inputs and output three vectors:
@@ -36,24 +36,22 @@ function [Y,W,TE,YE,IE] = sde_gbm(mu,sig,tspan,y0,options,varargin)
 %   for all events. Direction and IsTerminal may also be scalars.
 %
 %   Example:
-%       % Compare analytical and simulated Geometric Brownian motion
+%       % Compare exact numeric and simulated Brownian motion
 %       npaths = 10; dt = 1e-2; t = 0:dt:1; y0 = ones(1,npaths);
-%       mu = 1.5; sig = 0.1:0.1:0.1*npaths;
-%       opts = sdeset('RandSeed',1,'SDEType','Ito');
-%       y1 = sde_gbm(mu,sig,t,y0,opts);
-%       y2 = sde_euler(@(t,y)(mu+sig'.^2/2).*y,@(t,y)sig'.*y,t,y0,opts);
-%       h = plot(t,y1,'b',t,y2,'r'); xlabel('t'); ylabel('y(t)');
+%       mu = 1.5; sig = 0.1:0.1:0.1*npaths; opts = sdeset('RandSeed',1);
+%       y1 = sde_bm(mu,sig,t,y0,opts);
+%       y2 = sde_euler(mu(ones(size(y0))).',sig.',t,y0,opts);
+%       h = plot(t,y1,'b',t,y2,'r-.'); xlabel('t'); ylabel('y(t)');
 %       mustr = num2str(mu); npstr = num2str(npaths); dtstr = num2str(dt);
-%       txt = {'Analytical solution',['Numerical solution, dt = ' dtstr]};
+%       txt = {'Exact numeric solution',['Numerical solution, dt = ' dtstr]};
 %       legend(h([1 end]),txt,2); legend boxoff;
-%       title(['Geometric Brownian motion, ' npstr ' paths, \mu = ' mustr]);
+%       title(['Brownian motion, ' npstr ' paths, \mu = ' mustr]);
 %
 %   Note:
-%       The solution assumes the Stratonovich form by default. The Ito form can
-%       be handled by setting the SDEType OPTIONS property to 'Ito' via the
-%       SDESET function. These forms are generally not equivalent and will
-%       converge to different solutions, so care should be taken to ensure that
-%       the form of SDEType matches the that of the desired solution.
+%       The Brownian motion process is based on additive noise, i.e., the
+%       diffusion term, g(t,y) = SIG, is not a function of the state variables.
+%       In this case the Ito and Stratonovich interpretations are equivalent and
+%       the SDEType OPTIONS property will have no effect.
 %
 %       Only diagonal noise is supported by this function. Setting the
 %       DiagonalNoise OPTIONS property to 'no' to specify the more general
@@ -64,33 +62,36 @@ function [Y,W,TE,YE,IE] = sde_gbm(mu,sig,tspan,y0,options,varargin)
 %   See also:
 %       Explicit SDE solvers:	SDE_EULER, SDE_MILSTEIN
 %       Implicit SDE solvers:   
-%       Stochastic processes:	SDE_BM, SDE_OU
+%       Stochastic processes:	SDE_GBM, SDE_OU
 %       Option handling:        SDESET, SDEGET
 %       SDE demos/validation:   SDE_EULER_VALIDATE, SDE_MILSTEIN_VALIDATE
 %   	Other:                  FUNCTION_HANDLE, RANDSTREAM
 
-%   The conditional analytic solutions Y = Y0*exp((MU-SIG^2/2)*t+SIG*W) and
-%   Y = Y0*exp(MU*t+SIG*W) are used for Ito and Stratonovich cases,
-%   respectively, where W is a standard Wiener process.
+%   For non-zero Mu and SIG, the recurrence relation
+%       Y(n+1) = Y(n)+MU*dt(n)+SIG*dW(n), Y(1) = Y0
+%   based on Euler-Maruyama integration is used, where dW is an increment from a
+%   standard Wiener process. If MU is zero, the analytic solution for a
+%   driftless Wiener process is used: Y = Y0+SIG*W(t). If SIG is zero, the
+%   the analytic solution noiseless constant drift is used: Y = Y0+MU*t.
 
 %   For details of this integration method, see: Peter E. Kloeden and Eckhard
 %   Platen, "Numerical solution of Stochastic Differential Equations,"
 %   Springer-Verlag, 1992.
 
-%   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
+%   Andrew D. Horchler, adh9 @ case . edu, Created 1-5-13
 %   Revision: 1.0, 1-5-13
 
 
-func = 'SDE_GBM';
+func = 'SDE_BM';
 
 % Check inputs and outputs
 if nargin < 5
     if nargin < 4
-        error('SDETools:sde_gbm:NotEnoughInputs',...
+        error('SDETools:sde_bm:NotEnoughInputs',...
               'Not enough input arguments.  See %s.',func);
     end
     if isa(y0,'struct')
-        error('SDETools:sde_gbm:NotEnoughInputsOptions',...
+        error('SDETools:sde_bm:NotEnoughInputsOptions',...
              ['An SDE options structure was provided as the last argument, '...
               'but one of the first four input arguments is missing.'...
               '  See %s.'],func);
@@ -99,18 +100,18 @@ if nargin < 5
 elseif isempty(options) && (~sde_ismatrix(options) ...
         || any(size(options) ~= 0) || ~(isstruct(options) || iscell(options) ...
         || isnumeric(options))) || ~isempty(options) && ~isstruct(options)
-	error('SDETools:sde_gbm:InvalidSDESETStruct',...
+	error('SDETools:sde_bm:InvalidSDESETStruct',...
           'Invalid SDE options structure.  See SDESET.');
 end
 
 % Check mu and sig types
 if isempty(mu) || ~isfloat(mu) || ~isvector(mu)
-    error('SDETools:sde_gbm:MuEmptyOrNotFloatVector',...
+    error('SDETools:sde_bm:MuEmptyOrNotFloatVector',...
          ['The drift parameter, MU, must be non-empty vector of singles or '...
           'doubles.  See %s.'],func);
 end
 if isempty(sig) || ~isfloat(sig) || ~isvector(sig)
-    error('SDETools:sde_gbm:SigEmptyOrNotFloatVector',...
+    error('SDETools:sde_bm:SigEmptyOrNotFloatVector',...
          ['The diffusion (volatility) parameter, SIG, must be non-empty '...
           'vector of singles or doubles.  See %s.'],func);
 end
@@ -118,7 +119,7 @@ end
 % Determine the dominant data type, single or double
 dataType = superiorfloat(mu,sig,tspan,y0);
 if ~all(strcmp(dataType,{class(mu),class(sig),class(tspan),class(y0)}))
-    warning('SDETools:sde_gbm:InconsistentDataType',...
+    warning('SDETools:sde_bm:InconsistentDataType',...
            ['Mixture of single and double data for inputs MU, SIG, TSPAN, '...
             'and Y0.']);
 end
@@ -130,17 +131,17 @@ end
 
 % Check mu and sig
 if ~any(length(mu) == [1 N])
-    error('SDETools:sde_gbm:MuDimensionMismatch',...
+    error('SDETools:sde_bm:MuDimensionMismatch',...
          ['The drift parameter, MU, must be a scalar or a vector the same '...
           'length as Y0.  See %s.'],func);
 end
 if ~any(length(sig) == [1 N])
-    error('SDETools:sde_gbm:SigDimensionMismatch',...
+    error('SDETools:sde_bm:SigDimensionMismatch',...
          ['The diffusion parameter, SIG, must be a scalar or a vector the '...
           'same length as Y0.  See %s.'],func);
 end
 if any(sig < 0)
-    error('SDETools:sde_gbm:SigNegative',...
+    error('SDETools:sde_bm:SigNegative',...
          ['The diffusion (volatility) parameter, SIG, must be greater than '...
           'or equal to zero.  See %s.'],func);
 end
@@ -149,7 +150,7 @@ end
 isEvents = ~isempty(EventsFUN);
 if isEvents
     if nargout > 5
-        error('SDETools:sde_gbm:EventsTooManyOutputs',...
+        error('SDETools:sde_bm:EventsTooManyOutputs',...
               'Too many output arguments.  See %s.',func);
     else
         if nargout >= 3
@@ -165,11 +166,11 @@ if isEvents
 else
     if nargout > 2
         if nargout <= 5
-            error('SDETools:sde_gbm:NoEventsTooManyOutputs',...
+            error('SDETools:sde_bm:NoEventsTooManyOutputs',...
                  ['Too many output arguments. An events function has not '...
                   'been specified.  See %s.'],func);
         else
-            error('SDETools:sde_gbm:TooManyOutputs',...
+            error('SDETools:sde_bm:TooManyOutputs',...
                   'Too many output arguments.  See %s.',func);
         end
     end
@@ -193,13 +194,13 @@ if any(sig0)
             % Store Wiener increments in Y indirectly
             r = feval(RandFUN,lt-1,D);
             if ~sde_ismatrix(r) || isempty(r) || ~isfloat(r)
-                error('SDETools:sde_gbm:RandFUNNot2DArray3',...
+                error('SDETools:sde_bm:RandFUNNot2DArray3',...
                      ['RandFUN must return a non-empty matrix of floating '...
                       'point values.  See %s.'],func);
             end
             [m,n] = size(r);
             if m ~= lt-1 || n ~= D
-                error('SDETools:sde_gbm:RandFUNDimensionMismatch3',...
+                error('SDETools:sde_bm:RandFUNDimensionMismatch3',...
                      ['The specified alternative RandFUN did not output a '...
                       '%d by %d matrix as requested.   See %s.',lt-1,D,func]);
             end
@@ -212,19 +213,19 @@ if any(sig0)
         catch err
             switch err.identifier
                 case 'MATLAB:TooManyInputs'
-                    error('SDETools:sde_gbm:RandFUNTooFewInputs',...
+                    error('SDETools:sde_bm:RandFUNTooFewInputs',...
                           'RandFUN must have at least two inputs.  See %s.',...
                           func);
                 case 'MATLAB:TooManyOutputs'
-                    error('SDETools:sde_gbm:RandFUNNoOutput',...
+                    error('SDETools:sde_bm:RandFUNNoOutput',...
                          ['The output of RandFUN was not specified. RandFUN '...
                           'must return a non-empty matrix.  See %s.'],func);
                 case 'MATLAB:unassignedOutputs'
-                    error('SDETools:sde_gbm:RandFUNUnassignedOutput',...
+                    error('SDETools:sde_bm:RandFUNUnassignedOutput',...
                          ['The first output of RandFUN was not assigned.'...
                           '  See %s.'],func);
                 case 'MATLAB:minrhs'
-                    error('SDETools:sde_gbm:RandFUNTooManyInputs',...
+                    error('SDETools:sde_bm:RandFUNTooManyInputs',...
                          ['RandFUN must not require more than two inputs.'...
                           '  See %s.'],func);
                 otherwise
@@ -240,43 +241,45 @@ if any(sig0)
         end
     end
     
-    % Integrate Wiener increments
-    Y(2:end,sig0) = cumsum(Y(2:end,sig0),1);
-    
     % Only allocate W matrix if requested as output
     if nargout >= 2
-        W = Y;
+        if isDouble
+            W(lt,N) = 0;
+        else
+            W(lt,N) = single(0);
+        end
+        % Integrate Wiener increments
+        W(2:end,sig0) = cumsum(Y(2:end,sig0),1);
     end
     
-    % Evaluate analytic solution, Stratonovich (default) or Ito
-    if Stratonovich
-        if N == 1
-            Y = exp(tspan*(mu-0.5*sig^2)+sig*Y)*y0;
-        else
-            if isscalar(mu) && isscalar(sig)
-                Y = bsxfun(@times,y0.',exp(bsxfun(@plus,tspan*(mu-0.5*sig^2),sig*Y)));
-            elseif isscalar(sig)
-                Y = bsxfun(@times,y0.',exp(tspan*(mu(:).'-0.5*sig^2)+sig*Y));
-            else
-                sig = sig(:)';
-                Y = bsxfun(@times,y0.',exp(tspan*(mu(:).'-0.5*sig.^2)+bsxfun(@times,sig,Y)));
-            end
-        end
+    % Evaluate exact numeric solution via Euler-Maruyama integration
+    Y(1,:) = y0;
+    if N == 1
+        Y(2:end) = mu*h+sig*Y(2:end);
     else
-        if N == 1
-            Y = exp(tspan*mu+sig*Y)*y0;
+        if ConstStep
+            if isscalar(mu) && isscalar(sig)
+                Y(2:end,:) = mu*h+sig*Y(2:end,:);
+            elseif isscalar(mu)
+                Y(2:end,:) = mu*h+bsxfun(@times,sig(:).',Y(2:end,:));
+            elseif isscalar(sig)
+                Y(2:end,:) = bsxfun(@plus,h*mu(:).',sig*Y(2:end,:));
+            else
+                Y(2:end,:) = bsxfun(@plus,h*mu(:).',bsxfun(@times,sig(:).',Y(2:end,:)));
+            end
         else
             if isscalar(mu) && isscalar(sig)
-                Y = bsxfun(@times,y0.',exp(bsxfun(@plus,tspan*mu,sig*Y)));
+                Y(2:end,:) = bsxfun(@plus,mu*h,sig*Y(2:end,:));
             elseif isscalar(mu)
-                Y = bsxfun(@times,y0.',exp(bsxfun(@plus,tspan*mu,bsxfun(@times,sig(:).',Y))));
+                Y(2:end,:) = bsxfun(@plus,mu*h,bsxfun(@times,sig(:).',Y(2:end,:)));
             elseif isscalar(sig)
-                Y = bsxfun(@times,y0.',exp(tspan*mu(:).'+sig*Y));
+                Y(2:end,:) = h*mu(:).'+sig*Y(2:end,:);
             else
-                Y = bsxfun(@times,y0.',exp(tspan*mu(:).'+bsxfun(@times,sig(:).',Y)));
+                Y(2:end,:) = h*mu(:).'+bsxfun(@times,sig(:).',Y(2:end,:));
             end
         end
     end
+    Y = cumsum(Y,1);
 else
     % Only allocate W matrix if requested as output (it will be all zero)
     if nargout >= 2
@@ -287,12 +290,17 @@ else
         end
     end
     
-    % Solution not a function of sig, Ito and Stratonovich coincide
+    % Solution not a function of sig
     if any(mu ~= 0)
-        if N == 1 || isscalar(mu)
-            Y = exp(tspan*mu)*y0.';
+        if N == 1
+            Y = y0+mu*tspan;
         else
-            Y = bsxfun(@times,y0.',exp(tspan*mu(:).'));
+            if ~isscalar(mu)
+                mu = mu(ones(1,N));
+            else
+                mu = mu(:).';
+            end
+            Y = bsxfun(@plus,y0.',tspan*mu);
         end
     else
         if N == 1

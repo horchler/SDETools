@@ -1,7 +1,7 @@
 SDETools
 ========
 #####A Matlab Toolbox for the Numerical Solution of Stochastic Differential Equations (SDEs).#####
-######Version 1.0, 12-31-12######
+######Version 1.0, 1-5-13######
 &nbsp;  
 
 Stochastic differential equation solvers.  
@@ -9,6 +9,7 @@ Stochastic differential equation solvers.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_milstein```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_milstein.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Milstein method, derivative and derivative-free.
 
 Stochastic differential equation processes.  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_bm```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_bm.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Brownian motion process, exact numeric solution.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_gbm```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_gbm.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Geometric Brownian motion process, analytic solution.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_ou```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_ou.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Ornstein-Uhlenbeck process, analytic solution.
 
@@ -26,7 +27,7 @@ Numerical validation and demos.
 --------
 
 Andrew D. Horchler, *adh9 @ case . edu*, [biorobots.case.edu](http://biorobots.case.edu/)  
-Created: 12-18-11, Revision: 1.0, 12-31-12  
+Created: 12-18-11, Revision: 1.0, 1-5-13  
 
 This version tested with Matlab 8.0.0.783 (R2012b)  
 Mac OS X 10.8.2 (Build: 12C2034), Java 1.6.0_37-b06-434-11M3909  
@@ -39,7 +40,7 @@ Acknowledgment of support: This material is based upon work supported by the [Na
 [Grant No.&nbsp;1065489](http://www.nsf.gov/awardsearch/showAward.do?AwardNumber=1065489). Disclaimer: Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.  
 &nbsp;  
 
-Copyright &copy; 2012, Andrew D. Horchler  
+Copyright &copy; 2011?2013, Andrew D. Horchler  
 All rights reserved.  
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:

@@ -14,12 +14,12 @@ function opts = sdeget(options,name,default,noErrorCheck)
 %       val = sdeget(opts,'SDEType','Ito');
 %   
 %   See also:
-%       SDESET, SDE_EULER, SDE_MILSTEIN, SDE_GBM, SDE_OU
+%       SDESET, SDE_EULER, SDE_MILSTEIN, SDE_BM, SDE_GBM, SDE_OU
 
 %   SDEGET is based on an updating of version 1.37.4.5 of Matlab's ODEGET
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-28-10
-%   Revision: 1.0, 1-1-13
+%   Revision: 1.0, 1-5-13
 
 
 % Undocumented usage for fast access with no error checking
