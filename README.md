@@ -9,7 +9,7 @@ Stochastic differential equation solvers.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_milstein```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_milstein.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Milstein method, derivative and derivative-free.
 
 Stochastic differential equation processes.  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_bm```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_bm.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Brownian motion process, exact numeric solution.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_bm```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_bm.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Brownian motion process, exact numeric solution.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_gbm```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_gbm.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Geometric Brownian motion process, analytic solution.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_ou```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_ou.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Ornstein-Uhlenbeck process, analytic solution.
 
@@ -40,7 +40,7 @@ Acknowledgment of support: This material is based upon work supported by the [Na
 [Grant No.&nbsp;1065489](http://www.nsf.gov/awardsearch/showAward.do?AwardNumber=1065489). Disclaimer: Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.  
 &nbsp;  
 
-Copyright &copy; 2011?2013, Andrew D. Horchler  
+Copyright &copy; 2011&ndash;2013, Andrew D. Horchler  
 All rights reserved.  
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
