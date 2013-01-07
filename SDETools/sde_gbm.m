@@ -78,7 +78,7 @@ function [Y,W,TE,YE,IE] = sde_gbm(mu,sig,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
-%   Revision: 1.0, 1-5-13
+%   Revision: 1.0, 1-7-13
 
 
 func = 'SDE_GBM';
@@ -183,8 +183,18 @@ else
     Y(lt,N) = single(0);
 end
 
-% Diffusion parameters are not all zero
+% Expand and orient sig parameter and y0 vectors, find non-zero values
+if N > 1
+    if isscalar(sig)
+        sig = sig(ones(1,N));
+    else
+        sig = sig(:).';
+    end
+    y0 = y0.';
+end
 sig0 = (sig ~= 0);
+
+% Diffusion parameters are not all zero
 if any(sig0)
     % Check output of alternative RandFUN if present
     D = nnz(sig0);
@@ -254,12 +264,12 @@ if any(sig0)
             Y = exp(tspan*(mu-0.5*sig^2)+sig*Y)*y0;
         else
             if isscalar(mu) && isscalar(sig)
-                Y = bsxfun(@times,y0.',exp(bsxfun(@plus,tspan*(mu-0.5*sig^2),sig*Y)));
+                Y = bsxfun(@times,y0,exp(bsxfun(@plus,tspan*(mu-0.5*sig^2),sig*Y)));
             elseif isscalar(sig)
-                Y = bsxfun(@times,y0.',exp(tspan*(mu(:).'-0.5*sig^2)+sig*Y));
+                Y = bsxfun(@times,y0,exp(tspan*(mu(:).'-0.5*sig^2)+sig*Y));
             else
                 sig = sig(:)';
-                Y = bsxfun(@times,y0.',exp(tspan*(mu(:).'-0.5*sig.^2)+bsxfun(@times,sig,Y)));
+                Y = bsxfun(@times,y0,exp(tspan*(mu(:).'-0.5*sig.^2)+bsxfun(@times,sig,Y)));
             end
         end
     else
@@ -267,13 +277,13 @@ if any(sig0)
             Y = exp(tspan*mu+sig*Y)*y0;
         else
             if isscalar(mu) && isscalar(sig)
-                Y = bsxfun(@times,y0.',exp(bsxfun(@plus,tspan*mu,sig*Y)));
+                Y = bsxfun(@times,y0,exp(bsxfun(@plus,tspan*mu,sig*Y)));
             elseif isscalar(mu)
-                Y = bsxfun(@times,y0.',exp(bsxfun(@plus,tspan*mu,bsxfun(@times,sig(:).',Y))));
+                Y = bsxfun(@times,y0,exp(bsxfun(@plus,tspan*mu,bsxfun(@times,sig,Y))));
             elseif isscalar(sig)
-                Y = bsxfun(@times,y0.',exp(tspan*mu(:).'+sig*Y));
+                Y = bsxfun(@times,y0,exp(tspan*mu(:).'+sig*Y));
             else
-                Y = bsxfun(@times,y0.',exp(tspan*mu(:).'+bsxfun(@times,sig(:).',Y)));
+                Y = bsxfun(@times,y0,exp(tspan*mu(:).'+bsxfun(@times,sig,Y)));
             end
         end
     end
@@ -290,15 +300,15 @@ else
     % Solution not a function of sig, Ito and Stratonovich coincide
     if any(mu ~= 0)
         if N == 1 || isscalar(mu)
-            Y = exp(tspan*mu)*y0.';
+            Y = exp(tspan*mu)*y0;
         else
-            Y = bsxfun(@times,y0.',exp(tspan*mu(:).'));
+            Y = bsxfun(@times,y0,exp(tspan*mu(:).'));
         end
     else
         if N == 1
             Y = Y+y0;
         else
-            Y = bsxfun(@plus,y0.',Y);
+            Y = bsxfun(@plus,y0,Y);
         end
     end
 end

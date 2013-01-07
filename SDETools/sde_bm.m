@@ -79,7 +79,7 @@ function [Y,W,TE,YE,IE] = sde_bm(mu,sig,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 1-5-13
-%   Revision: 1.0, 1-5-13
+%   Revision: 1.0, 1-7-13
 
 
 func = 'SDE_BM';
@@ -184,8 +184,17 @@ else
     Y(lt,N) = single(0);
 end
 
-% Diffusion parameters are not all zero
+% Expand and orient sig parameter, find non-zero values
+if N > 1
+    if isscalar(sig)
+        sig = sig(ones(1,N));
+    else
+        sig = sig(:).';
+    end
+end
 sig0 = (sig ~= 0);
+
+% Diffusion parameters are not all zero
 if any(sig0)
     % Check output of alternative RandFUN if present
     D = nnz(sig0);
@@ -261,21 +270,21 @@ if any(sig0)
             if isscalar(mu) && isscalar(sig)
                 Y(2:end,:) = mu*h+sig*Y(2:end,:);
             elseif isscalar(mu)
-                Y(2:end,:) = mu*h+bsxfun(@times,sig(:).',Y(2:end,:));
+                Y(2:end,:) = mu*h+bsxfun(@times,sig,Y(2:end,:));
             elseif isscalar(sig)
                 Y(2:end,:) = bsxfun(@plus,h*mu(:).',sig*Y(2:end,:));
             else
-                Y(2:end,:) = bsxfun(@plus,h*mu(:).',bsxfun(@times,sig(:).',Y(2:end,:)));
+                Y(2:end,:) = bsxfun(@plus,h*mu(:).',bsxfun(@times,sig,Y(2:end,:)));
             end
         else
             if isscalar(mu) && isscalar(sig)
                 Y(2:end,:) = bsxfun(@plus,mu*h,sig*Y(2:end,:));
             elseif isscalar(mu)
-                Y(2:end,:) = bsxfun(@plus,mu*h,bsxfun(@times,sig(:).',Y(2:end,:)));
+                Y(2:end,:) = bsxfun(@plus,mu*h,bsxfun(@times,sig,Y(2:end,:)));
             elseif isscalar(sig)
                 Y(2:end,:) = h*mu(:).'+sig*Y(2:end,:);
             else
-                Y(2:end,:) = h*mu(:).'+bsxfun(@times,sig(:).',Y(2:end,:));
+                Y(2:end,:) = h*mu(:).'+bsxfun(@times,sig,Y(2:end,:));
             end
         end
     end

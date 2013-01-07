@@ -6,7 +6,7 @@ function [te,ye,ie,vnew,stop] = sdezero(EventsFUN,t,y,value,args)
 %       SDEARGUMENTS_SPECIAL, SDEGET, SDESET, FUNCTION_HANDLE
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 12-30-11
-%   Revision: 1.0, 1-5-13
+%   Revision: 1.0, 1-7-13
 
 %   SDEZERO is loosely based on Matlab's ODEZERO helper function.
 
@@ -21,7 +21,7 @@ if any(z)
     ie = find(z(:));
     q = zeros(length(ie),1);
     te = t+q;
-    y = y.';
+    y = y(:).';
     ye = y(1+q,:);
     stop = any(isterminal & z);
 else

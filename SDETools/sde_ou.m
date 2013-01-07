@@ -80,7 +80,7 @@ function [Y,W,TE,YE,IE] = sde_ou(th,mu,sig,tspan,y0,options,varargin)
 %   of Mathematics, Vol. 43, No. 2, pp. 351-369, April 1942.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-8-12
-%   Revision: 1.0, 1-5-13
+%   Revision: 1.0, 1-7-13
 
 
 func = 'SDE_OU';
@@ -199,28 +199,18 @@ else
 end
 
 % Expand and orient parameter and y0 vectors, find non-zero values
-if N > 1 && isscalar(th)
+if N > 1
     if isscalar(sig)
         sig = sig(ones(1,N));
+    else
+        sig = sig(:).';
     end
-else
-    sig = sig(:).';
+    th = th(:).';
+    mu = mu(:).';
+    y0 = y0.';
 end
 sig0 = (sig ~= 0);
-
-th = th(:).';
 th0 = (th ~= 0);
-
-mu = mu(:).';
-if ~isscalar(mu)
-    if ~isscalar(th) && any(th0) && any(~th0)
-        mu = mu(ones(1,N));
-    else
-        mu = mu(:).';
-    end
-end
-
-y0 = y0.';
 
 % Diffusion parameters are not all zero
 if any(sig0)
@@ -344,6 +334,11 @@ if any(sig0)
         i = th0;
         D = nnz(i);
         th = th(i);
+        if isscalar(mu)
+            mu = mu(ones(1,N));
+        else
+            mu = mu(:).';
+        end
         if D == 1
             Y(:,i) = exp(-tspan*th).*(y0(i)-mu(i)+(sig(i)/sqrt(2*th))*Y(:,i));
         else
@@ -398,6 +393,11 @@ else
     else
         % Some th ~= 0, pure drift, noise magnitude, sig, is zero
         i = th0;
+        if isscalar(mu)
+            mu = mu(ones(1,N));
+        else
+            mu = mu(:).';
+        end
         if nnz(i) == 1
             Y(:,i) = exp(-tspan*th(i)).*(y0(i)-mu(i));
         else
