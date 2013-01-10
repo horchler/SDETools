@@ -1,7 +1,7 @@
-function [Y,W,TE,YE,IE] = sde_bm(mu,sig,tspan,y0,options,varargin)
-%SDE_BM  Brownian motion process, exact numeric solution.
+function [Y,W,TE,YE,WE,IE] = sde_bm(mu,sig,tspan,y0,options,varargin)
+%SDE_BM  Brownian motion process, analytic solution.
 %   YOUT = SDE_BM(MU,SIG,TSPAN,Y0) with TSPAN = [T0 T1 ... TFINAL] returns the
-%   exact numeric solution of the N-dimensional system of stochastic differential
+%   analytic solution of the N-dimensional system of stochastic differential
 %   equations for Brownian motion, dY = MU*dt + SIG*dW, with N-dimensional
 %   diagonal noise from time T0 to TFINAL (all increasing or all decreasing with
 %   arbitrary step size) with initial conditions Y0. TSPAN is a length M vector.
@@ -21,13 +21,13 @@ function [Y,W,TE,YE,IE] = sde_bm(mu,sig,tspan,y0,options,varargin)
 %   the Wiener increments. The DiagonalNoise and NonNegative OPTIONS properties
 %   are not supported.
 %
-%   [YOUT, W, TE, YE, IE] = SDE_BM(MU,SIG,TSPAN,Y0,OPTIONS) with the EventsFUN
-%   property set to a function handle, in order to specify an events function,
-%   solves as above while also finding zero-crossings. The corresponding
-%   function, must take at least two inputs and output three vectors:
-%   [Value, IsTerminal, Direction] = Events(T,Y). The scalar input T is the
-%   current integration time and the vector Y is the current state. For the i-th
-%   event, Value(i) is the value of the zero-crossing function and
+%   [YOUT, W, TE, YE, WE, IE] = SDE_BM(MU,SIG,TSPAN,Y0,OPTIONS) with the
+%   EventsFUN property set to a function handle, in order to specify an events
+%   function, solves as above while also finding zero-crossings. The
+%   corresponding function, must take at least two inputs and output three
+%   vectors: [Value, IsTerminal, Direction] = Events(T,Y). The scalar input T is
+%   the current integration time and the vector Y is the current state. For the
+%   i-th event, Value(i) is the value of the zero-crossing function and
 %   IsTerminal(i) = 1 specifies that integration is to terminate at a zero or to
 %   continue if IsTerminal(i) = 0. If Direction(i) = 1, only zeros where
 %   Value(i) is increasing are found, if Direction(i) = -1, only zeros where
@@ -67,19 +67,15 @@ function [Y,W,TE,YE,IE] = sde_bm(mu,sig,tspan,y0,options,varargin)
 %       SDE demos/validation:   SDE_EULER_VALIDATE, SDE_MILSTEIN_VALIDATE
 %   	Other:                  FUNCTION_HANDLE, RANDSTREAM
 
-%   For non-zero Mu and SIG, the recurrence relation
-%       Y(n+1) = Y(n)+MU*dt(n)+SIG*dW(n), Y(1) = Y0
-%   based on Euler-Maruyama integration is used, where dW is an increment from a
-%   standard Wiener process. If MU is zero, the analytic solution for a
-%   driftless Wiener process is used: Y = Y0+SIG*W(t). If SIG is zero, the
-%   the analytic solution noiseless constant drift is used: Y = Y0+MU*t.
+%   The conditional analytic solution Y = Y0+MU*t+SIG*W(t) is used, where W is a
+%   standard Wiener process.
 
 %   For details of this integration method, see: Peter E. Kloeden and Eckhard
 %   Platen, "Numerical solution of Stochastic Differential Equations,"
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 1-5-13
-%   Revision: 1.0, 1-7-13
+%   Revision: 1.0, 1-10-13
 
 
 func = 'SDE_BM';
@@ -149,7 +145,7 @@ end
 % Initialize outputs for zero-crossing events
 isEvents = ~isempty(EventsFUN);
 if isEvents
-    if nargout > 5
+    if nargout > 6
         error('SDETools:sde_bm:EventsTooManyOutputs',...
               'Too many output arguments.  See %s.',func);
     else
@@ -158,14 +154,17 @@ if isEvents
             if nargout >= 4
                 YE = [];
                 if nargout >= 5
-                    IE = [];
+                    WE = [];
+                    if nargout >= 6
+                        IE = [];
+                    end
                 end
             end
         end
     end
 else
     if nargout > 2
-        if nargout <= 5
+        if nargout <= 6
             error('SDETools:sde_bm:NoEventsTooManyOutputs',...
                  ['Too many output arguments. An events function has not '...
                   'been specified.  See %s.'],func);
@@ -191,6 +190,7 @@ if N > 1
     else
         sig = sig(:).';
     end
+    y0 = y0.';
 end
 sig0 = (sig ~= 0);
 
@@ -250,48 +250,31 @@ if any(sig0)
         end
     end
     
+    % Integrate Wiener increments
+    Y(2:end,sig0) = cumsum(Y(2:end,sig0),1);
+    
     % Only allocate W matrix if requested as output
-    if nargout >= 2
-        if isDouble
-            W(lt,N) = 0;
-        else
-            W(lt,N) = single(0);
-        end
-        % Integrate Wiener increments
-        W(2:end,sig0) = cumsum(Y(2:end,sig0),1);
+    if nargout >= 2 || isEvents
+        W = Y;
     end
     
-    % Evaluate exact numeric solution via Euler-Maruyama integration
-    Y(1,:) = y0;
+    % Evaluate analytic solution
     if N == 1
-        Y(2:end) = mu*h+sig*Y(2:end);
+        Y = y0+mu*tspan+sig*Y;
     else
-        if ConstStep
-            if isscalar(mu) && isscalar(sig)
-                Y(2:end,:) = mu*h+sig*Y(2:end,:);
-            elseif isscalar(mu)
-                Y(2:end,:) = mu*h+bsxfun(@times,sig,Y(2:end,:));
-            elseif isscalar(sig)
-                Y(2:end,:) = bsxfun(@plus,h*mu(:).',sig*Y(2:end,:));
-            else
-                Y(2:end,:) = bsxfun(@plus,h*mu(:).',bsxfun(@times,sig,Y(2:end,:)));
-            end
+        if isscalar(mu) && isscalar(sig)
+            Y = bsxfun(@plus,y0,bsxfun(@plus,mu*tspan,sig*Y));
+        elseif isscalar(mu)
+            Y = bsxfun(@plus,y0,bsxfun(@plus,mu*tspan,bsxfun(@times,sig,Y)));
+        elseif isscalar(sig)
+            Y = bsxfun(@plus,y0,tspan*mu(:).'+sig*Y);
         else
-            if isscalar(mu) && isscalar(sig)
-                Y(2:end,:) = bsxfun(@plus,mu*h,sig*Y(2:end,:));
-            elseif isscalar(mu)
-                Y(2:end,:) = bsxfun(@plus,mu*h,bsxfun(@times,sig,Y(2:end,:)));
-            elseif isscalar(sig)
-                Y(2:end,:) = h*mu(:).'+sig*Y(2:end,:);
-            else
-                Y(2:end,:) = h*mu(:).'+bsxfun(@times,sig,Y(2:end,:));
-            end
+            Y = bsxfun(@plus,y0,tspan*mu(:).'+bsxfun(@times,sig,Y));
         end
     end
-    Y = cumsum(Y,1);
 else
     % Only allocate W matrix if requested as output (it will be all zero)
-    if nargout >= 2
+    if nargout >= 2 || isEvents
         if isDouble
             W(lt,N) = 0;
         else
@@ -309,13 +292,13 @@ else
             else
                 mu = mu(:).';
             end
-            Y = bsxfun(@plus,y0.',tspan*mu);
+            Y = bsxfun(@plus,y0,tspan*mu);
         end
     else
         if N == 1
             Y = Y+y0;
         else
-            Y = bsxfun(@plus,y0.',Y);
+            Y = bsxfun(@plus,y0,Y);
         end
     end
 end
@@ -323,14 +306,17 @@ end
 % Check for and handle zero-crossing events
 if isEvents
     for i = 2:lt
-        [te,ye,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i),Y(i,:),EventsValue,varargin);
+        [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i),Y(i,:),W(i,:),EventsValue,varargin);
         if ~isempty(te)
             if nargout >= 3
-                TE = [TE;te];           %#ok<AGROW>
+                TE = [TE;te];               %#ok<AGROW>
                 if nargout >= 4
-                    YE = [YE;ye];       %#ok<AGROW>
+                    YE = [YE;ye];           %#ok<AGROW>
                     if nargout >= 5
-                        IE = [IE;ie];	%#ok<AGROW>
+                        WE = [WE;we];       %#ok<AGROW>
+                        if nargout >= 6
+                            IE = [IE;ie];	%#ok<AGROW>
+                        end
                     end
                 end
             end

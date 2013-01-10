@@ -1,4 +1,4 @@
-function [te,ye,ie,vnew,stop] = sdezero(EventsFUN,t,y,value,args)
+function [te,ye,we,ie,vnew,stop] = sdezero(EventsFUN,t,y,w,value,args)
 %SDEZERO  Locate any zero-crossings of event functions in a time step.
 %
 %   See also:
@@ -6,7 +6,7 @@ function [te,ye,ie,vnew,stop] = sdezero(EventsFUN,t,y,value,args)
 %       SDEARGUMENTS_SPECIAL, SDEGET, SDESET, FUNCTION_HANDLE
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 12-30-11
-%   Revision: 1.0, 1-7-13
+%   Revision: 1.0, 1-10-13
 
 %   SDEZERO is loosely based on Matlab's ODEZERO helper function.
 
@@ -19,14 +19,17 @@ z = sign(vnew).*sign(value) < 0 & (direction == 0 | direction == 1 ...
     & vnew > value | direction == -1 & vnew < value);
 if any(z)
     ie = find(z(:));
-    q = zeros(length(ie),1);
-    te = t+q;
+    q = ones(length(ie),1);
+    te = t+q-1;
     y = y(:).';
-    ye = y(1+q,:);
+    ye = y(q,:);
+    w = w(:).';
+    we = w(q,:);
     stop = any(isterminal & z);
 else
     te = [];
     ye = [];
+    we = [];
     ie = [];
     stop = false;
 end

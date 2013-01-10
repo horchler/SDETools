@@ -1,4 +1,4 @@
-function [Y,W,TE,YE,IE] = sde_gbm(mu,sig,tspan,y0,options,varargin)
+function [Y,W,TE,YE,WE,IE] = sde_gbm(mu,sig,tspan,y0,options,varargin)
 %SDE_GBM  Geometric Brownian motion process, analytic solution.
 %   YOUT = SDE_GBM(MU,SIG,TSPAN,Y0) with TSPAN = [T0 T1 ... TFINAL] returns the
 %   analytic solution of the N-dimensional system of stochastic differential
@@ -21,13 +21,13 @@ function [Y,W,TE,YE,IE] = sde_gbm(mu,sig,tspan,y0,options,varargin)
 %   RandSeed property, which creates a new random number stream, instead of
 %   using the default stream, to generate the Wiener increments.
 %
-%   [YOUT, W, TE, YE, IE] = SDE_GBM(MU,SIG,TSPAN,Y0,OPTIONS) with the EventsFUN
-%   property set to a function handle, in order to specify an events function,
-%   solves as above while also finding zero-crossings. The corresponding
-%   function, must take at least two inputs and output three vectors:
-%   [Value, IsTerminal, Direction] = Events(T,Y). The scalar input T is the
-%   current integration time and the vector Y is the current state. For the i-th
-%   event, Value(i) is the value of the zero-crossing function and
+%   [YOUT, W, TE, YE, WE, IE] = SDE_GBM(MU,SIG,TSPAN,Y0,OPTIONS) with the
+%   EventsFUN property set to a function handle, in order to specify an events
+%   function, solves as above while also finding zero-crossings. The
+%   corresponding function, must take at least two inputs and output three
+%   vectors: [Value, IsTerminal, Direction] = Events(T,Y). The scalar input T is
+%   the current integration time and the vector Y is the current state. For the
+%   i-th event, Value(i) is the value of the zero-crossing function and
 %   IsTerminal(i) = 1 specifies that integration is to terminate at a zero or to
 %   continue if IsTerminal(i) = 0. If Direction(i) = 1, only zeros where
 %   Value(i) is increasing are found, if Direction(i) = -1, only zeros where
@@ -78,7 +78,7 @@ function [Y,W,TE,YE,IE] = sde_gbm(mu,sig,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
-%   Revision: 1.0, 1-7-13
+%   Revision: 1.0, 1-10-13
 
 
 func = 'SDE_GBM';
@@ -148,7 +148,7 @@ end
 % Initialize outputs for zero-crossing events
 isEvents = ~isempty(EventsFUN);
 if isEvents
-    if nargout > 5
+    if nargout > 6
         error('SDETools:sde_gbm:EventsTooManyOutputs',...
               'Too many output arguments.  See %s.',func);
     else
@@ -157,14 +157,17 @@ if isEvents
             if nargout >= 4
                 YE = [];
                 if nargout >= 5
-                    IE = [];
+                    WE = [];
+                    if nargout >= 6
+                        IE = [];
+                    end
                 end
             end
         end
     end
 else
     if nargout > 2
-        if nargout <= 5
+        if nargout <= 6
             error('SDETools:sde_gbm:NoEventsTooManyOutputs',...
                  ['Too many output arguments. An events function has not '...
                   'been specified.  See %s.'],func);
@@ -254,7 +257,7 @@ if any(sig0)
     Y(2:end,sig0) = cumsum(Y(2:end,sig0),1);
     
     % Only allocate W matrix if requested as output
-    if nargout >= 2
+    if nargout >= 2 || isEvents
         W = Y;
     end
     
@@ -289,7 +292,7 @@ if any(sig0)
     end
 else
     % Only allocate W matrix if requested as output (it will be all zero)
-    if nargout >= 2
+    if nargout >= 2 || isEvents
         if isDouble
             W(lt,N) = 0;
         else
@@ -316,14 +319,17 @@ end
 % Check for and handle zero-crossing events
 if isEvents
     for i = 2:lt
-        [te,ye,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i),Y(i,:),EventsValue,varargin);
+        [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i),Y(i,:),W(i,:),EventsValue,varargin);
         if ~isempty(te)
             if nargout >= 3
-                TE = [TE;te];           %#ok<AGROW>
+                TE = [TE;te];               %#ok<AGROW>
                 if nargout >= 4
-                    YE = [YE;ye];       %#ok<AGROW>
+                    YE = [YE;ye];           %#ok<AGROW>
                     if nargout >= 5
-                        IE = [IE;ie];	%#ok<AGROW>
+                        WE = [WE;we];       %#ok<AGROW>
+                        if nargout >= 6
+                            IE = [IE;ie];	%#ok<AGROW>
+                        end
                     end
                 end
             end

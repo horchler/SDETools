@@ -1,4 +1,4 @@
-function [Y,W,TE,YE,IE] = sde_milstein(f,g,tspan,y0,options,varargin)
+function [Y,W,TE,YE,WE,IE] = sde_milstein(f,g,tspan,y0,options,varargin)
 %SDE_MILSTEIN  Solve stochastic differential equations, Milstein method.
 %   YOUT = SDE_MILSTEIN(FFUN,GFUN,TSPAN,Y0) with TSPAN = [T0 T1 ... TFINAL]
 %   integrates the N-dimensional system of stochastic differential equations
@@ -36,9 +36,9 @@ function [Y,W,TE,YE,IE] = sde_milstein(f,g,tspan,y0,options,varargin)
 %   seed via the RandSeed property, which creates a new random number stream,
 %   instead of using the default stream, to generate the Wiener increments.
 %
-%   [YOUT, W, TE, YE, IE] = SDE_MILSTEIN(FFUN,GFUN,TSPAN,Y0,OPTIONS) with the
-%   EventsFUN property set to a function handle, in order to specify an events
-%   function, solves as above while also finding zero-crossings. The
+%   [YOUT, W, TE, YE, WE, IE] = SDE_MILSTEIN(FFUN,GFUN,TSPAN,Y0,OPTIONS) with
+%   the EventsFUN property set to a function handle, in order to specify an
+%   events function, solves as above while also finding zero-crossings. The
 %   corresponding function must take at least two inputs and output three
 %   vectors: [Value, IsTerminal, Direction] = Events(T,Y). The scalar input T is
 %   the current integration time and the vector Y is the current state. For the
@@ -92,7 +92,7 @@ function [Y,W,TE,YE,IE] = sde_milstein(f,g,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-25-10
-%   Revision: 1.0, 1-5-13
+%   Revision: 1.0, 1-10-13
 
 
 solver = 'SDE_MILSTEIN';
@@ -117,7 +117,7 @@ elseif isempty(options) && (~sde_ismatrix(options) ...
           'Invalid SDE options structure.  See SDESET.');
 end
 
-% Handle solver arguments
+% Handle solver arguments (NOTE: ResetStream is called by onCleanup())
 [N,D,D0,tspan,tdir,lt,y0,fout,gout,h,ConstStep,dataType,idxNonNegative,...
     NonNegative,DiagonalNoise,ScalarNoise,idxConstFFUN,ConstFFUN,...
     idxConstGFUN,ConstGFUN,Stratonovich,RandFUN,CustomRandFUN,ResetStream,...
@@ -207,7 +207,7 @@ end
 % Initialize outputs for zero-crossing events
 isEvents = ~isempty(EventsFUN);
 if isEvents
-    if nargout > 5
+    if nargout > 6
         error('SDETools:sde_milstein:EventsTooManyOutputs',...
               'Too many output arguments.  See %s.',solver);
     else
@@ -216,14 +216,17 @@ if isEvents
             if nargout >= 4
                 YE = [];
                 if nargout >= 5
-                    IE = [];
+                    WE = [];
+                    if nargout >= 6
+                        IE = [];
+                    end
                 end
             end
         end
     end
 else
     if nargout > 2
-        if nargout <= 5
+        if nargout <= 6
             error('SDETools:sde_milstein:NoEventsTooManyOutputs',...
                  ['Too many output arguments. An events function has not '...
                   'been specified.  See %s.'],solver);
@@ -248,24 +251,23 @@ if CustomRandFUN    % check output of alternative RandFUN
     try
         if D > N
             if nargout >= 2 % Store Wiener increments in W
-                W = feval(RandFUN,lt,D);
+                W = feval(RandFUN,lt-1,D);
                 if ~sde_ismatrix(W) || isempty(W) || ~isfloat(W)
                     error('SDETools:sde_milstein:RandFUNNot2DArray1',...
                          ['RandFUN must return a non-empty matrix of '...
                           'floating point values.  See %s.'],solver);
                 end
                 [m,n] = size(W);
-                if m ~= lt || n ~= D
+                if m ~= lt-1 || n ~= D
                     error('SDETools:sde_milstein:RandFUNDimensionMismatch1',...
                          ['The specified alternative RandFUN did not output '...
-                          'a %d by %d matrix as requested.  See %s.'],lt,D,...
+                          'a %d by %d matrix as requested.  See %s.'],lt-1,D,...
                           solver);
                 end
                 if ConstStep
-                    W = sh*W;
-                    W(1,1:D) = zeros(1,D,dataType);
+                    W = [zeros(1,D);sh*W];
                 else
-                    W = bsxfun(@times,[0;sh],W);
+                    W = [zeros(1,D);bsxfun(@times,sh,W)];
                 end
             else            % Unable to store Wiener increments
                 dW = feval(RandFUN,1,D);
@@ -328,71 +330,71 @@ else    % No error checking needed if default RANDN used
     if D > N
         if nargout >= 2 % Store Wiener increments in W
             if ConstStep
-                W = sh*feval(RandFUN,lt,D);
-                W(1,1:D) = zeros(1,D,dataType);
+                W(2:end,:) = sh*feval(RandFUN,lt-1,D);
             else
-                W = bsxfun(@times,[0;sh],feval(RandFUN,lt,D));
+                W(2:end,:) = bsxfun(@times,sh,feval(RandFUN,lt-1,D));
             end
         else            % Unable to store Wiener increments
             dW = sh(1)*feval(RandFUN,1,D);
         end
     else                % Store Wiener increments in Y
-        if N == 1 && DiagonalNoise || ConstStep
-            Y(2:end,1:D) = sh.*feval(RandFUN,lt-1,D);
-        else
-            Y(2:end,1:D) = bsxfun(@times,sh,feval(RandFUN,lt-1,D));
+        if D > 0 && ~isempty(D0)
+            if N == 1 && DiagonalNoise || ConstStep
+                Y(2:end,D0) = sh.*feval(RandFUN,lt-1,D);
+            else
+                Y(2:end,D0) = bsxfun(@times,sh,feval(RandFUN,lt-1,D));
+            end
         end
     end
 end
 
 % Only allocate W matrix if requested as output
 if nargout >= 2 && D <= N
-	W = cumsum(Y(:,1:D),1);
+	W = cumsum(Y(:,D0),1);
 end
 
 % Integration loop
 if ConstFFUN && ConstGFUN && (D <= N || nargout >= 2) && ~NonNegative	% no FOR loop needed
-    Y(1,:) = y0;
-    if ScalarNoise
-        if ConstStep
-            Y(2:end,:) = bsxfun(@plus,h*fout.',Y(2:end,ones(1,N))*gout);
-        else
-            Y(2:end,:) = h*fout.'+Y(2:end,ones(1,N))*gout;
+    if D > N
+        W = cumsum(W,1);
+    elseif nargout < 2
+        Y = cumsum(Y(:,D0),1);
+        if isEvents
+            W = Y;
         end
-    elseif DiagonalNoise
-        if ConstStep
-            Y(2:end,:) = bsxfun(@plus,h*fout.',bsxfun(@times,Y(2:end,:),gout.'));
-        else
-            Y(2:end,:) = h*fout.'+bsxfun(@times,Y(2:end,D0),gout(D0).');
-        end
+    end
+    
+    % Evaluate analytic solution
+    if N == 1 && DiagonalNoise
+        Y = y0+tspan*fout+Y*gout;
     else
-        if ConstStep
-            if D > N
-                Y(2:end,:) = bsxfun(@plus,h*fout.',W(2:end,:)*gout.');
-            else
-                Y(2:end,:) = bsxfun(@plus,h*fout.',Y(2:end,1:D)*gout.');
-            end
+        if ScalarNoise
+            Y = bsxfun(@plus,y0.',bsxfun(@plus,tspan*fout.',Y*gout));
+        elseif DiagonalNoise
+            Y = bsxfun(@plus,y0.',tspan*fout.'+bsxfun(@times,Y(:,D0),gout(D0).'));
         else
             if D > N
-                Y(2:end,:) = h*fout.'+W(2:end,:)*gout.';
+                Y = bsxfun(@plus,y0.',tspan*fout.'+W*gout.');
             else
-                Y(2:end,:) = bsxfun(@plus,h*fout.',Y(2:end,1:D)*gout.');
+                Y = bsxfun(@plus,y0.',tspan*fout.'+Y*gout.');
             end
         end
     end
-    Y = cumsum(Y,1);
     
     % Check for and handle zero-crossing events
     if isEvents
         for i = 2:lt
-            [te,ye,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i),Y(i,:),EventsValue,varargin);
+            [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i),Y(i,:),W(i,:),EventsValue,varargin);
             if ~isempty(te)
                 if nargout >= 3
-                    TE = [TE;te];           %#ok<AGROW>
+                    TE = [TE;te];               %#ok<AGROW>
                     if nargout >= 4
-                        YE = [YE;ye];       %#ok<AGROW>
+                        YE = [YE;ye];           %#ok<AGROW>
                         if nargout >= 5
-                            IE = [IE;ie];	%#ok<AGROW>
+                            WE = [WE;we];       %#ok<AGROW>
+                            if nargout >= 6
+                                IE = [IE;ie];	%#ok<AGROW>
+                            end
                         end
                     end
                 end
@@ -411,26 +413,27 @@ else
     if N == 1 && DiagonalNoise
         dt = h(1);  % Step size for first time step and fixed step-size
         Y(1) = y0;	% Set initial conditions
-
-        % Use existing fout and gout to calculate the first time step, Y(2,:)
+        dW = Y(2);  % Wiener increment
+        
+        % Use existing fout and gout to calculate the first time step, Y(2)
         if ConstGFUN
-            Y(2) = y0+fout*dt+gout*Y(2);
+            Y(2) = y0+fout*dt+gout*dW;
         else
             if Derivative
                 if Stratonovich
-                    dW2 = 0.5*Y(2)^2;
+                    dW2 = 0.5*dW^2;
                 else
-                    dW2 = 0.5*(Y(2)^2-dt);
+                    dW2 = 0.5*(dW^2-dt);
                 end
-                Y(2) = y0+fout*dt+gout*(Y(2)+dgout*dW2);
+                Y(2) = y0+fout*dt+gout*(dW+dgout*dW2);
             else
                 sdt = sh(1);
                 if Stratonovich
-                    dW2 = (0.5/sdt)*Y(2)^2;
+                    dW2 = (0.5/sdt)*dW^2;
                 else
-                    dW2 = (0.5/sdt)*(Y(2)^2-dt);
+                    dW2 = (0.5/sdt)*(dW^2-dt);
                 end
-              	Ybar = y0+gout*Y(2);
+              	Ybar = y0+gout*dW;
                 Y(2) = Ybar+fout*dt+(feval(g,tspan(1),Ybar,varargin{:})-gout)*dW2;
             end
         end
@@ -440,14 +443,18 @@ else
         
         % Check for and handle zero-crossing events
         if isEvents
-            [te,ye,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(2),Y(2),EventsValue,varargin);
+            Wi = dW;
+            [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(2),Y(2),Wi,EventsValue,varargin);
             if ~isempty(te)
                 if nargout >= 3
                     TE = [TE;te];
                     if nargout >= 4
                         YE = [YE;ye];
                         if nargout >= 5
-                            IE = [IE;ie];
+                            WE = [WE;we];
+                            if nargout >= 6
+                                IE = [IE;ie];
+                            end
                         end
                     end
                 end
@@ -468,10 +475,11 @@ else
                 dt = h(i);
                 sdt = sh(i);
             end
+            dW = Y(i+1);    % Wiener increment
 
             % Calculate next time step
             if ConstGFUN
-              	Y(i+1) = Y(i)+feval(f,tspan(i),Y(i),varargin{:})*dt+gout*Y(i+1);
+              	Y(i+1) = Y(i)+feval(f,tspan(i),Y(i),varargin{:})*dt+gout*dW;
             else
                 if ~ConstFFUN
                     fout = feval(f,tspan(i),Y(i),varargin{:})*dt;
@@ -480,21 +488,21 @@ else
                 gout = feval(g,tspan(i),Y(i),varargin{:});
                 if Derivative   % Use Milstein with derivative if specified
                     if Stratonovich
-                        dW2 = 0.5*Y(i+1)^2;
+                        dW2 = 0.5*dW^2;
                     else
-                        dW2 = 0.5*(Y(i+1)^2-dt);
+                        dW2 = 0.5*(dW^2-dt);
                     end
                     if ~ConstDGFUN
                         dgout = feval(dg,tspan(i),Y(i),varargin{:});
                     end
-                    Y(i+1) = Y(i)+fout+gout*(Y(i+1)+dgout*dW2);
+                    Y(i+1) = Y(i)+fout+gout*(dW+dgout*dW2);
                 else            % Otherwise use derivative-free Milstein method
                     if Stratonovich
-                        dW2 = (0.5/sdt)*Y(i+1)^2;
+                        dW2 = (0.5/sdt)*dW^2;
                     else
-                        dW2 = (0.5/sdt)*(Y(i+1)^2-dt);
+                        dW2 = (0.5/sdt)*(dW^2-dt);
                     end
-                 	Ybar = Y(i)+gout*Y(i+1);
+                 	Ybar = Y(i)+gout*dW;
                 	Y(i+1) = Ybar+fout+(feval(g,tspan(i),Ybar,varargin{:})-gout)*dW2;
                 end
             end
@@ -504,14 +512,22 @@ else
             
             % Check for and handle zero-crossing events
             if isEvents
-                [te,ye,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i+1),Y(i+1),EventsValue,varargin);
+                if nargout >= 2
+                    Wi = W(i+1);
+                else
+                    Wi = Wi+dW; % Integrate Wiener increment
+                end
+                [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i+1),Y(i+1),Wi,EventsValue,varargin);
                 if ~isempty(te)
                     if nargout >= 3
-                        TE = [TE;te];           %#ok<AGROW>
+                        TE = [TE;te];               %#ok<AGROW>
                         if nargout >= 4
-                            YE = [YE;ye];       %#ok<AGROW>
+                            YE = [YE;ye];           %#ok<AGROW>
                             if nargout >= 5
-                                IE = [IE;ie];	%#ok<AGROW>
+                                WE = [WE;we];       %#ok<AGROW>
+                                if nargout >= 6
+                                    IE = [IE;ie];	%#ok<AGROW>
+                                end
                             end
                         end
                     end
@@ -582,14 +598,18 @@ else
         
         % Check for and handle zero-crossing events
         if isEvents
-            [te,ye,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(2),Yi,EventsValue,varargin);
+            Wi = dW;
+            [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(2),Yi,Wi,EventsValue,varargin);
             if ~isempty(te)
                 if nargout >= 3
                     TE = [TE;te];
                     if nargout >= 4
                         YE = [YE;ye];
                         if nargout >= 5
-                            IE = [IE;ie];
+                            WE = [WE;we];
+                            if nargout >= 6
+                                IE = [IE;ie];
+                            end
                         end
                     end
                 end
@@ -671,14 +691,22 @@ else
             
             % Check for and handle zero-crossing events
             if isEvents
-                [te,ye,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i+1),Yi,EventsValue,varargin);
+                if nargout >= 2
+                    Wi = W(i+1,:);
+                else
+                    Wi = Wi+dW; % Integrate Wiener increments
+                end
+                [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i+1),Yi,Wi,EventsValue,varargin);
                 if ~isempty(te)
                     if nargout >= 3
-                        TE = [TE;te];           %#ok<AGROW>
+                        TE = [TE;te];               %#ok<AGROW>
                         if nargout >= 4
-                            YE = [YE;ye];       %#ok<AGROW>
+                            YE = [YE;ye];           %#ok<AGROW>
                             if nargout >= 5
-                                IE = [IE;ie];	%#ok<AGROW>
+                                WE = [WE;we];       %#ok<AGROW>
+                                if nargout >= 6
+                                    IE = [IE;ie];	%#ok<AGROW>
+                                end
                             end
                         end
                     end
