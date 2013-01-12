@@ -1,4 +1,4 @@
-function [Y,W,TE,YE,WE,IE] = sde_milstein(f,g,tspan,y0,options,varargin)
+function [Y,W,TE,YE,WE,IE] = sde_milstein(f,g,tspan,y0,options)
 %SDE_MILSTEIN  Solve stochastic differential equations, Milstein method.
 %   YOUT = SDE_MILSTEIN(FFUN,GFUN,TSPAN,Y0) with TSPAN = [T0 T1 ... TFINAL]
 %   integrates the N-dimensional system of stochastic differential equations
@@ -92,7 +92,7 @@ function [Y,W,TE,YE,WE,IE] = sde_milstein(f,g,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-25-10
-%   Revision: 1.0, 1-10-13
+%   Revision: 1.0, 1-12-13
 
 
 solver = 'SDE_MILSTEIN';
@@ -121,7 +121,7 @@ end
 [N,D,D0,tspan,tdir,lt,y0,fout,gout,h,ConstStep,dataType,idxNonNegative,...
     NonNegative,DiagonalNoise,ScalarNoise,idxConstFFUN,ConstFFUN,...
     idxConstGFUN,ConstGFUN,Stratonovich,RandFUN,CustomRandFUN,ResetStream,...
-    EventsFUN,EventsValue] = sdearguments(solver,f,g,tspan,y0,options,varargin);
+    EventsFUN,EventsValue] = sdearguments(solver,f,g,tspan,y0,options);
 
 % If optional derivative function property is set
 if ~ConstGFUN
@@ -149,7 +149,7 @@ if ~ConstGFUN
     else
         % Check output of DGFUN and save it
         try
-            dgout = feval(dg,t0,y0,varargin{:});
+            dgout = dg(t0,y0);
         catch err
             switch err.identifier
                 case 'MATLAB:TooManyInputs'
@@ -384,7 +384,7 @@ if ConstFFUN && ConstGFUN && (D <= N || nargout >= 2) && ~NonNegative	% no FOR l
     % Check for and handle zero-crossing events
     if isEvents
         for i = 2:lt
-            [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i),Y(i,:),W(i,:),EventsValue,varargin);
+            [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i),Y(i,:),W(i,:),EventsValue);
             if ~isempty(te)
                 if nargout >= 3
                     TE = [TE;te];               %#ok<AGROW>
@@ -434,7 +434,7 @@ else
                     dW2 = (0.5/sdt)*(dW^2-dt);
                 end
               	Ybar = y0+gout*dW;
-                Y(2) = Ybar+fout*dt+(feval(g,tspan(1),Ybar,varargin{:})-gout)*dW2;
+                Y(2) = Ybar+fout*dt+(g(tspan(1),Ybar)-gout)*dW2;
             end
         end
         if NonNegative
@@ -444,7 +444,7 @@ else
         % Check for and handle zero-crossing events
         if isEvents
             Wi = dW;
-            [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(2),Y(2),Wi,EventsValue,varargin);
+            [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(2),Y(2),Wi,EventsValue);
             if ~isempty(te)
                 if nargout >= 3
                     TE = [TE;te];
@@ -479,13 +479,13 @@ else
 
             % Calculate next time step
             if ConstGFUN
-              	Y(i+1) = Y(i)+feval(f,tspan(i),Y(i),varargin{:})*dt+gout*dW;
+              	Y(i+1) = Y(i)+f(tspan(i),Y(i))*dt+gout*dW;
             else
                 if ~ConstFFUN
-                    fout = feval(f,tspan(i),Y(i),varargin{:})*dt;
+                    fout = f(tspan(i),Y(i))*dt;
                 end
 
-                gout = feval(g,tspan(i),Y(i),varargin{:});
+                gout = g(tspan(i),Y(i));
                 if Derivative   % Use Milstein with derivative if specified
                     if Stratonovich
                         dW2 = 0.5*dW^2;
@@ -493,7 +493,7 @@ else
                         dW2 = 0.5*(dW^2-dt);
                     end
                     if ~ConstDGFUN
-                        dgout = feval(dg,tspan(i),Y(i),varargin{:});
+                        dgout = dg(tspan(i),Y(i));
                     end
                     Y(i+1) = Y(i)+fout+gout*(dW+dgout*dW2);
                 else            % Otherwise use derivative-free Milstein method
@@ -503,7 +503,7 @@ else
                         dW2 = (0.5/sdt)*(dW^2-dt);
                     end
                  	Ybar = Y(i)+gout*dW;
-                	Y(i+1) = Ybar+fout+(feval(g,tspan(i),Ybar,varargin{:})-gout)*dW2;
+                	Y(i+1) = Ybar+fout+(g(tspan(i),Ybar)-gout)*dW2;
                 end
             end
             if NonNegative
@@ -517,7 +517,7 @@ else
                 else
                     Wi = Wi+dW; % Integrate Wiener increment
                 end
-                [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i+1),Y(i+1),Wi,EventsValue,varargin);
+                [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i+1),Y(i+1),Wi,EventsValue);
                 if ~isempty(te)
                     if nargout >= 3
                         TE = [TE;te];               %#ok<AGROW>
@@ -584,10 +584,10 @@ else
                 end
                 if DiagonalNoise
                     Ybar = y0+gout.*dW;
-                    Yi = Ybar+fout*dt+(feval(g,tspan(1),Ybar,varargin{:})-gout).*dW2;
+                    Yi = Ybar+fout*dt+(g(tspan(1),Ybar)-gout).*dW2;
                 else
                     Ybar = y0+gout*dW;
-                    Yi = Ybar+fout*dt+(feval(g,tspan(1),Ybar,varargin{:})-gout)*dW2;
+                    Yi = Ybar+fout*dt+(g(tspan(1),Ybar)-gout)*dW2;
                 end
             end
         end
@@ -599,7 +599,7 @@ else
         % Check for and handle zero-crossing events
         if isEvents
             Wi = dW;
-            [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(2),Yi,Wi,EventsValue,varargin);
+            [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(2),Yi,Wi,EventsValue);
             if ~isempty(te)
                 if nargout >= 3
                     TE = [TE;te];
@@ -645,16 +645,16 @@ else
             % Calculate next time step
             if ConstGFUN
                 if DiagonalNoise
-                    Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+gout.*dW;
+                    Yi = Yi+f(tspan(i),Yi)*dt+gout.*dW;
                 else
-                    Yi = Yi+feval(f,tspan(i),Yi,varargin{:})*dt+gout*dW;
+                    Yi = Yi+f(tspan(i),Yi)*dt+gout*dW;
                 end
             else
                 if ~ConstFFUN
-                    fout = feval(f,tspan(i),Yi,varargin{:})*dt;
+                    fout = f(tspan(i),Yi)*dt;
                 end
 
-                gout = feval(g,tspan(i),Yi,varargin{:});
+                gout = g(tspan(i),Yi);
                 if Derivative   % Use Milstein with derivative function if specified
                     if Stratonovich
                         dW2 = 0.5*dW.^2;
@@ -662,7 +662,7 @@ else
                         dW2 = 0.5*(dW.^2-dt);
                     end
                     if ~ConstDGFUN
-                        dgout = feval(dg,tspan(i),Yi,varargin{:});
+                        dgout = dg(tspan(i),Yi);
                     end
                     if DiagonalNoise
                         Yi = Yi+fout+gout.*(dW+dgout.*dW2);
@@ -677,10 +677,10 @@ else
                     end
                     if DiagonalNoise
                         Ybar = Yi+gout.*dW;
-                        Yi = Ybar+fout+(feval(g,tspan(i),Ybar,varargin{:})-gout).*dW2;
+                        Yi = Ybar+fout+(g(tspan(i),Ybar)-gout).*dW2;
                     else
                         Ybar = Yi+gout*dW;
-                        Yi = Ybar+fout+(feval(g,tspan(i),Ybar,varargin{:})-gout)*dW2;
+                        Yi = Ybar+fout+(g(tspan(i),Ybar)-gout)*dW2;
                     end
                 end
             end
@@ -696,7 +696,7 @@ else
                 else
                     Wi = Wi+dW; % Integrate Wiener increments
                 end
-                [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i+1),Yi,Wi,EventsValue,varargin);
+                [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i+1),Yi,Wi,EventsValue);
                 if ~isempty(te)
                     if nargout >= 3
                         TE = [TE;te];               %#ok<AGROW>

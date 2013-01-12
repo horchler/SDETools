@@ -1,4 +1,4 @@
-function [Y,W,TE,YE,WE,IE] = sde_bm(mu,sig,tspan,y0,options,varargin)
+function [Y,W,TE,YE,WE,IE] = sde_bm(mu,sig,tspan,y0,options)
 %SDE_BM  Brownian motion process, analytic solution.
 %   YOUT = SDE_BM(MU,SIG,TSPAN,Y0) with TSPAN = [T0 T1 ... TFINAL] returns the
 %   analytic solution of the N-dimensional system of stochastic differential
@@ -75,7 +75,7 @@ function [Y,W,TE,YE,WE,IE] = sde_bm(mu,sig,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 1-5-13
-%   Revision: 1.0, 1-10-13
+%   Revision: 1.0, 1-12-13
 
 
 func = 'SDE_BM';
@@ -93,11 +93,14 @@ if nargin < 5
               '  See %s.'],func);
     end
     options = [];
-elseif isempty(options) && (~sde_ismatrix(options) ...
+elseif nargin == 5 && isempty(options) && (~sde_ismatrix(options) ...
         || any(size(options) ~= 0) || ~(isstruct(options) || iscell(options) ...
         || isnumeric(options))) || ~isempty(options) && ~isstruct(options)
 	error('SDETools:sde_bm:InvalidSDESETStruct',...
           'Invalid SDE options structure.  See SDESET.');
+else
+    error('SDETools:sde_bm:TooManyInputs',...
+          'Too many input arguments.  See %s.',func);
 end
 
 % Check mu and sig types
@@ -123,7 +126,7 @@ end
 % Handle function arguments (NOTE: ResetStream is called by onCleanup())
 [N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,CustomRandFUN,...
     ResetStream,EventsFUN,EventsValue]...
-	= sdearguments_special(func,tspan,y0,dataType,options,varargin);	%#ok<ASGLU>
+	= sdearguments_special(func,tspan,y0,dataType,options);	%#ok<ASGLU>
 
 % Check mu and sig
 if ~any(length(mu) == [1 N])

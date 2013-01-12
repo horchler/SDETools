@@ -1,4 +1,4 @@
-function [Y,W,TE,YE,WE,IE] = sde_ou(th,mu,sig,tspan,y0,options,varargin)
+function [Y,W,TE,YE,WE,IE] = sde_ou(th,mu,sig,tspan,y0,options)
 %SDE_OU  Ornstein-Uhlenbeck mean-reverting process, analytic solution.
 %   YOUT = SDE_OU(THETA,MU,SIG,TSPAN,Y0) with TSPAN = [T0 T1 ... TFINAL] returns
 %   the analytic solution of the N-dimensional system of stochastic differential
@@ -80,7 +80,7 @@ function [Y,W,TE,YE,WE,IE] = sde_ou(th,mu,sig,tspan,y0,options,varargin)
 %   of Mathematics, Vol. 43, No. 2, pp. 351-369, April 1942.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-8-12
-%   Revision: 1.0, 1-10-13
+%   Revision: 1.0, 1-12-13
 
 
 func = 'SDE_OU';
@@ -98,11 +98,14 @@ if nargin < 6
               '  See %s.'],func);
     end
     options = [];
-elseif isempty(options) && (~sde_ismatrix(options) ...
+elseif nargin ==6 && isempty(options) && (~sde_ismatrix(options) ...
         || any(size(options) ~= 0) || ~(isstruct(options) || iscell(options) ...
         || isnumeric(options))) || ~isempty(options) && ~isstruct(options)
 	error('SDETools:sde_ou:InvalidSDESETStruct',...
           'Invalid SDE options structure.  See SDESET.');
+else
+    error('SDETools:sde_ou:TooManyInputs',...
+          'Too many input arguments.  See %s.',func);
 end
 
 % Check th, mu, and sig types
@@ -134,7 +137,7 @@ end
 % Handle function arguments (NOTE: ResetStream is called by onCleanup())
 [N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,CustomRandFUN,...
     ResetStream,EventsFUN,EventsValue]...
-	= sdearguments_special(func,tspan,y0,dataType,options,varargin);	%#ok<ASGLU>
+	= sdearguments_special(func,tspan,y0,dataType,options);	%#ok<ASGLU>
 
 % Check th, mu, and sig sizes
 if ~any(length(th) == [1 N])

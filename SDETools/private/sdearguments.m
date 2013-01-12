@@ -2,7 +2,7 @@ function [N,D,D0,tspan,tdir,lt,y0,f0,g0,h,ConstStep,dataType,idxNonNegative,...
           NonNegative,DiagonalNoise,ScalarNoise,idxConstFFUN,ConstFFUN,...
           idxConstGFUN,ConstGFUN,Stratonovich,RandFUN,CustomRandFUN,...
           ResetStream,EventsFUN,EventsValue]...
-          = sdearguments(solver,f,g,tspan,y0,options,args)
+          = sdearguments(solver,f,g,tspan,y0,options)
 %SDEARGUMENTS  Process arguments for all SDE solvers.
 %
 %   See also:
@@ -10,7 +10,7 @@ function [N,D,D0,tspan,tdir,lt,y0,f0,g0,h,ConstStep,dataType,idxNonNegative,...
 %       RANDSTREAM
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 12-12-11
-%   Revision: 1.0, 1-4-13
+%   Revision: 1.0, 1-12-13
 
 %   SDEARGUMENTS is partially based on an updating of version 1.12.4.15 of
 %   Matlab's ODEARGUMENTS.
@@ -105,7 +105,7 @@ if ~isa(f,'function_handle')
 else
     % Check output of FFUN and save it
     try
-        f0 = feval(f,t0,y0,args{:});
+        f0 = f(t0,y0);
     catch err
         switch err.identifier
             case 'MATLAB:TooManyInputs'
@@ -187,7 +187,7 @@ if ~isa(g,'function_handle')
 else
     % Check output of GFUN and save it
     try
-        g0 = feval(g,t0,y0,args{:});
+        g0 = g(t0,y0);
     catch err
         switch err.identifier
             case 'MATLAB:TooManyInputs'
@@ -358,7 +358,7 @@ if ~isempty(EventsFUN)
     
     % Check output of EventsFUN at initial condition and save value
     try
-        [EventsValue,isterminal,direction] = feval(EventsFUN,tspan(1),y0,args{:});
+        [EventsValue,isterminal,direction] = EventsFUN(tspan(1),y0);
     catch err
         switch err.identifier
             case 'MATLAB:TooManyInputs'

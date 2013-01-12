@@ -1,6 +1,6 @@
 function [N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,CustomRandFUN,...
           ResetStream,EventsFUN,EventsValue]...
-          = sdearguments_special(func,tspan,y0,dataType,options,args)
+          = sdearguments_special(func,tspan,y0,dataType,options)
 %SDEARGUMENTS_SPECIAL  Process arguments for all SDE special functions.
 %
 %   See also:
@@ -8,7 +8,7 @@ function [N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,CustomRandFUN,...
 %       RANDSTREAM
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
-%   Revision: 1.0, 1-5-13
+%   Revision: 1.0, 1-12-13
 
 %   SDEARGUMENTS_SPECIAL is partially based on an updating of version 1.12.4.15
 %   of Matlab's ODEARGUMENTS.
@@ -139,7 +139,7 @@ if ~isempty(EventsFUN)
     
     % Check output of EventsFUN at initial condition and save value
     try
-        [EventsValue,isterminal,direction] = feval(EventsFUN,tspan(1),y0,args{:});
+        [EventsValue,isterminal,direction] = EventsFUN(tspan(1),y0);
     catch err
         switch err.identifier
             case 'MATLAB:TooManyInputs'

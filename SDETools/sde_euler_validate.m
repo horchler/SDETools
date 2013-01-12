@@ -14,7 +14,7 @@ function varargout=sde_euler_validate(dt,n,a,b,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 11-1-10
-%   Revision: 1.0, 6-30-12
+%   Revision: 1.0, 1-12-13
 
 
 close all
@@ -132,7 +132,7 @@ else
 end
 
 % Warm up for timing
-[Y W] = sde_euler(f,g,[t0 t0+dt(1)],y0,options);    %#ok<NASGU,ASGLU>
+[Y,W] = sde_euler(f,g,[t0 t0+dt(1)],y0,options);    %#ok<NASGU,ASGLU>
 
 % Loop through time-steps
 ttotal = 0;
@@ -142,7 +142,7 @@ for i=1:length(dt)
     nsteps = nsteps+length(t);
     
     tic
-    [Y W] = sde_euler(f,g,t,y0,options);
+    [Y,W] = sde_euler(f,g,t,y0,options);
     ttotal = ttotal+toc;
     
     % Calculate error between analytic and simulated solutions

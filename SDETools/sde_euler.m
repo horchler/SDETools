@@ -1,4 +1,4 @@
-function [Y,W,TE,YE,WE,IE] = sde_euler(f,g,tspan,y0,options,varargin)
+function [Y,W,TE,YE,WE,IE] = sde_euler(f,g,tspan,y0,options)
 %SDE_EULER  Solve stochastic differential equations, Euler methods.
 %   YOUT = SDE_EULER(FFUN,GFUN,TSPAN,Y0) with TSPAN = [T0 T1 ... TFINAL]
 %   integrates the N-dimensional system of stochastic differential equations
@@ -93,7 +93,7 @@ function [Y,W,TE,YE,WE,IE] = sde_euler(f,g,tspan,y0,options,varargin)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 10-28-10
-%   Revision: 1.0, 1-10-13
+%   Revision: 1.0, 1-12-13
 
 
 solver = 'SDE_EULER';
@@ -111,18 +111,21 @@ if nargin < 5
               '  See %s.'],solver);
     end
     options = [];
-elseif isempty(options) && (~sde_ismatrix(options) ...
+elseif nargin == 5 && isempty(options) && (~sde_ismatrix(options) ...
         || any(size(options) ~= 0) || ~(isstruct(options) || iscell(options) ...
         || isnumeric(options))) || ~isempty(options) && ~isstruct(options)
 	error('SDETools:sde_euler:InvalidSDESETStruct',...
           'Invalid SDE options structure.  See SDESET.');
+else
+    error('SDETools:sde_euler:TooManyInputs',...
+          'Too many input arguments.  See %s.',solver);
 end
 
 % Handle solver arguments (NOTE: ResetStream is called by onCleanup())
 [N,D,D0,tspan,tdir,lt,y0,fout,gout,h,ConstStep,dataType,idxNonNegative,...
     NonNegative,DiagonalNoise,ScalarNoise,idxConstFFUN,ConstFFUN,...
     idxConstGFUN,ConstGFUN,Stratonovich,RandFUN,CustomRandFUN,ResetStream,...
-    EventsFUN,EventsValue] = sdearguments(solver,f,g,tspan,y0,options,varargin);
+    EventsFUN,EventsValue] = sdearguments(solver,f,g,tspan,y0,options);
 
 % Initialize outputs for zero-crossing events
 isEvents = ~isempty(EventsFUN);
@@ -304,7 +307,7 @@ if ConstFFUN && ConstGFUN && (D <= N || nargout >= 2) && ~NonNegative	% no FOR l
     % Check for and handle zero-crossing events
     if isEvents
         for i = 2:lt
-            [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i),Y(i,:),W(i,:),EventsValue,varargin);
+            [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i),Y(i,:),W(i,:),EventsValue);
             if ~isempty(te)
                 if nargout >= 3
                     TE = [TE;te];               %#ok<AGROW>
@@ -340,7 +343,7 @@ else
             Y(2) = y0+fout*dt+gout*dW;
         else
             if Stratonovich     % Use Euler-Heun step
-                Y(2) = y0+fout*dt+0.5*(gout+feval(g,tspan(2),y0+gout*dW,varargin{:}))*dW;
+                Y(2) = y0+fout*dt+0.5*(gout+g(tspan(2),y0+gout*dW))*dW;
             else
                 Y(2) = y0+fout*dt+gout*dW;
             end
@@ -352,7 +355,7 @@ else
         % Check for and handle zero-crossing events
         if isEvents
             Wi = dW;
-            [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(2),Y(2),Wi,EventsValue,varargin);
+            [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(2),Y(2),Wi,EventsValue);
             if ~isempty(te)
                 if nargout >= 3
                     TE = [TE;te];
@@ -385,15 +388,15 @@ else
 
             % Calculate next time step
             if ConstGFUN
-              	Y(i+1) = Y(i)+feval(f,tspan(i+1),Y(i),varargin{:})*dt+gout*dW;
+              	Y(i+1) = Y(i)+f(tspan(i+1),Y(i))*dt+gout*dW;
             else
                 if ~ConstFFUN
-                    fout = feval(f,tspan(i+1),Y(i),varargin{:})*dt;
+                    fout = f(tspan(i+1),Y(i))*dt;
                 end
-                gout = feval(g,tspan(i+1),Y(i),varargin{:});
+                gout = g(tspan(i+1),Y(i));
 
                 if Stratonovich     % Use Euler-Heun step
-                    Y(i+1) = Y(i)+fout+0.5*(gout+feval(g,tspan(i+1),Y(i)+gout*dW,varargin{:}))*dW;
+                    Y(i+1) = Y(i)+fout+0.5*(gout+g(tspan(i+1),Y(i)+gout*dW))*dW;
                 else
                     Y(i+1) = Y(i)+fout+gout*dW;
                 end
@@ -409,7 +412,7 @@ else
                 else
                     Wi = Wi+dW; % Integrate Wiener increment
                 end
-                [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i+1),Y(i+1),Wi,EventsValue,varargin);
+                [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i+1),Y(i+1),Wi,EventsValue);
                 if ~isempty(te)
                     if nargout >= 3
                         TE = [TE;te];               %#ok<AGROW>
@@ -459,9 +462,9 @@ else
         else
             if Stratonovich	% Use Euler-Heun step
                 if DiagonalNoise
-                    Yi = y0+fout*dt+0.5*(gout+feval(g,tspan(2),y0+gout.*dW,varargin{:})).*dW;
+                    Yi = y0+fout*dt+0.5*(gout+g(tspan(2),y0+gout.*dW)).*dW;
                 else
-                    Yi = y0+fout*dt+0.5*(gout+feval(g,tspan(2),y0+gout*dW,varargin{:}))*dW;
+                    Yi = y0+fout*dt+0.5*(gout+g(tspan(2),y0+gout*dW))*dW;
                 end
             else
                 if DiagonalNoise
@@ -479,7 +482,7 @@ else
         % Check for and handle zero-crossing events
         if isEvents
             Wi = dW;
-            [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(2),Yi,Wi,EventsValue,varargin);
+            [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(2),Yi,Wi,EventsValue);
             if ~isempty(te)
                 if nargout >= 3
                     TE = [TE;te];
@@ -525,21 +528,21 @@ else
             % Calculate next time step
             if ConstGFUN
                 if DiagonalNoise
-                    Yi = Yi+feval(f,tspan(i+1),Yi,varargin{:})*dt+gout.*dW;
+                    Yi = Yi+f(tspan(i+1),Yi)*dt+gout.*dW;
                 else
-                    Yi = Yi+feval(f,tspan(i+1),Yi,varargin{:})*dt+gout*dW;
+                    Yi = Yi+f(tspan(i+1),Yi)*dt+gout*dW;
                 end
             else
                 if ~ConstFFUN
-                    fout = feval(f,tspan(i+1),Yi,varargin{:})*dt;
+                    fout = f(tspan(i+1),Yi)*dt;
                 end
-                gout = feval(g,tspan(i+1),Yi,varargin{:});
+                gout = g(tspan(i+1),Yi);
 
                 if Stratonovich     % Use Euler-Heun step
                     if DiagonalNoise
-                        Yi = Yi+fout+0.5*(gout+feval(g,tspan(i+1),Yi+gout.*dW,varargin{:})).*dW;
+                        Yi = Yi+fout+0.5*(gout+g(tspan(i+1),Yi+gout.*dW)).*dW;
                     else
-                        Yi = Yi+fout+0.5*(gout+feval(g,tspan(i+1),Yi+gout*dW,varargin{:}))*dW;
+                        Yi = Yi+fout+0.5*(gout+g(tspan(i+1),Yi+gout*dW))*dW;
                     end
                 else
                     if DiagonalNoise
@@ -561,7 +564,7 @@ else
                 else
                     Wi = Wi+dW; % Integrate Wiener increments
                 end
-                [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i+1),Yi,Wi,EventsValue,varargin);
+                [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i+1),Yi,Wi,EventsValue);
                 if ~isempty(te)
                     if nargout >= 3
                         TE = [TE;te];               %#ok<AGROW>
