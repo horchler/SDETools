@@ -96,11 +96,14 @@ if nargin < 5
               '  See %s.'],func);
     end
     options = [];
-elseif nargin ==5 && isempty(options) && (~sde_ismatrix(options) ...
-        || any(size(options) ~= 0) || ~(isstruct(options) || iscell(options) ...
-        || isnumeric(options))) || ~isempty(options) && ~isstruct(options)
-	error('SDETools:sde_gbm:InvalidSDESETStruct',...
-          'Invalid SDE options structure.  See SDESET.');
+elseif nargin == 5
+    if isempty(options) && (~sde_ismatrix(options) ...
+            || any(size(options) ~= 0) || ~(isstruct(options) ...
+            || iscell(options) || isnumeric(options))) ...
+            || ~isempty(options) && ~isstruct(options)
+        error('SDETools:sde_gbm:InvalidSDESETStruct',...
+              'Invalid SDE options structure.  See SDESET.');
+    end
 else
     error('SDETools:sde_gbm:TooManyInputs',...
           'Too many input arguments.  See %s.',func);
@@ -322,7 +325,7 @@ end
 % Check for and handle zero-crossing events
 if isEvents
     for i = 2:lt
-        [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i),Y(i,:),W(i,:),EventsValue,varargin);
+        [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i),Y(i,:),W(i,:),EventsValue);
         if ~isempty(te)
             if nargout >= 3
                 TE = [TE;te];               %#ok<AGROW>
