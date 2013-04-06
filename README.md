@@ -1,7 +1,7 @@
 SDETools
 ========
 #####A Matlab Toolbox for the Numerical Solution of Stochastic Differential Equations (SDEs).#####
-######Version 1.0, 1-10-13######
+######Version 1.1, 4-5-13######
 &nbsp;  
 
 Stochastic differential equation solvers.  
@@ -27,10 +27,10 @@ Numerical validation and demos.
 --------
 
 Andrew D. Horchler, *adh9 @ case . edu*, [biorobots.case.edu](http://biorobots.case.edu/)  
-Created: 12-18-11, Revision: 1.0, 1-10-13  
+Created: 12-18-11, Revision: 1.1, 4-5-13  
 
 This version tested with Matlab 8.0.0.783 (R2012b)  
-Mac OS X 10.8.2 (Build: 12C2034), Java 1.6.0_37-b06-434-11M3909  
+Mac OS X 10.8.2 (Build: 12D78), Java 1.6.0_43-b01-447-11M4203  
 Compatibility maintained back through Matlab 7.4 (R2007a)  
 &nbsp;  
 
