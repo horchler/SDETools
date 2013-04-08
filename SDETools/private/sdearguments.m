@@ -10,7 +10,7 @@ function [N,D,D0,tspan,tdir,lt,y0,f0,g0,h,ConstStep,dataType,idxNonNegative,...
 %       RANDSTREAM
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 12-12-11
-%   Revision: 1.0, 1-12-13
+%   Revision: 1.0, 4-7-13
 
 %   SDEARGUMENTS is partially based on an updating of version 1.12.4.15 of
 %   Matlab's ODEARGUMENTS.
@@ -71,7 +71,7 @@ elseif ~strcmp(idxNonNegative,'no') && ~isempty(idxNonNegative)
               '  See %s.'],solver);
     end
     if any(idxNonNegative < 1) || any(idxNonNegative > N) ...
-            || ~all(idxNonNegative-floor(idxNonNegative) == 0)
+            || ~all(idxNonNegative == floor(idxNonNegative))
         error('SDETools:sdearguments:InvalidIndexNonNegative',...
              ['NonNegative option must be a vector of integer indices no '...
               'greater than the length of Y0.  See %s.'],solver);
@@ -141,7 +141,7 @@ else
                   '  See %s.'],solver);
         end
         if any(idxConstFFUN < 1) || any(idxConstFFUN > N) ...
-                || ~all(idxConstFFUN-floor(idxConstFFUN) == 0)
+                || ~all(idxConstFFUN == floor(idxConstFFUN))
             error('SDETools:sdearguments:InvalidIndexConstFFUN',...
                  ['ConstFFUN option must be a vector of integer indices no '...
                   'greater than the length of Y0.  See %s.'],solver);
@@ -223,7 +223,7 @@ else
                   '  See %s.'],solver);
         end
         if any(idxConstGFUN < 1) || any(idxConstGFUN > N) ...
-                || ~all(idxConstGFUN-floor(idxConstGFUN) == 0)
+                || ~all(idxConstGFUN == floor(idxConstGFUN))
             error('SDETools:sdearguments:InvalidIndexConstGFUN',...
                  ['ConstGFUN option must be a vector of integer indices no '...
                   'greater than the length of Y0.  See %s.'],solver);

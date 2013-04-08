@@ -14,7 +14,7 @@ function varargout=sde_euler_validate(dt,n,a,b,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 11-1-10
-%   Revision: 1.0, 1-12-13
+%   Revision: 1.0, 4-7-13
 
 
 close all
@@ -65,7 +65,7 @@ if ~isscalar(n) || ~isfloat(n) || ~isreal(n) || ~isfinite(n)
     error('SDETools:sde_euler_validate:InvalidN',...
           'N must be a finite real floating-point scalar.');
 end
-if isempty(n) || n < 1 || n-floor(n) ~= 0
+if isempty(n) || n < 1 || n ~= floor(n)
     error('SDETools:sde_euler_validate:BadInputSizeN',...
           'Input N must be an integer >= 1.');
 end

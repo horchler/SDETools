@@ -85,7 +85,7 @@ function varargout=waittext(varargin)
 %   See also WAITBAR, FPRINTF, ISSTRPROP, DISP, SPMD.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 6-8-12
-%   Revision: 1.0, 6-30-12
+%   Revision: 1.0, 4-7-13
 
 % Inspired by:
 % blogs.mathworks.com/loren/2007/08/01/monitoring-progress-of-a-calculation/#7
@@ -121,7 +121,7 @@ if nargin > 2
             end
             if ~isnumeric(labtarget) || ~isreal(labtarget) ...
                     || ~isfinite(labtarget) || labtarget < 1 ...
-                    || labtarget > numlabs || labtarget-floor(labtarget) ~= 0
+                    || labtarget > numlabs || labtarget ~= floor(labtarget)
                 error('SDETools:waittext:NonFiniteRealLabTarget',...
                      ['LABTARGET must be a finite real integer between one '...
                       'and NUMLABS.']);
@@ -249,7 +249,7 @@ if hasSPMD && labindex == 1 || ~hasSPMD && ~isspmd
                 msg = [];
                 fprintf(1,[bsa sp(ones(1,spmdsp))]);
             case 'countdown'
-                if x < 0 || x-floor(x) ~= 0
+                if x < 0 || x ~= floor(x)
                     error('SDETools:waittext:InvalidCountdown',...
                          ['Countdown values must be integers greater than '...
                           'or equal to zero.']);
@@ -286,7 +286,7 @@ if hasSPMD && labindex == 1 || ~hasSPMD && ~isspmd
                 fprintf(1,[bsa sp(ones(1,ndigits-length(pct))) '%s' ...
                     sp(ones(1,nchars+spmdsp-13-ndigits)) '\n'],msg);
             case {'iteration','count','counter'}
-                if x < 0 || x-floor(x) ~= 0
+                if x < 0 || x ~= floor(x)
                     error('SDETools:waittext:InvalidIteration',...
                          ['Iteration values must be integers greater than '...
                           'or equal to zero.']);
@@ -351,7 +351,7 @@ if hasSPMD && labindex == 1 || ~hasSPMD && ~isspmd
                              ['Optional waitbar length must be a finite '...
                               'real scalar.']);
                     end
-                    if nwait < 1 || nwait > nchars-2 || nwait-floor(nwait) ~= 0
+                    if nwait < 1 || nwait > nchars-2 || nwait ~= floor(nwait)
                         error('SDETools:waittext:InvalidWaitbarLength',...
                              ['Optional waitbar length must be an integer '...
                               'between 1 and ' int2str(nchars-2) '.']);
