@@ -1,7 +1,7 @@
 function [N,D,D0,tspan,tdir,lt,y0,f0,g0,h,ConstStep,dataType,idxNonNegative,...
           NonNegative,DiagonalNoise,ScalarNoise,idxConstFFUN,ConstFFUN,...
           idxConstGFUN,ConstGFUN,Stratonovich,RandFUN,CustomRandFUN,...
-          ResetStream,EventsFUN,EventsValue]...
+          ResetStream,EventsFUN,EventsValue,OutputFUN]...
           = sdearguments(solver,f,g,tspan,y0,options)
 %SDEARGUMENTS  Process arguments for all SDE solvers.
 %
@@ -10,7 +10,7 @@ function [N,D,D0,tspan,tdir,lt,y0,f0,g0,h,ConstStep,dataType,idxNonNegative,...
 %       RANDSTREAM
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 12-12-11
-%   Revision: 1.0, 4-7-13
+%   Revision: 1.0, 4-29-13
 
 %   SDEARGUMENTS is partially based on an updating of version 1.12.4.15 of
 %   Matlab's ODEARGUMENTS.
@@ -417,4 +417,101 @@ if ~isempty(EventsFUN)
     end
 else
     EventsValue = [];
+end
+
+% Check for output function
+OutputFUN = sdeget(options,'OutputFUN',[],'flag');
+if ~isempty(OutputFUN)
+    if ~isa(OutputFUN,'function_handle')
+        error('SDETools:sdearguments:OutputFUNNotAFunctionHandle',...
+              'OutputFUN, if specified, must be a function handle.  See %s.',...
+              solver);
+    end
+    
+    % Check for selected Y components
+    idxY = sdeget(options,'OutputYSelect','yes','flag');
+    if strcmp(idxY,'yes')
+        idxY = 1:N;
+        YSelect = true;
+    elseif ~strcmp(idxY,'no') && ~isempty(idxY)
+        if ~isnumeric(idxY) || ~isreal(idxY) || ~all(isfinite(idxY)) ...
+                || ~isvector(idxY)
+            error('SDETools:sdearguments:InvalidOutputYSelect',...
+                 ['OutputYSelect option must be a finite real numeric '...
+                  'vector.  See %s.'],solver);
+        end
+        if any(idxY < 1) || any(idxY > N) || ~all(idxY == floor(idxY))
+            error('SDETools:sdearguments:InvalidIndexOutputYSelect',...
+                 ['OutputYSelect option must be a vector of integer indices '...
+                  'no greater than the length of Y0.  See %s.'],solver);
+        end
+        if any(diff(sort(idxY)) == 0)
+            error('SDETools:sdearguments:RepeatedIndexOutputYSelect',...
+                 ['OutputYSelect vector cannot contain repeated indices.  '...
+                  'See %s.'],solver);
+        end
+        YSelect = true;
+    else
+        idxY = [];
+        YSelect = false;
+    end
+    
+    % Check for selected W components
+    idxW = sdeget(options,'OutputWSelect','no','flag');
+    if strcmp(idxW,'yes')
+        idxW = 1:N;
+        WSelect = true;
+    elseif ~strcmp(idxW,'no') && ~isempty(idxW)
+        if ~isnumeric(idxW) || ~isreal(idxW) || ~all(isfinite(idxW)) ...
+                || ~isvector(idxW)
+            error('SDETools:sdearguments:InvalidOutputWSelect',...
+                 ['OutputWSelect option must be a finite real numeric '...
+                  'vector.  See %s.'],solver);
+        end
+        if any(idxW < 1) || any(idxW > N) || ~all(idxW == floor(idxW))
+            error('SDETools:sdearguments:InvalidIndexOutputWSelect',...
+                 ['OutputWSelect option must be a vector of integer indices '...
+                  'no greater than the length of Y0.  See %s.'],solver);
+        end
+        if any(diff(sort(idxW)) == 0)
+            error('SDETools:sdearguments:RepeatedIndexOutputWSelect',...
+                 ['OutputWSelect vector cannot contain repeated indices.  '...
+                  'See %s.'],solver);
+        end
+        WSelect = true;
+    else
+        idxW = [];
+        WSelect = false;
+    end
+    
+    if WSelect
+        OutputFUN = @(t,y,w)OutputFUN(t,y(idxY(~isempty(y),:)),...
+            w(idxW(~isempty(w),:)));
+    elseif YSelect
+        OutputFUN = @(t,y,w)OutputFUN(t,y(idxY(~isempty(y),:)));
+    else
+        OutputFUN = @(t,y,w)OutputFUN(t);
+    end
+    
+    % Check output of new OutputFUN at initial condition
+    try
+        OutputFUN(tspan([1 end]),y0,zeros(N,1));
+    catch err
+        switch err.identifier
+            case 'MATLAB:TooManyInputs'
+                error('SDETools:sdearguments:OutputFUNTooFewInputs',...
+                      'OutputFUN must have at least two inputs.  See %s.',...
+                      solver);
+            case 'MATLAB:unassignedOutputs'
+                error('SDETools:sdearguments:OutputFUNUnassignedOutput',...
+                     ['The first output of OutputFUN was not assigned.  '...
+                      'See %s.'],solver);
+            case 'MATLAB:minrhs'
+                error('SDETools:sdearguments:OutputFUNTooManyInputs',...
+                     ['OutputFUN requires one or more input arguments '...
+                      '(parameters) that were not supplied.  See %s.'],solver);
+            otherwise
+                rethrow(err);
+        end
+    end
 end

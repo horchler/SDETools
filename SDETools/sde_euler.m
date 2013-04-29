@@ -19,7 +19,7 @@ function [Y,W,TE,YE,WE,IE] = sde_euler(f,g,tspan,y0,options)
 %   corresponds to a time in TSPAN.
 %
 %   [YOUT, W] = SDE_EULER(FFUN,GFUN,TSPAN,Y0,...) outputs the M-by-N matrix W of
-%   integrated Weiner increments that were used by the solver. Each row of W
+%   integrated Wiener increments that were used by the solver. Each row of W
 %   corresponds to a time in TSPAN.
 %
 %   [...] = SDE_EULER(FFUN,GFUN,TSPAN,Y0,OPTIONS) solves as above with default
@@ -93,7 +93,7 @@ function [Y,W,TE,YE,WE,IE] = sde_euler(f,g,tspan,y0,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 10-28-10
-%   Revision: 1.0, 1-12-13
+%   Revision: 1.0, 4-29-13
 
 
 solver = 'SDE_EULER';
@@ -128,7 +128,8 @@ end
 [N,D,D0,tspan,tdir,lt,y0,fout,gout,h,ConstStep,dataType,idxNonNegative,...
     NonNegative,DiagonalNoise,ScalarNoise,idxConstFFUN,ConstFFUN,...
     idxConstGFUN,ConstGFUN,Stratonovich,RandFUN,CustomRandFUN,ResetStream,...
-    EventsFUN,EventsValue] = sdearguments(solver,f,g,tspan,y0,options);
+    EventsFUN,EventsValue,OutputFUN] ...
+    = sdearguments(solver,f,g,tspan,y0,options);	%#ok<ASGLU>
 
 % Initialize outputs for zero-crossing events
 isEvents = ~isempty(EventsFUN);
@@ -162,6 +163,9 @@ else
         end
     end
 end
+
+% Initialize output function
+isOutput = ~isempty(OutputFUN);
 
 % State array
 if strcmp(dataType,'double')
@@ -307,7 +311,7 @@ if ConstFFUN && ConstGFUN && (D <= N || nargout >= 2) && ~NonNegative	% no FOR l
         end
     end
     
-    % Check for and handle zero-crossing events
+    % Check for and handle zero-crossing events, and output function
     if isEvents
         for i = 2:lt
             [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i),Y(i,:),W(i,:),EventsValue);
@@ -332,6 +336,14 @@ if ConstFFUN && ConstGFUN && (D <= N || nargout >= 2) && ~NonNegative	% no FOR l
                     return;
                 end
             end
+            
+            if isOutput
+                OutputFUN(tspan(i),Y(i,:));
+            end
+        end
+    elseif isOutput
+        for i = 2:lt
+            OutputFUN(tspan(i),Y(i,:));
         end
     end
 else
@@ -382,7 +394,12 @@ else
             end
         end
         
-        % Integration loop using Weiner increments stored in Y(i+1)
+        % Check for and handle output function
+        if isOutput
+            OutputFUN(tspan(2),Y(2));
+        end
+        
+        % Integration loop using Wiener increments stored in Y(i+1)
         for i = 2:lt-1
             if ~ConstStep
                 dt = h(i);  % Step size
@@ -437,6 +454,11 @@ else
                         return;
                     end
                 end
+            end
+            
+            % Check for and handle output function
+            if isOutput
+                OutputFUN(tspan(i+1),Y(i+1));
             end
         end
     else
@@ -507,6 +529,11 @@ else
                     return;
                 end
             end
+        end
+        
+        % Check for and handle output function
+        if isOutput
+            OutputFUN(tspan(2),Yi);
         end
         
         % Integration loop using cached state, Yi, and increment, dW
@@ -589,6 +616,11 @@ else
                         return;
                     end
                 end
+            end
+            
+            % Check for and handle output function
+            if isOutput
+                OutputFUN(tspan(i+1),Yi);
             end
         end
     end

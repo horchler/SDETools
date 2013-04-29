@@ -21,7 +21,12 @@ function options = sdeset(varargin)
 %SDEType - Type of SDE  [ {Stratonovich} | Ito ]
 %   This property specifies the form of the SDE to be solved, and therefore if
 %   particular SDE integration scheme is based upon the Stratonovich or Ito
-%   stochastic integral.
+%   stochastic integral. The choice of Ito or Stratonovich depends on the form
+%   of the modelled noise process. Ito is appropriate for approximating discrete
+%   noise processes, while Stratonovich is suited for approximating continuous
+%   noise processes. The Ito and Stratonovich forms are equivalent for additive
+%   noise, i.e., the stochastic function, g(t,y), is not a function of the state
+%   variables, g(t,y) = g(t).
 %
 %DFFUN - Derivative of the deterministic function  [ function_handle | vector ]
 %   Set this property to a function handle in order to specify the derivative of
@@ -83,7 +88,7 @@ function options = sdeset(varargin)
 %   function, f(t,y), that are constant. An empty vector, [], is equivalent to
 %   'no'.
 %
-%ConstGFUN - Stochastic function is constant [ yes | {no} | vector of indices ]
+%ConstGFUN - Stochastic function is constant  [ yes | {no} | vector of indices ]
 %   Set this property to 'yes' in the case of time-independent additive noise,
 %   i.e., if the stochastic function, g(t,y), of the SDE is constant and
 %   therefore not a function of time or state. The function is then evaluated
@@ -97,7 +102,7 @@ function options = sdeset(varargin)
 %   state. The function is then evaluated only once by the integration routine,
 %   improving performance.
 %
-%NonNegative - Non-negative components [ yes | {no} | vector of indices ]
+%NonNegative - Non-negative components  [ yes | {no} | vector of indices ]
 %   Set to 'yes' to specify that all components of the solution are
 %   non-negative. A vector of indices specifies individual components of the
 %   solution vector that must be non-negative. An empty vector, [], is
@@ -116,15 +121,36 @@ function options = sdeset(varargin)
 %   otherwise if Direction(i) = 0, all zeros are found. If Direction is set to
 %   the empty matrix, [], all zeros are found for all events. Direction and
 %   IsTerminal may also be scalars.
+%
+%OutputFUN - Function called by solver after each time-step  [ function_handle ]
+%   Set this property to a function handle in order to specify a function that
+%   will be called upon completion of each time-step. By default, the output
+%   function must take two arguments: the current integration time, T, and a
+%   vector of solution components, Y. The OutputYSelect option can be used to
+%   pass only subsets (or none) of the solution components to the output
+%   function. The OutputWSelect option can be enabled to pass integrated Wiener
+%   increments, W, as a third argument to the output function. See SDEPLOT.
+%
+%OutputYSelect - Y Output selection indices  [ {yes} | no | vector of integers ]
+%   A vector of indices specifies a subset of solution vector components of the
+%   solution vector to be passed to OutputFUN. If 'no' is specified, and the
+%   default OutputWSelect is used, only the current integration time is passed
+%   to OutputFUN. An empty vector, [], is equivalent to 'no'.
+%
+%OutputWSelect - W Output selection indices  [ yes | {no} | vector of integers ]
+%   Set to 'yes' to specify that all integrated Wiener increment components, W,
+%   are passed to OutputFUN. A vector of indices specifies a subset of
+%   integrated Wiener increment components to be passed to OutputFUN. An empty
+%   vector, [], is equivalent to 'no'.
 %   
 %   See also:
-%       SDEGET, SDE_EULER, SDE_MILSTEIN, SDE_BM, SDE_GBM, SDE_OU,
-%       FUNCTION_HANDLE, RANDSTREAM
+%       SDEGET, SDEPLOT, SDE_EULER, SDE_MILSTEIN, SDE_BM, SDE_GBM, SDE_OU,
+%       FUNCTION_HANDLE, RANDSTREAM, ODEPLOT
 
 %   SDESET is based on an updating of version 1.46.4.10 of Matlab's ODESET.
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-27-10
-%   Revision: 1.0, 1-5-13
+%   Revision: 1.0, 4-28-13
 
 
 options = struct(	'SDEType',          [],...
@@ -139,7 +165,10 @@ options = struct(	'SDEType',          [],...
                     'ConstGFUN',        [],...
                     'ConstDGFUN',       [],...
                     'NonNegative',      [],...
-                    'EventsFUN',        []...
+                    'EventsFUN',        [],...
+                    'OutputFUN',        [],...
+                    'OutputYSelect',    [],...
+                    'OutputWSelect',    []...
                 );
 
 Values = {	'{Stratonovich} | Ito'
@@ -155,6 +184,9 @@ Values = {	'{Stratonovich} | Ito'
             ' yes  | {no}'
             ' yes  | {no} | vector'
             'function_handle'
+            'function_handle'
+            ' {yes}  | no | vector'
+            ' yes  | {no} | vector'
          };
 
 Names = fieldnames(options);
