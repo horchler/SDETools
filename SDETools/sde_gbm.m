@@ -10,7 +10,7 @@ function [Y,W,TE,YE,WE,IE] = sde_gbm(mu,sig,tspan,y0,options)
 %   in the M-by-N solution array YOUT corresponds to a time in TSPAN.
 %
 %   [YOUT, W] = SDE_GBM(MU,SIG,TSPAN,Y0,...) outputs the M-by-N matrix W of
-%   integrated Weiner increments that were used. Each row of W corresponds to a
+%   integrated Wiener increments that were used. Each row of W corresponds to a
 %   time in TSPAN.
 %
 %   [...] = SDE_GBM(MU,SIG,TSPAN,Y0,OPTIONS) returns as above with default
@@ -78,7 +78,7 @@ function [Y,W,TE,YE,WE,IE] = sde_gbm(mu,sig,tspan,y0,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
-%   Revision: 1.0, 1-12-13
+%   Revision: 1.0, 4-28-13
 
 
 func = 'SDE_GBM';

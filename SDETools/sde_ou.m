@@ -11,7 +11,7 @@ function [Y,W,TE,YE,WE,IE] = sde_ou(th,mu,sig,tspan,y0,options)
 %   corresponds to a time in TSPAN.
 %
 %   [YOUT, W] = SDE_OU(THETA,MU,SIG,TSPAN,Y0,...) outputs the M-by-N matrix W of
-%   integrated Weiner increments that were used. Each row of W corresponds to a
+%   integrated Wiener increments that were used. Each row of W corresponds to a
 %   time in TSPAN.
 %
 %   [...] = SDE_OU(THETA,MU,SIG,TSPAN,Y0,OPTIONS) returns as above with default
@@ -80,7 +80,7 @@ function [Y,W,TE,YE,WE,IE] = sde_ou(th,mu,sig,tspan,y0,options)
 %   of Mathematics, Vol. 43, No. 2, pp. 351-369, April 1942.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-8-12
-%   Revision: 1.0, 1-12-13
+%   Revision: 1.0, 4-28-13
 
 
 func = 'SDE_OU';
