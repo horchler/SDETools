@@ -37,12 +37,12 @@ function [Y,W,TE,YE,WE,IE] = sde_gbm(mu,sig,tspan,y0,options)
 %
 %   Example:
 %       % Compare analytical and simulated Geometric Brownian motion
-%       npaths = 10; dt = 1e-2; t = 0:dt:1; y0 = ones(1,npaths);
-%       mu = 1.5; sig = 0.1:0.1:0.1*npaths;
+%       npaths = 10; dt = 1e-2; t = 0:dt:1; y0 = ones(npaths,1);
+%       mu = 1.5; sig = (0.1:0.1:0.1*npaths).';
 %       opts = sdeset('RandSeed',1,'SDEType','Ito');
 %       y1 = sde_gbm(mu,sig,t,y0,opts);
-%       y2 = sde_euler(@(t,y)(mu+sig'.^2/2).*y,@(t,y)sig'.*y,t,y0,opts);
-%       h = plot(t,y1,'b',t,y2,'r'); xlabel('t'); ylabel('y(t)');
+%       y2 = sde_euler(@(t,y)mu*y,@(t,y)sig.*y,t,y0,opts);
+%       figure; h = plot(t,y1,'b',t,y2,'r'); xlabel('t'); ylabel('y(t)');
 %       mustr = num2str(mu); npstr = num2str(npaths); dtstr = num2str(dt);
 %       txt = {'Analytical solution',['Numerical solution, dt = ' dtstr]};
 %       legend(h([1 end]),txt,2); legend boxoff;
@@ -78,7 +78,7 @@ function [Y,W,TE,YE,WE,IE] = sde_gbm(mu,sig,tspan,y0,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
-%   Revision: 1.0, 4-28-13
+%   Revision: 1.0, 4-29-13
 
 
 func = 'SDE_GBM';
@@ -270,19 +270,6 @@ if any(sig0)
     % Evaluate analytic solution, Stratonovich (default) or Ito
     if Stratonovich
         if N == 1
-            Y = exp(tspan*(mu-0.5*sig^2)+sig*Y)*y0;
-        else
-            if isscalar(mu) && isscalar(sig)
-                Y = bsxfun(@times,y0,exp(bsxfun(@plus,tspan*(mu-0.5*sig^2),sig*Y)));
-            elseif isscalar(sig)
-                Y = bsxfun(@times,y0,exp(tspan*(mu(:).'-0.5*sig^2)+sig*Y));
-            else
-                sig = sig(:)';
-                Y = bsxfun(@times,y0,exp(tspan*(mu(:).'-0.5*sig.^2)+bsxfun(@times,sig,Y)));
-            end
-        end
-    else
-        if N == 1
             Y = exp(tspan*mu+sig*Y)*y0;
         else
             if isscalar(mu) && isscalar(sig)
@@ -293,6 +280,19 @@ if any(sig0)
                 Y = bsxfun(@times,y0,exp(tspan*mu(:).'+sig*Y));
             else
                 Y = bsxfun(@times,y0,exp(tspan*mu(:).'+bsxfun(@times,sig,Y)));
+            end
+        end
+    else
+        if N == 1
+            Y = exp(tspan*(mu-0.5*sig^2)+sig*Y)*y0;
+        else
+            if isscalar(mu) && isscalar(sig)
+                Y = bsxfun(@times,y0,exp(bsxfun(@plus,tspan*(mu-0.5*sig^2),sig*Y)));
+            elseif isscalar(sig)
+                Y = bsxfun(@times,y0,exp(tspan*(mu(:).'-0.5*sig^2)+sig*Y));
+            else
+                sig = sig(:)';
+                Y = bsxfun(@times,y0,exp(tspan*(mu(:).'-0.5*sig.^2)+bsxfun(@times,sig,Y)));
             end
         end
     end

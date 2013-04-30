@@ -37,11 +37,11 @@ function [Y,W,TE,YE,WE,IE] = sde_bm(mu,sig,tspan,y0,options)
 %
 %   Example:
 %       % Compare exact numeric and simulated Brownian motion
-%       npaths = 10; dt = 1e-2; t = 0:dt:1; y0 = ones(1,npaths);
+%       npaths = 10; dt = 1e-2; t = 0:dt:1; y0 = ones(npaths,1);
 %       mu = 1.5; sig = 0.1:0.1:0.1*npaths; opts = sdeset('RandSeed',1);
 %       y1 = sde_bm(mu,sig,t,y0,opts);
-%       y2 = sde_euler(mu(ones(size(y0))).',sig.',t,y0,opts);
-%       h = plot(t,y1,'b',t,y2,'r-.'); xlabel('t'); ylabel('y(t)');
+%       y2 = sde_euler(mu(ones(size(y0))),sig(:),t,y0,opts);
+%       figure; h = plot(t,y1,'b',t,y2,'r-.'); xlabel('t'); ylabel('y(t)');
 %       mustr = num2str(mu); npstr = num2str(npaths); dtstr = num2str(dt);
 %       txt = {'Exact numeric solution',['Numerical solution, dt = ' dtstr]};
 %       legend(h([1 end]),txt,2); legend boxoff;
@@ -75,7 +75,7 @@ function [Y,W,TE,YE,WE,IE] = sde_bm(mu,sig,tspan,y0,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 1-5-13
-%   Revision: 1.0, 4-28-13
+%   Revision: 1.0, 4-29-13
 
 
 func = 'SDE_BM';
