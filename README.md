@@ -2,8 +2,8 @@ SDETools
 ========
 #####A Matlab Toolbox for the Numerical Solution of Stochastic Differential Equations (SDEs).#####
 ######Version 1.1, 4-29-13######
-
 #####Download Repository: [ZIP Archive](https://github.com/horchler/SDETools/archive/master.zip)#####
+&nbsp;
 
 Stochastic differential equation solvers.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_euler```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_euler.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Euler-Maruyama (Ito) and Euler-Heun (Stratonovich)  
