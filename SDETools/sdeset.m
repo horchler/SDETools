@@ -61,13 +61,15 @@ function options = sdeset(varargin)
 %   created with the RandStream function. The RandSeed and Antithetic properties
 %   are ignored if the RandStream property is specified.
 %   
-%RandFUN - Specify alternative random number function  [ function_handle ]
+%RandFUN - Alternative random number function  [ function_handle | matrix ]
 %   Set this property to a function handle in order to specify an alternative
 %   random number generator function, instead of using Matlab's random number
 %   generator, to calculate the Wiener increments. The corresponding function
 %   must take two arguments, M and N, and output an M by N matrix of normal
-%   variates. The RandSeed, RandStream, and Antithetic properties are ignored if
-%   the RandFUN property is specified.
+%   variates. If a LENGTH(TSPAN)-by-D floating-point matrix, W, of integrated
+%   Wiener increments is specified, these will be used directly. The RandSeed,
+%   RandStream, and Antithetic properties are ignored if the RandFUN property is
+%   specified.
 %
 %DiagonalNoise - Dimension of stochastic function  [ {yes} | no ]
 %   In the default diagonal (uncorrelated) noise situation each dimension of the
@@ -149,7 +151,7 @@ function options = sdeset(varargin)
 %   SDESET is based on an updating of version 1.46.4.10 of Matlab's ODESET.
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-27-10
-%   Revision: 1.2, 5-2-13
+%   Revision: 1.2, 5-3-13
 
 
 options = struct(	'SDEType',          [],...
@@ -176,7 +178,7 @@ Values = {	'{Stratonovich} | Ito'
             '0 <= integer < 2^32'
             ' yes  | {no}'
             'RandStream object'
-            'function_handle'
+            'function_handle | matrix'
             '{yes} |  no'
             ' yes  | {no}'
             ' yes  | {no}'

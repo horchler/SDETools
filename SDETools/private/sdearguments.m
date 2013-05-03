@@ -1,7 +1,7 @@
 function [N,D,tspan,tdir,lt,y0,f0,g0,dg0,h,ConstStep,dataType,NonNegative,...
           idxNonNegative,DiagonalNoise,ScalarNoise,OneDNoise,ConstFFUN,...
-          ConstGFUN,ConstDGFUN,Stratonovich,RandFUN,CustomRandFUN,...
-          ResetStream,EventsFUN,EventsValue,OutputFUN,WSelect] ...
+          ConstGFUN,ConstDGFUN,Stratonovich,RandFUN,ResetStream,EventsFUN,...
+          EventsValue,OutputFUN,WSelect] ...
           = sdearguments(solver,f,g,tspan,y0,options)
 %SDEARGUMENTS  Process arguments for all SDE solvers.
 %
@@ -10,7 +10,7 @@ function [N,D,tspan,tdir,lt,y0,f0,g0,dg0,h,ConstStep,dataType,NonNegative,...
 %       SDEZERO, SDEOUTPUT, SDERESET_STREAM, FUNCTION_HANDLE, RANDSTREAM
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 12-12-11
-%   Revision: 1.2, 5-2-13
+%   Revision: 1.2, 5-3-13
 
 %   SDEARGUMENTS is partially based on an updating of version 1.12.4.15 of
 %   Matlab's ODEARGUMENTS.
@@ -336,37 +336,42 @@ if isDiffusion && ~(ConstGFUN && isscalar(g0) && g0 == 0)
     if DiagonalNoise
         if D ~= 1 || (d ~= N && d ~= 1)
             error('SDETools:sdearguments:GFUNDimensionMismatchDiagonal',...
-                 ['For diagonal noise, GFUN must return a non-empty column '...
-                  'vector the same length as Y0. Set the DiagonalNoise '...
-                  'option to ''no'' with SDESET for general noise case.  '...
-                  'See %s.'],solver);
+                 ['For diagonal noise, GFUN must return a non-empty scalar '...
+                  'or a column vector the same length as Y0. Set the '...
+                  'DiagonalNoise option to ''no'' with SDESET for general '...
+                  'noise case.  See %s.'],solver);
         end
         D = N;
+        ScalarNoise = (N == 1);
     else
-        if d ~= N
+        if d ~= N && d ~= 1
             error('SDETools:sdearguments:GFUNDimensionMismatchNonDiagonal',...
                  ['For non-diagonal noise, GFUN must return a non-empty '...
-                  'matrix with the same number of rows as the length as '...
-                  'Y0.  See %s.'],solver);
+                  'scalar or matrix with the same number of rows as the '...
+                  'length as Y0.  See %s.'],solver);
         end
-        if ConstGFUN && sde_isdiag(g0)
+        if D == 1
+            ScalarNoise = true;
+            DiagonalNoise = (N == 1);
+        elseif ConstGFUN && sde_isdiag(g0)
             D = N;
             g0 = g0(1:N+1:end).';
             if Derivative
                 dg0 = dg0(1:N+1:end).';
             end
+            ScalarNoise = false;
             DiagonalNoise = true;   % Not specified, noise is actually diagonal
+        else
+            ScalarNoise = false;
+            DiagonalNoise = false;
         end
     end
-    
-    % GFUN is N-by-1, i.e., D = 1, not diagonal unless N = 1, then equivalent
-    ScalarNoise = ((~DiagonalNoise || N == 1) && D == 1);
     
     % GFUN is 1-by-1 scalar and diagonal, i.e., N = 1, D = 1
     OneDNoise = (DiagonalNoise && ScalarNoise);
     
     % Create function handle to be used for generating Wiener increments
-    [RandFUN,CustomRandFUN,ResetStream] = sderandfun(solver,dataType,options);
+    [RandFUN,ResetStream] = sderandfun(solver,dataType,options);
 
     % Integration method is dependent on if SDE is Stratonovich or Ito form
     if ConstGFUN

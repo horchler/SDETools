@@ -86,15 +86,16 @@ function [Y,W,TE,YE,WE,IE] = sde_euler(f,g,tspan,y0,options)
 
 %   SDE_EULER is an implementation of the order 0.5 strong (order 1.0 weak)
 %   explicit Euler-Maruyama and Euler-Heun schemes, which are also order 0.5
-%   strong Taylor approximation schemes. In the additive noise case, Euler
-%   schemes improve to order 1.0 strong convergence.
+%   strong Taylor approximation schemes. In the additive noise case (where the
+%   diffusion is not a function of the state, but may be a function of time),
+%   Euler schemes improve to order 1.0 strong convergence.
 
 %   For details of this integration method, see: Peter E. Kloeden and Eckhard
 %   Platen, "Numerical solution of Stochastic Differential Equations,"
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 10-28-10
-%   Revision: 1.2, 5-2-13
+%   Revision: 1.2, 5-3-13
 
 
 solver = 'SDE_EULER';
@@ -128,9 +129,8 @@ end
 % Handle solver arguments (NOTE: ResetStream is called by onCleanup())
 [N,D,tspan,tdir,lt,y0,fout,gout,dgout,h,ConstStep,dataType,NonNegative,...
     idxNonNegative,DiagonalNoise,ScalarNoise,OneDNoise,ConstFFUN,ConstGFUN,...
-    ConstDGFUN,Stratonovich,RandFUN,CustomRandFUN,ResetStream,EventsFUN,...
-    EventsValue,OutputFUN,WSelect] ...
-    = sdearguments(solver,f,g,tspan,y0,options);	%#ok<ASGLU>
+    ConstDGFUN,Stratonovich,RandFUN,ResetStream,EventsFUN,EventsValue,...
+    OutputFUN,WSelect] = sdearguments(solver,f,g,tspan,y0,options);	%#ok<ASGLU>
 
 % Initialize outputs for zero-crossing events
 isEvents = ~isempty(EventsFUN);
@@ -181,9 +181,18 @@ isDiffusion = ~(ConstGFUN && isscalar(gout) && gout == 0);
 % Is Y allocated and output
 isYOutput = (nargout > 0);
 
+% Check if alternative RandFUN function or W matrix is present
+if isempty(RandFUN) && ~isempty(options)
+    CustomRandFUN = isa(options.RandFUN,'function_handle');
+    CustomWMatrix = ~CustomRandFUN;
+else
+    CustomRandFUN = false;
+    CustomWMatrix = false;
+end
+
 % Location of stored Wiener increments, if they are needed and pre-calculated
-dWinY = (isDiffusion && D <= N && isYOutput);	% Store Wiener increments in Y
-dWinW = (isDiffusion && D > N && nargout >= 2);	% Store Wiener increments in W
+dWinY = (isDiffusion && D <= N && isYOutput && ~CustomWMatrix);   	% In Y
+dWinW = (isDiffusion && D > N && nargout >= 2 || CustomWMatrix);	% In W
 
 % Allocate state array, Y, if needed (may be allocated in place below)
 if isYOutput && (~(CustomRandFUN && dWinY) ...
@@ -198,96 +207,113 @@ end
 % Calculate Wiener increments from normal variates, store in Y if possible, or W
 sh = tdir*sqrt(h);
 h = tdir*h;
-if isDiffusion
+if isDiffusion || isW
     if CustomRandFUN                        % Check alternative RandFUN output
-        try
-            if dWinY                        % Store Wiener increments in Y
-                Y = feval(RandFUN,lt-1,D);
-                if ~sde_ismatrix(Y) || isempty(Y) || ~isfloat(Y)
-                    error('SDETools:sde_euler:RandFUNNot2DArray3',...
-                         ['RandFUN must return a non-empty matrix of '...
-                          'floating-point values.  See %s.'],solver);
-                end
-                [m,n] = size(Y);
-                if m ~= lt-1 || n ~= D
-                    error('SDETools:sde_euler:RandFUNDimensionMismatch3',...
-                         ['The specified alternative RandFUN did not output '...
-                          'a %d by %d matrix as requested.  See %s.',lt-1,D,...
-                          solver]);
-                end
-
-                if ScalarNoise || ConstStep
-                    Y = [zeros(1,D,dataType);
-                         sh.*Y zeros(lt-1,N-D,dataType)];
-                else
-                    Y = [zeros(1,D,dataType);
-                         bsxfun(@times,sh,Y) zeros(lt-1,N-D,dataType)];
-                end
-                if nargout >= 2
-                    W = cumsum(Y(:,1:D),1); % Integrated Wiener increments
-                end
-            elseif dWinW                    % Store Wiener increments in W
-                W = feval(RandFUN,lt-1,D);
-                if ~sde_ismatrix(W) || isempty(W) || ~isfloat(W)
-                    error('SDETools:sde_euler:RandFUNNot2DArray1',...
-                         ['RandFUN must return a non-empty matrix of '...
-                          'floating-point values.  See %s.'],solver);
-                end
-                [m,n] = size(W);
-                if m ~= lt-1 || n ~= D
-                    error('SDETools:sde_euler:RandFUNDimensionMismatch1',...
-                         ['The specified alternative RandFUN did not output '...
-                          'a %d by %d matrix as requested.  See %s.',lt-1,D,...
-                          solver]);
-                end
-
-                if ConstStep
-                    W = [zeros(1,D,dataType);sh.*W];
-                else
-                    W = [zeros(1,D,dataType);bsxfun(@times,sh,W)];
-                end
-            else                            % Unable to store Wiener increments
-                dW = feval(RandFUN,1,D);
-                if ~isvector(dW) || isempty(dW) || ~isfloat(dW)
-                    error('SDETools:sde_euler:RandFUNNot2DArray2',...
-                         ['RandFUN must return a non-empty matrix of '...
-                          'floating-point values.  See %s.'],solver);
-                end
-                [m,n] = size(dW);
-                if m ~= 1 || n ~= D
-                    error('SDETools:sde_euler:RandFUNDimensionMismatch2',...
-                         ['The specified alternative RandFUN did not output '...
-                          'a 1 by %d column vector as requested.  See %s.',D,...
-                          solver]);
-                end
-
-                dW = sh(1)*dW;
-                if ConstStep
-                    RandFUN = @(i)sh*feval(RandFUN,1,D);
-                else
-                    RandFUN = @(i)sh(i)*feval(RandFUN,1,D);
-                end
+        if CustomWMatrix
+            W = sdeget(options,'RandFUN',[],'flag');
+            if ~isfloat(W) || ~sde_ismatrix(W) || any(size(W) ~= [lt D])
+                error('SDETools:sde_euler:RandFUNInvalidW',...
+                     ['RandFUN must be a function handle or a '...
+                      'LENGTH(TSPAN)-by-D (%d by %d) floating-point matrix '...
+                      'of integrated Wiener increments.  See %s.'],lt,D,solver);
             end
-        catch err
-            switch err.identifier
-                case 'MATLAB:TooManyInputs'
-                    error('SDETools:sde_euler:RandFUNTooFewInputs',...
-                          'RandFUN must have at least two inputs.  See %s.',...
-                          solver);
-                case 'MATLAB:TooManyOutputs'
-                    error('SDETools:sde_euler:RandFUNNoOutput',...
-                         ['The output of RandFUN was not specified. RandFUN '...
-                          'must return a non-empty matrix.  See %s.'],solver);
-                case 'MATLAB:unassignedOutputs'
-                    error('SDETools:sde_euler:RandFUNUnassignedOutput',...
-                         ['The first output of RandFUN was not assigned.'...
-                          '  See %s.'],solver);
-                case 'MATLAB:minrhs'
-                    error('SDETools:sde_euler:RandFUNTooManyInputs',...
-                         ['RandFUN must not require more than two inputs.'...
-                          '  See %s.'],solver);
-                otherwise
-                    rethrow(err);
+            error('SDETools:sde_euler:RandFUNWMatrixNotSupportedYet',...
+                 ['Custom W matrices specified via RandFUN not supported '...
+                  'yet in SDE_EULER and SDE_MILSTEIN.']);
+        else
+            % User-specified function handle
+            RandFUN = sdeget(options,'RandFUN',[],'flag');
+            
+            try
+                if dWinY                        % Store Wiener increments in Y
+                    Y = feval(RandFUN,lt-1,D);
+                    if ~sde_ismatrix(Y) || isempty(Y) || ~isfloat(Y)
+                        error('SDETools:sde_euler:RandFUNNot2DArray3',...
+                             ['RandFUN must return a non-empty matrix of '...
+                              'floating-point values.  See %s.'],solver);
+                    end
+                    [m,n] = size(Y);
+                    if m ~= lt-1 || n ~= D
+                        error('SDETools:sde_euler:RandFUNDimensionMismatch3',...
+                             ['The specified alternative RandFUN did not '...
+                              'output a %d by %d matrix as requested.  '...
+                              'See %s.'],lt-1,D,solver);
+                    end
+
+                    if ScalarNoise || ConstStep
+                        Y = [zeros(1,D,dataType);
+                             sh.*Y zeros(lt-1,N-D,dataType)];
+                    else
+                        Y = [zeros(1,D,dataType);
+                             bsxfun(@times,sh,Y) zeros(lt-1,N-D,dataType)];
+                    end
+                    if nargout >= 2
+                        W = cumsum(Y(:,1:D),1); % Integrated Wiener increments
+                    end
+                elseif dWinW                    % Store Wiener increments in W
+                    W = feval(RandFUN,lt-1,D);
+                    if ~sde_ismatrix(W) || isempty(W) || ~isfloat(W)
+                        error('SDETools:sde_euler:RandFUNNot2DArray1',...
+                             ['RandFUN must return a non-empty matrix of '...
+                              'floating-point values.  See %s.'],solver);
+                    end
+                    [m,n] = size(W);
+                    if m ~= lt-1 || n ~= D
+                        error('SDETools:sde_euler:RandFUNDimensionMismatch1',...
+                             ['The specified alternative RandFUN did not '...
+                              'output a %d by %d matrix as requested.  '...
+                              'See %s.'],lt-1,D,solver);
+                    end
+
+                    if ConstStep
+                        W = [zeros(1,D,dataType);sh.*W];
+                    else
+                        W = [zeros(1,D,dataType);bsxfun(@times,sh,W)];
+                    end
+                else                            % Cannot store Wiener increments
+                    dW = feval(RandFUN,1,D);
+                    if ~isvector(dW) || isempty(dW) || ~isfloat(dW)
+                        error('SDETools:sde_euler:RandFUNNot2DArray2',...
+                             ['RandFUN must return a non-empty matrix of '...
+                              'floating-point values.  See %s.'],solver);
+                    end
+                    [m,n] = size(dW);
+                    if m ~= 1 || n ~= D
+                        error('SDETools:sde_euler:RandFUNDimensionMismatch2',...
+                             ['The specified alternative RandFUN did not '...
+                              'output a 1 by %d column vector as '...
+                              'requested.  See %s.'],D,solver);
+                    end
+
+                    dW = sh(1)*dW;
+                    if ConstStep
+                        RandFUN = @(i)sh*feval(RandFUN,1,D);
+                    else
+                        RandFUN = @(i)sh(i)*feval(RandFUN,1,D);
+                    end
+                end
+            catch err
+                switch err.identifier
+                    case 'MATLAB:TooManyInputs'
+                        error('SDETools:sde_euler:RandFUNTooFewInputs',...
+                             ['RandFUN must have at least two inputs.  '...
+                              'See %s.'],solver);
+                    case 'MATLAB:TooManyOutputs'
+                        error('SDETools:sde_euler:RandFUNNoOutput',...
+                             ['The output of RandFUN was not specified. '...
+                              'RandFUN must return a non-empty matrix.  '...
+                              'See %s.'],solver);
+                    case 'MATLAB:unassignedOutputs'
+                        error('SDETools:sde_euler:RandFUNUnassignedOutput',...
+                             ['The first output of RandFUN was not '...
+                              'assigned.  See %s.'],solver);
+                    case 'MATLAB:minrhs'
+                        error('SDETools:sde_euler:RandFUNTooManyInputs',...
+                             ['RandFUN must not require more than two '...
+                              'inputs.  See %s.'],solver);
+                    otherwise
+                        rethrow(err);
+                end
             end
         end
     else
@@ -331,6 +357,8 @@ if ConstFFUN && ConstGFUN && ((~isDiffusion && isYOutput) || dWinY || dWinW) ...
         if isDrift
             if OneDNoise                    % 1-D scalar (and diagonal) noise
                 Y = y0+tspan*fout+Y*gout;
+            elseif ScalarNoise
+                Y = bsxfun(@plus,y0.',bsxfun(@plus,tspan*fout.',Y(:,1)*gout.'));
             elseif DiagonalNoise
                 Y = bsxfun(@plus,y0.',tspan*fout.'+bsxfun(@times,Y,gout.'));
             else

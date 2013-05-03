@@ -1,5 +1,5 @@
-function [N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,CustomRandFUN,...
-          ResetStream,EventsFUN,EventsValue,OutputFUN,WSelect]...
+function [N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,ResetStream,...
+          EventsFUN,EventsValue,OutputFUN,WSelect] ...
           = sdearguments_process(func,tspan,y0,dataType,options)
 %SDEARGUMENTS_PROCESS  Process arguments for all SDE process functions.
 %
@@ -8,7 +8,7 @@ function [N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,CustomRandFUN,...
 %       SDEOUTPUT, SDERESET_STREAMFUNCTION_HANDLE, RANDSTREAM
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
-%   Revision: 1.2, 5-2-13
+%   Revision: 1.2, 5-3-13
 
 %   sdearguments_process is partially based on an updating of version 1.12.4.15
 %   of Matlab's ODEARGUMENTS.
@@ -65,7 +65,7 @@ N = length(y0);             % Number of state variables
 [OutputFUN,WSelect] = sdeoutputfun(func,tspan,y0,N,options);
 
 % Create function handle to be used for generating Wiener increments
-[RandFUN,CustomRandFUN,ResetStream] = sderandfun(func,dataType,options);
+[RandFUN,ResetStream] = sderandfun(func,dataType,options);
 
 % Check if noise is not specified as diagonal, i.e., uncorrelated
 if strcmp(sdeget(options,'DiagonalNoise','yes','flag'),'no');

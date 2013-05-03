@@ -1,4 +1,4 @@
-function [RandFUN,CustomRandFUN,ResetStream]=sderandfun(solver,dataType,options)
+function [RandFUN,ResetStream]=sderandfun(solver,dataType,options)
 %SDERANDFUN  Process random function arguments for SDE solvers and functions.
 %
 %   See also:
@@ -6,19 +6,12 @@ function [RandFUN,CustomRandFUN,ResetStream]=sderandfun(solver,dataType,options)
 %       FUNCTION_HANDLE
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 5-2-13
-%   Revision: 1.2, 5-2-13
+%   Revision: 1.2, 5-3-13
 
 
-% Create function handle to be used for generating Wiener increments
-RandFUN = sdeget(options,'RandFUN',[],'flag');
-if ~isempty(RandFUN)	% Use alternative random number generator
-    if ~isa(RandFUN,'function_handle')
-        error('SDETools:sderandfun:RandFUNNotAFunctionHandle',...
-              'RandFUN must be a function handle.  See %s.',solver);
-    end
-    CustomRandFUN = true;
-    ResetStream = [];
-else    % Use Matlab's random number generator for normal variates
+% Check if alternative random number generator function or W matrix specified
+if isempty(options) || ~isempty(options) && isempty(options.RandFUN)
+    % Use Matlab's random number generator for normal variates
     Stream = sdeget(options,'RandStream',[],'flag');
     if ~isempty(Stream)
         if ~isa(Stream,'RandStream')
@@ -53,9 +46,13 @@ else    % Use Matlab's random number generator for normal variates
         end
     end
     
+    % Create function handle to be used for generating Wiener increments
     RandFUN = @(M,N)randn(Stream,M,N,dataType);
-    CustomRandFUN = false;
     
     % Function to be call on completion or early termination of integration
     ResetStream = onCleanup(@()sdereset_stream(Stream));
+else
+    % Function handle for generating Wiener increments created in main function
+    RandFUN = [];
+    ResetStream = [];
 end

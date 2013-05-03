@@ -18,7 +18,7 @@ function sde_euler_benchmark(tests,N,Tol)
 %       SDE_MILSTEIN_BENCHMARK
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 1-2-11
-%   Revision: 1.0, 6-30-12
+%   Revision: 1.2, 5-3-13
 
 
 % Make sure toolbox on path, otherwise ensure we're in right location and add it
@@ -84,7 +84,6 @@ gi = cell(M,1);
 tspani = cell(M,1);
 y0i = cell(M,1);
 optsi = cell(M,1);
-paramsi = cell(M,1);
 
 
 % no FOR loop cases
@@ -97,7 +96,6 @@ gi{i} = 1;
 tspani{i} = 0:0.001:1;
 y0i{i} = 0;
 optsi{i} = [];
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Scalar, constant drift and diffusion, variable step-size';
 
@@ -107,7 +105,6 @@ gi{i} = 1;
 tspani{i} = 0:0.5:500;
 y0i{i} = 0;
 optsi{i} = [];
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Scalar, constant drift and diffusion, fixed step-size';
 
@@ -117,7 +114,6 @@ gi{i} = @(t,x)x+1;
 tspani{i} = 0:0.001:1;
 y0i{i} = 0;
 optsi{i} = sdeset('ConstFFUN','yes','ConstGFUN','yes');
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Scalar, constant drift and diffusion functions, variable step-size';
 
@@ -127,7 +123,6 @@ gi{i} = @(t,x)x+1;
 tspani{i} = 0:0.5:500;
 y0i{i} = 0;
 optsi{i} = sdeset('ConstFFUN','yes','ConstGFUN','yes');
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Scalar, constant drift and diffusion functions, fixed step-size';
 
@@ -137,7 +132,6 @@ gi{i} = 1;
 tspani{i} = 0:0.001:1;
 y0i{i} = 0;
 optsi{i} = sdeset('Diagonal','no');
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Scalar, constant drift, constant non-diagonal diffusion, variable step-size';
 
@@ -147,7 +141,6 @@ gi{i} = 1;
 tspani{i} = 0:0.5:500;
 y0i{i} = 0;
 optsi{i} = sdeset('Diagonal','no');
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Scalar, constant drift, constant non-diagonal diffusion, fixed step-size';
 
@@ -157,7 +150,6 @@ gi{i} = @(t,x)x+1;
 tspani{i} = 0:0.001:1;
 y0i{i} = 0;
 optsi{i} = sdeset('Diagonal','no','ConstFFUN','yes','ConstGFUN','yes');
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Scalar, constant drift function, constant non-diagonal diffusion function, variable step-size';
 
@@ -167,7 +159,6 @@ gi{i} = @(t,x)x+1;
 tspani{i} = 0:0.5:500;
 y0i{i} = 0;
 optsi{i} = sdeset('Diagonal','no','ConstFFUN','yes','ConstGFUN','yes');
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Scalar, constant drift function, constant non-diagonal diffusion function, fixed step-size';
 
@@ -180,7 +171,6 @@ gi{i} = ones(1000,1);
 tspani{i} = 0:0.001:1;
 y0i{i}(1,1000) = 0;
 optsi{i} = [];
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Vector, constant drift and diffusion, variable step-size';
 
@@ -190,7 +180,6 @@ gi{i} = ones(1000,1);
 tspani{i} = 0:0.5:500;
 y0i{i}(1,1000) = 0;
 optsi{i} = [];
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Vector, constant drift and diffusion, fixed step-size';
 
@@ -200,7 +189,6 @@ gi{i} = @(t,x)x+1;
 tspani{i} = 0:0.001:1;
 y0i{i}(1,1000) = 0;
 optsi{i} = sdeset('ConstFFUN','yes','ConstGFUN','yes');
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Vector, constant drift and diffusion functions, variable step-size';
 
@@ -210,7 +198,6 @@ gi{i} = @(t,x)x+1;
 tspani{i} = 0:0.5:500;
 y0i{i}(1,1000) = 0;
 optsi{i} = sdeset('ConstFFUN','yes','ConstGFUN','yes');
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Vector, constant drift and diffusion functions, fixed step-size';
 
@@ -221,7 +208,6 @@ gi{i} = 1;
 tspani{i} = 0:0.001:1;
 y0i{i}(1,1000) = 0;
 optsi{i} = sdeset('Diagonal','no');
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Vector, constant drift, constant non-diagonal diffusion, variable step-size';
 
@@ -231,7 +217,6 @@ gi{i} = 1;
 tspani{i} = 0:0.5:500;
 y0i{i}(1,1000) = 0;
 optsi{i} = sdeset('Diagonal','no');
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Vector, constant drift, constant non-diagonal diffusion, fixed step-size';
 
@@ -241,7 +226,6 @@ gi{i} = @(t,x)x(1)+1;
 tspani{i} = 0:0.001:1;
 y0i{i}(1,1000) = 0;
 optsi{i} = sdeset('Diagonal','no','ConstFFUN','yes','ConstGFUN','yes');
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Vector, constant drift function, constant non-diagonal diffusion function, variable step-size';
 
@@ -251,7 +235,6 @@ gi{i} = @(t,x)x(1)+1;
 tspani{i} = 0:0.5:500;
 y0i{i}(1,1000) = 0;
 optsi{i} = sdeset('Diagonal','no','ConstFFUN','yes','ConstGFUN','yes');
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Vector, constant drift function, constant non-diagonal diffusion function, fixed step-size';
 
@@ -263,7 +246,6 @@ gi{i} = @(t,x)x+1;
 tspani{i} = 0:0.001:1;
 y0i{i} = 0;
 optsi{i} = [];
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Scalar, diagonal diffusion function, variable step-size';
 
@@ -273,7 +255,6 @@ gi{i} = @(t,x)x+1;
 tspani{i} = 0:0.5:500;
 y0i{i} = 0;
 optsi{i} = [];
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Scalar, diagonal diffusion function, fixed step-size';
 
@@ -283,7 +264,6 @@ gi{i} = @(t,x)x+1;
 tspani{i} = 0:0.001:1;
 y0i{i} = 0;
 optsi{i} = sdeset('SDEType','Ito');
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Scalar, Ito type, diagonal diffusion function, variable step-size';
 
@@ -293,7 +273,6 @@ gi{i} = @(t,x)x+1;
 tspani{i} = 0:0.5:500;
 y0i{i} = 0;
 optsi{i} = sdeset('SDEType','Ito');
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Scalar, Ito type, diagonal diffusion function, fixed step-size';
 
@@ -305,7 +284,6 @@ gi{i} = ones(500000,1);
 tspani{i} = 0:0.5:5;
 y0i{i}(1,500000) = 0;
 optsi{i} = [];
-paramsi{i} = [];
 oneout{i} = false;
 description{i} = 'Memory allocation: vector, constant drift and diffusion, fixed step-size';
 
@@ -334,7 +312,6 @@ for k=1:lts
     tspan = tspani{i};
     y0 = y0i{i};
     opts = optsi{i};
-    params = paramsi{i};
     
     % Ensure that all tests start out with same random variates
     try
@@ -345,24 +322,16 @@ for k=1:lts
     
     % Warm up function before timing
     if oneout{i}
-        if isempty(opts) && isempty(params)
+        if isempty(opts)
             y = sde_euler(f,g,tspan,y0);        %#ok<*NASGU>
-        elseif ~isempty(opts) && isempty(params)
-            y = sde_euler(f,g,tspan,y0,opts);
-        elseif isempty(opts) && ~isempty(params)
-            y = sde_euler(f,g,tspan,y0,[],params);
         else
-            y = sde_euler(f,g,tspan,y0,opts,params);
+            y = sde_euler(f,g,tspan,y0,opts);
         end
     else
-        if isempty(opts) && isempty(params)
-            [y w] = sde_euler(f,g,tspan,y0);	%#ok<*ASGLU>
-        elseif ~isempty(opts) && isempty(params)
-            [y w] = sde_euler(f,g,tspan,y0,opts);
-        elseif isempty(opts) && ~isempty(params)
-            [y w] = sde_euler(f,g,tspan,y0,[],params);
+        if isempty(opts)
+            [y,w] = sde_euler(f,g,tspan,y0);	%#ok<*ASGLU>
         else
-            [y w] = sde_euler(f,g,tspan,y0,opts,params);
+            [y,w] = sde_euler(f,g,tspan,y0,opts);
         end
     end
     
@@ -372,39 +341,23 @@ for k=1:lts
         
         % Time an iteration
         if oneout{i}
-            if isempty(opts) && isempty(params)
+            if isempty(opts)
                 tic
                 y = sde_euler(f,g,tspan,y0);
                 t(j) = toc;
-            elseif ~isempty(opts) && isempty(params)
+            else
                 tic
                 y = sde_euler(f,g,tspan,y0,opts);
                 t(j) = toc;
-            elseif isempty(opts) && ~isempty(params)
-                tic
-                y = sde_euler(f,g,tspan,y0,[],params);
-                t(j) = toc;
-            else
-                tic
-                y = sde_euler(f,g,tspan,y0,opts,params);
-                t(j) = toc;
             end
         else
-            if isempty(opts) && isempty(params)
+            if isempty(opts)
                 tic
-                [y w] = sde_euler(f,g,tspan,y0);
-                t(j) = toc;
-            elseif ~isempty(opts) && isempty(params)
-                tic
-                [y w] = sde_euler(f,g,tspan,y0,opts);
-                t(j) = toc;
-            elseif isempty(opts) && ~isempty(params)
-                tic
-                [y w] = sde_euler(f,g,tspan,y0,[],params);
+                [y,w] = sde_euler(f,g,tspan,y0);
                 t(j) = toc;
             else
                 tic
-                [y w] = sde_euler(f,g,tspan,y0,opts,params);
+                [y,w] = sde_euler(f,g,tspan,y0,opts);
                 t(j) = toc;
             end
         end

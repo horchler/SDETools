@@ -18,7 +18,7 @@ function sde_euler_unittest(tests)
 %       SDE_MILSTEIN_UNITTEST, WAITTEXT
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 12-20-11
-%   Revision: 1.2, 5-2-13
+%   Revision: 1.2, 5-3-13
 
 
 % Make sure toolbox on path, otherwise ensure we're in right location and add it
@@ -47,7 +47,8 @@ end
 % Validate input argument if it exists
 if nargin == 1
     if isempty(tests) || ~isnumeric(tests) || ~all(isfinite(tests))
-        error('SDETools:sde_euler_unittest:InvalidArgument','Invalid argument.');
+        error('SDETools:sde_euler_unittest:InvalidArgument',...
+              'Invalid argument.');
     end
     if any(tests < 1)
         error('SDETools:sde_euler_unittest:NotAnIndex',...
@@ -59,9 +60,9 @@ else
     runtests = false;
 end
 
-lnum1 = cell(71,1);
-cmd = cell(71,1);
-msg = cell(71,1);
+lnum1 = cell(70,1);
+cmd = cell(70,1);
+msg = cell(70,1);
 
 lnum = cell(234,1);
 f = cell(234,1);
@@ -69,7 +70,6 @@ g = cell(234,1);
 tspan = cell(234,1);
 y0 = cell(234,1);
 opts = cell(234,1);
-params = cell(234,1);
 twoout = cell(234,1);
 
 
@@ -462,14 +462,7 @@ cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandSeed'',2^32));'
 msg{i} = 'SDETools:sderandfun:InvalidRandSeed';
 
 
-% RandFUN:
-
-% inavlid RandFUN
-st = dbstack;
-i = i+1;
-lnum1{i} = st.line;
-cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandFUN'',0));';
-msg{i} = 'SDETools:sderandfun:RandFUNNotAFunctionHandle';
+% RandFUN:s
 
 % undefined RandFUN
 st = dbstack;
@@ -594,7 +587,7 @@ msg{i} = 'SDETools:sde_euler:RandFUNTooManyInputs';
 
 % Normal unit tests:
 
-% Cases where no FOR loop is required, no parameter arguments:
+% Cases where no FOR loop is required:
 
 % with numeric inputs
 
@@ -606,7 +599,6 @@ g{i} = '1';             % constant, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = '';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -617,7 +609,6 @@ g{i} = '1';             % constant, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = '';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -628,7 +619,6 @@ g{i} = '[1;1]';     	% constant, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';     	% scalar ICs, N == 2
 opts{i} = '';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -639,7 +629,6 @@ g{i} = '[1;1]';     	% constant, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';     	% scalar ICs, N == 2
 opts{i} = '';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -650,7 +639,6 @@ g{i} = '[1,1;1,1]';   	% constant, autonomous, matrix, diagonal, D == 2
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';     	% scalar ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -661,7 +649,6 @@ g{i} = '[1,1;1,1]';    	% constant, autonomous, matrix, diagonal, D == 2
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';     	% scalar ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -672,7 +659,6 @@ g{i} = '[1,1,1;1,1,1]';	% constant, autonomous, matrix, diagonal, D == 3
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';     	% scalar ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [0 1];
 
 st = dbstack;
@@ -683,7 +669,6 @@ g{i} = '[1,1,1;1,1,1]';	% constant, autonomous, matrix, diagonal, D == 3
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';     	% scalar ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [0 1];
 
 st = dbstack;
@@ -694,7 +679,6 @@ g{i} = '[1,1;1,1;1,1]';	% constant, autonomous, matrix, diagonal, D == 2
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0,0]';     	% scalar ICs, N == 3
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [0 1];
 
 st = dbstack;
@@ -705,7 +689,6 @@ g{i} = '[1,1;1,1;1,1]';	% constant, autonomous, matrix, diagonal, D == 2
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0,0]';     	% scalar ICs, N == 3
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [0 1];
 
 
@@ -719,7 +702,6 @@ g{i} = '@(t,x)1';     	% constant, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''ConstFFUN'',''yes'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -730,7 +712,6 @@ g{i} = '@(t,x)1';      	% constant, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''ConstFFUN'',''yes'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -741,7 +722,6 @@ g{i} = '@(t,x)[1,1]';  	% constant, autonomous, vector, non-diagonal, D == 2
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [0 1];
 
 st = dbstack;
@@ -752,7 +732,6 @@ g{i} = '@(t,x)[1,1]';  	% constant, autonomous, vector, non-diagonal, D == 2
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [0 1];
 
 st = dbstack;
@@ -763,7 +742,6 @@ g{i} = '@(t,x)1';      	% constant, autonomous, scalar, non-diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -774,7 +752,6 @@ g{i} = '@(t,x)1';    	% constant, autonomous, scalar, non-diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -785,7 +762,6 @@ g{i} = '@(t,x)ones(2,3)';	% constant, autonomous, scalar, non-diagonal, D == 3
 tspan{i} = '0:0.5:10';   	% constant step-size, increasing
 y0{i} = '[0,0]';          	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [0 1];
 
 st = dbstack;
@@ -796,7 +772,6 @@ g{i} = '@(t,x)ones(2,3)';	% constant, autonomous, scalar, non-diagonal, D == 3
 tspan{i} = '0:0.1:10';   	% non-constant step-size, increasing
 y0{i} = '[0,0]';          	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [0 1];
 
 st = dbstack;
@@ -807,7 +782,6 @@ g{i} = '@(t,x)1';     	% constant, autonomous, scalar, non-diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -818,7 +792,6 @@ g{i} = '@(t,x)1';     	% constant, autonomous, scalar, non-diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';     	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -829,7 +802,6 @@ g{i} = '@(t,x)ones(3,2)';	% constant, autonomous, scalar, non-diagonal, D == 2
 tspan{i} = '0:0.5:10';   	% constant step-size, increasing
 y0{i} = '[0,0,0]';       	% vector ICs, N == 3
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -840,7 +812,6 @@ g{i} = '@(t,x)ones(3,2)';	% constant, autonomous, scalar, non-diagonal, D == 2
 tspan{i} = '0:0.1:10';   	% non-constant step-size, increasing
 y0{i} = '[0,0,0]';       	% vector ICs, N == 3
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -851,7 +822,6 @@ g{i} = '@(t,x)ones(3)';	% constant, autonomous, scalar, non-diagonal, D == 3
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0,0]';     	% vector ICs, N == 3
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
  
 st = dbstack;
@@ -862,11 +832,10 @@ g{i} = '@(t,x)ones(3)';	% constant, autonomous, scalar, non-diagonal, D == 3
 tspan{i} = '0:0.1:10'; 	% non-constant step-size, increasing
 y0{i} = '[0,0,0]';     	% vector ICs, N == 3
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 
-% default options, no parameter arguments:
+% default options:
 
 st = dbstack;
 i = i+1;
@@ -876,7 +845,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = '';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -887,7 +855,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = '';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -898,7 +865,6 @@ g{i} = '@(t,x)x+1'; 	% non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = '';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -909,7 +875,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = '';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -920,7 +885,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = '';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -931,7 +895,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = '';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -942,7 +905,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '10:-0.5:0';	% constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = '';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -953,7 +915,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '10:-0.1:0';	% non-constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = '';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -964,7 +925,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '-5:0.5:5';	% constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = '';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -975,7 +935,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '-5:0.1:5';	% non-constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = '';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -986,7 +945,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '5:-0.5:-5';	% constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = '';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -997,7 +955,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '5:-0.1:-5';	% non-constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = '';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1008,7 +965,6 @@ g{i} = '@(t,x)x+1'; 	% non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0;0]';       	% vector ICs, N == 2
 opts{i} = '';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1019,11 +975,10 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0;0]';       	% vector ICs, N == 2
 opts{i} = '';
-params{i} = '';
 twoout{i} = [1 1];
 
 
-% with options, no parameter arguments:
+% with options:
 
 % non-diagonal, Stratonovich:
 
@@ -1035,7 +990,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1046,7 +1000,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1057,7 +1010,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1068,7 +1020,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1079,7 +1030,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1090,7 +1040,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1101,7 +1050,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '10:-0.5:0';	% constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1112,7 +1060,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '10:-0.1:0';	% non-constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1123,7 +1070,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '-5:0.5:5';	% constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1134,7 +1080,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '-5:0.1:5';	% non-constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1145,7 +1090,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '5:-0.5:-5';	% constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1156,7 +1100,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '5:-0.1:-5';	% non-constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1167,7 +1110,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1178,7 +1120,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1189,7 +1130,6 @@ g{i} = '@(t,x)[x,x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D
 tspan{i} = '0:0.5:10';      % constant step-size, increasing
 y0{i} = '[0,0]';            % vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1200,7 +1140,6 @@ g{i} = '@(t,x)[x,x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D
 tspan{i} = '0:0.1:10';      % non-constant step-size, increasing
 y0{i} = '[0,0]';            % vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1211,7 +1150,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0,0]';     	% vector ICs, N == 3
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1222,7 +1160,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0,0]';    	% vector ICs, N == 3
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1233,7 +1170,6 @@ g{i} = '@(t,x)x(1)+1';	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';     	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1244,7 +1180,6 @@ g{i} = '@(t,x)x(1)+1';	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';    	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1255,7 +1190,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';            % scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1266,7 +1200,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, vector, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';            % scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 
@@ -1280,7 +1213,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1291,7 +1223,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1302,7 +1233,6 @@ g{i} = '@(t,x)x+1'; 	% non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1313,7 +1243,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1324,7 +1253,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1335,7 +1263,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1346,7 +1273,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '10:-0.5:0';	% constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1357,7 +1283,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '10:-0.1:0';	% non-constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1368,7 +1293,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '-5:0.5:5';	% constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1379,7 +1303,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '-5:0.1:5';	% non-constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1390,7 +1313,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '5:-0.5:-5';	% constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1401,7 +1323,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '5:-0.1:-5';	% non-constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1412,7 +1333,6 @@ g{i} = '@(t,x)x+1'; 	% non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0;0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1423,7 +1343,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0;0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 
@@ -1437,7 +1356,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1448,7 +1366,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1459,7 +1376,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1470,7 +1386,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1481,7 +1396,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1492,7 +1406,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1503,7 +1416,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '10:-0.5:0';	% constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1514,7 +1426,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '10:-0.1:0';	% non-constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1525,7 +1436,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '-5:0.5:5';	% constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1536,7 +1446,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '-5:0.1:5';	% non-constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1547,7 +1456,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '5:-0.5:-5';	% constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1558,7 +1466,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '5:-0.1:-5';	% non-constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1569,7 +1476,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1580,7 +1486,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1591,7 +1496,6 @@ g{i} = '@(t,x)[x,x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D
 tspan{i} = '0:0.5:10';      % constant step-size, increasing
 y0{i} = '[0,0]';            % vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1602,7 +1506,6 @@ g{i} = '@(t,x)[x,x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D
 tspan{i} = '0:0.1:10';      % non-constant step-size, increasing
 y0{i} = '[0,0]';            % vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1613,7 +1516,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0,0]';     	% vector ICs, N == 3
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1624,7 +1526,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0,0]';    	% vector ICs, N == 3
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1635,7 +1536,6 @@ g{i} = '@(t,x)x(1)+1';	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';     	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1646,7 +1546,6 @@ g{i} = '@(t,x)x(1)+1';	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';    	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1657,7 +1556,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';            % scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1668,7 +1566,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, vector, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';            % scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 
@@ -1682,7 +1579,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1693,7 +1589,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1704,7 +1599,6 @@ g{i} = '@(t,x)x+1'; 	% non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1715,7 +1609,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1726,7 +1619,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1737,7 +1629,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1748,7 +1639,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '10:-0.5:0';	% constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1759,7 +1649,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '10:-0.1:0';	% non-constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1770,7 +1659,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '-5:0.5:5';	% constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1781,7 +1669,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '-5:0.1:5';	% non-constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1792,7 +1679,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '5:-0.5:-5';	% constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1803,7 +1689,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '5:-0.1:-5';	% non-constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1814,7 +1699,6 @@ g{i} = '@(t,x)x+1'; 	% non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0;0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1825,7 +1709,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0;0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 
@@ -1839,7 +1722,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1850,7 +1732,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1861,7 +1742,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1872,7 +1752,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1883,7 +1762,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1894,7 +1772,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1905,7 +1782,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '10:-0.5:0';	% constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1916,7 +1792,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '10:-0.1:0';	% non-constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1927,7 +1802,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '-5:0.5:5';	% constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1938,7 +1812,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '-5:0.1:5';	% non-constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1949,7 +1822,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '5:-0.5:-5';	% constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1960,7 +1832,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '5:-0.1:-5';	% non-constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1971,7 +1842,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1982,7 +1852,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -1993,7 +1862,6 @@ g{i} = '@(t,x)[x,x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D
 tspan{i} = '0:0.5:10';      % constant step-size, increasing
 y0{i} = '[0,0]';            % vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2004,7 +1872,6 @@ g{i} = '@(t,x)[x,x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D
 tspan{i} = '0:0.1:10';      % non-constant step-size, increasing
 y0{i} = '[0,0]';            % vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2015,7 +1882,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0,0]';     	% vector ICs, N == 3
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2026,7 +1892,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0,0]';    	% vector ICs, N == 3
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2037,7 +1902,6 @@ g{i} = '@(t,x)x(1)+1';	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';     	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2048,7 +1912,6 @@ g{i} = '@(t,x)x(1)+1';	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';    	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2059,7 +1922,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';            % scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2070,7 +1932,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, vector, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';            % scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 
@@ -2084,7 +1945,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2095,7 +1955,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2106,7 +1965,6 @@ g{i} = '@(t,x)x+1'; 	% non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2117,7 +1975,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2128,7 +1985,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2139,7 +1995,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2150,7 +2005,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '10:-0.5:0';	% constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2161,7 +2015,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '10:-0.1:0';	% non-constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2172,7 +2025,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '-5:0.5:5';	% constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2183,7 +2035,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '-5:0.1:5';	% non-constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2194,7 +2045,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '5:-0.5:-5';	% constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2205,7 +2055,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '5:-0.1:-5';	% non-constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2216,7 +2065,6 @@ g{i} = '@(t,x)x+1'; 	% non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0;0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2227,7 +2075,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0;0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 
@@ -2241,7 +2088,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2252,7 +2098,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2263,7 +2108,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2274,7 +2118,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2285,7 +2128,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2296,7 +2138,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2307,7 +2148,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '10:-0.5:0';	% constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2318,7 +2158,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '10:-0.1:0';	% non-constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2329,7 +2168,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '-5:0.5:5';	% constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2340,7 +2178,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '-5:0.1:5';	% non-constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2351,7 +2188,7 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '5:-0.5:-5';	% constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
+
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2362,7 +2199,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '5:-0.1:-5';	% non-constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2373,7 +2209,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2384,7 +2219,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2395,7 +2229,6 @@ g{i} = '@(t,x)[x,x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D
 tspan{i} = '0:0.5:10';      % constant step-size, increasing
 y0{i} = '[0,0]';            % vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2406,7 +2239,6 @@ g{i} = '@(t,x)[x,x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D
 tspan{i} = '0:0.1:10';      % non-constant step-size, increasing
 y0{i} = '[0,0]';            % vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2417,7 +2249,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0,0]';     	% vector ICs, N == 3
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2428,7 +2259,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0,0]';    	% vector ICs, N == 3
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2439,7 +2269,6 @@ g{i} = '@(t,x)x(1)+1';	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';     	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2450,7 +2279,6 @@ g{i} = '@(t,x)x(1)+1';	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';    	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2461,7 +2289,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';            % scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2472,7 +2299,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, vector, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';            % scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstFFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 
@@ -2486,7 +2312,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2497,7 +2322,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2508,7 +2332,6 @@ g{i} = '@(t,x)x+1'; 	% non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2519,7 +2342,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2530,7 +2352,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2541,7 +2362,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2552,7 +2372,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '10:-0.5:0';	% constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2563,7 +2382,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '10:-0.1:0';	% non-constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2574,7 +2392,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '-5:0.5:5';	% constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2585,7 +2402,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '-5:0.1:5';	% non-constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2596,7 +2412,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '5:-0.5:-5';	% constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2607,7 +2422,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '5:-0.1:-5';	% non-constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2618,7 +2432,6 @@ g{i} = '@(t,x)x+1'; 	% non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0;0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2629,7 +2442,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0;0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 
@@ -2643,7 +2455,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2654,7 +2465,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2665,7 +2475,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2676,7 +2485,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2687,7 +2495,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2698,7 +2505,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2709,7 +2515,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '10:-0.5:0';	% constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2720,7 +2525,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '10:-0.1:0';	% non-constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2731,7 +2535,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '-5:0.5:5';	% constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2742,7 +2545,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '-5:0.1:5';	% non-constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2753,7 +2555,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '5:-0.5:-5';	% constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2764,7 +2565,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '5:-0.1:-5';	% non-constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2775,7 +2575,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2786,7 +2585,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2797,7 +2595,6 @@ g{i} = '@(t,x)[x,x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D
 tspan{i} = '0:0.5:10';      % constant step-size, increasing
 y0{i} = '[0,0]';            % vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2808,7 +2605,6 @@ g{i} = '@(t,x)[x,x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D
 tspan{i} = '0:0.1:10';      % non-constant step-size, increasing
 y0{i} = '[0,0]';            % vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2819,7 +2615,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0,0]';     	% vector ICs, N == 3
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2830,7 +2625,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0,0]';    	% vector ICs, N == 3
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2841,7 +2635,6 @@ g{i} = '@(t,x)x(1)+1';	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';     	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2852,7 +2645,6 @@ g{i} = '@(t,x)x(1)+1';	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';    	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2863,7 +2655,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';            % scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2874,7 +2665,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, vector, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';            % scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 
@@ -2888,7 +2678,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2899,7 +2688,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2910,7 +2698,6 @@ g{i} = '@(t,x)x+1'; 	% non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2921,7 +2708,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2932,7 +2718,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2943,7 +2728,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2954,7 +2738,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '10:-0.5:0';	% constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2965,7 +2748,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '10:-0.1:0';	% non-constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2976,7 +2758,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '-5:0.5:5';	% constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2987,7 +2768,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '-5:0.1:5';	% non-constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -2998,7 +2778,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '5:-0.5:-5';	% constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3009,7 +2788,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, diagonal, D == 1
 tspan{i} = '5:-0.1:-5';	% non-constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3020,7 +2798,6 @@ g{i} = '@(t,x)x+1'; 	% non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0;0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3031,7 +2808,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, vector, diagonal, D == 1
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0;0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 
@@ -3045,7 +2821,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3056,7 +2831,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3067,7 +2841,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3078,7 +2851,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3089,7 +2861,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3100,7 +2871,6 @@ g{i} = '@(t,x)x(1)+1'; 	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3111,7 +2881,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '10:-0.5:0';	% constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3122,7 +2891,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '10:-0.1:0';	% non-constant step-size, decreasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3133,7 +2901,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '-5:0.5:5';	% constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3144,7 +2911,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '-5:0.1:5';	% non-constant step-size, increasing, negative to positive
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3155,7 +2921,6 @@ g{i} = '@(t,x)x+1';    	% non-homogeneous, autonomous, scalar, non-diagonal, D =
 tspan{i} = '5:-0.5:-5';	% constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3166,7 +2931,6 @@ g{i} = '@(t,x)x+1';   	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '5:-0.1:-5';	% non-constant step-size, decreasing, positive to negative
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3177,7 +2941,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3188,7 +2951,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';       	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3199,7 +2961,6 @@ g{i} = '@(t,x)[x,x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D
 tspan{i} = '0:0.5:10';      % constant step-size, increasing
 y0{i} = '[0,0]';            % vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3210,7 +2971,6 @@ g{i} = '@(t,x)[x,x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D
 tspan{i} = '0:0.1:10';      % non-constant step-size, increasing
 y0{i} = '[0,0]';            % vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3221,7 +2981,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0,0]';     	% vector ICs, N == 3
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3232,7 +2991,6 @@ g{i} = '@(t,x)[x,x]+1';	% non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0,0]';    	% vector ICs, N == 3
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3243,7 +3001,6 @@ g{i} = '@(t,x)x(1)+1';	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '[0,0]';     	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3254,7 +3011,6 @@ g{i} = '@(t,x)x(1)+1';	% non-homogeneous, autonomous, scalar, non-diagonal, D ==
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '[0,0]';    	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3265,7 +3021,6 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, matrix, non-diagonal, D =
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';            % scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 st = dbstack;
@@ -3276,11 +3031,10 @@ g{i} = '@(t,x)x+1';     % non-homogeneous, autonomous, vector, non-diagonal, D =
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';            % scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''SDEType'',''Ito'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 1];
 
 
-% cases that miss no FOR loop case, D > N, nargout == 1, no parameter arguments:
+% cases that miss no FOR loop case, D > N, nargout == 1:
 
 st = dbstack;
 i = i+1;
@@ -3290,7 +3044,6 @@ g{i} = '@(t,x)[1,1]';  	% constant, autonomous, vector, non-diagonal, D == 2
 tspan{i} = '0:0.5:10';	% constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 0];
 
 st = dbstack;
@@ -3301,7 +3054,6 @@ g{i} = '@(t,x)[1,1]';  	% constant, autonomous, vector, non-diagonal, D == 2
 tspan{i} = '0:0.1:10';	% non-constant step-size, increasing
 y0{i} = '0';          	% scalar ICs, N == 1
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 0];
 
 st = dbstack;
@@ -3312,7 +3064,6 @@ g{i} = '@(t,x)ones(2,3)';	% constant, autonomous, scalar, non-diagonal, D == 3
 tspan{i} = '0:0.5:10';   	% constant step-size, increasing
 y0{i} = '[0,0]';          	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 0];
 
 st = dbstack;
@@ -3323,7 +3074,6 @@ g{i} = '@(t,x)ones(2,3)';	% constant, autonomous, scalar, non-diagonal, D == 3
 tspan{i} = '0:0.1:10';   	% non-constant step-size, increasing
 y0{i} = '[0,0]';          	% vector ICs, N == 2
 opts{i} = ',sdeset(''Diagonal'',''no'',''ConstFFUN'',''yes'',''ConstGFUN'',''yes'')';
-params{i} = '';
 twoout{i} = [1 0];
 
 
@@ -3446,7 +3196,7 @@ for j = ms
             st = dbstack;
             i = 1;
             lnum2{i} = st.line;
-            cmd{i} = ['y=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} params{j} ');'];
+            cmd{i} = ['y=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} ');'];
             test1{i} = 'isempty(y)';
             test2{i} = false;
 
@@ -3454,7 +3204,7 @@ for j = ms
             st = dbstack;
             i = i+1;
             lnum2{i} = st.line;
-            cmd{i} = ['y=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} params{j} ');'];
+            cmd{i} = ['y=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} ');'];
             test1{i} = 'isfloat(y)';
             test2{i} = true;
 
@@ -3462,7 +3212,7 @@ for j = ms
             st = dbstack;
             i = i+1;
             lnum2{i} = st.line;
-            cmd{i} = ['y=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} params{j} ');'];
+            cmd{i} = ['y=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} ');'];
             test1{i} = 'ndims(y)';
             test2{i} = 2;
 
@@ -3470,7 +3220,7 @@ for j = ms
             st = dbstack;
             i = i+1;
             lnum2{i} = st.line;
-            cmd{i} = ['y=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} params{j} ');'];
+            cmd{i} = ['y=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} ');'];
             test1{i} = 'size(y,2)';
             ic = eval(y0{j});
             test2{i} = size(ic(:),1);
@@ -3479,7 +3229,7 @@ for j = ms
             st = dbstack;
             i = i+1;
             lnum2{i} = st.line;
-            cmd{i} = ['y=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} params{j} ');'];
+            cmd{i} = ['y=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} ');'];
             test1{i} = 'size(y,1)';
             test2{i} = length(eval(tspan{j}));
 
@@ -3487,7 +3237,7 @@ for j = ms
             st = dbstack;
             i = i+1;
             lnum2{i} = st.line;
-            cmd{i} = ['y=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} params{j} ');'];
+            cmd{i} = ['y=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} ');'];
             test1{i} = 'y(1,:)''';
             ic = eval(y0{j});
             test2{i} = ic(:);
@@ -3501,7 +3251,7 @@ for j = ms
                 i = 1;
             end
             lnum2{i} = st.line;
-            cmd{i} = ['[y,w]=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} params{j} ');'];
+            cmd{i} = ['[y,w]=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} ');'];
             test1{i} = '[isempty(y) isempty(w)]';
             test2{i} = false;
 
@@ -3509,7 +3259,7 @@ for j = ms
             st = dbstack;
             i = i+1;
             lnum2{i} = st.line;
-            cmd{i} = ['[y,w]=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} params{j} ');'];
+            cmd{i} = ['[y,w]=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} ');'];
             test1{i} = '[isfloat(y) isfloat(w)]';
             test2{i} = true;
 
@@ -3517,7 +3267,7 @@ for j = ms
             st = dbstack;
             i = i+1;
             lnum2{i} = st.line;
-            cmd{i} = ['[y,w]=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} params{j} ');'];
+            cmd{i} = ['[y,w]=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} ');'];
             test1{i} = '[ndims(y) ndims(w)]';
             test2{i} = 2;
 
@@ -3525,7 +3275,7 @@ for j = ms
             st = dbstack;
             i = i+1;
             lnum2{i} = st.line;
-            cmd{i} = ['[y,w]=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} params{j} ');'];
+            cmd{i} = ['[y,w]=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} ');'];
             test1{i} = 'size(y,2)';
             ic = eval(y0{j});
             test2{i} = size(ic(:),1);
@@ -3534,7 +3284,7 @@ for j = ms
             st = dbstack;
             i = i+1;
             lnum2{i} = st.line;
-            cmd{i} = ['[y,w]=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} params{j} ');'];
+            cmd{i} = ['[y,w]=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} ');'];
             test1{i} = 'size(w,2)';
             t = eval(tspan{j});
             ic = eval(y0{j});
@@ -3554,7 +3304,7 @@ for j = ms
             st = dbstack;
             i = i+1;
             lnum2{i} = st.line;
-            cmd{i} = ['[y,w]=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} params{j} ');'];
+            cmd{i} = ['[y,w]=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} ');'];
             test1{i} = '[size(y,1) size(w,1)]';
             test2{i} = length(eval(tspan{j}));
 
@@ -3562,7 +3312,7 @@ for j = ms
             st = dbstack;
             i = i+1;
             lnum2{i} = st.line;
-            cmd{i} = ['[y,w]=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} params{j} ');'];
+            cmd{i} = ['[y,w]=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} ');'];
             test1{i} = 'y(1,:)''';
             ic = eval(y0{j});
             test2{i} = ic(:);
@@ -3571,7 +3321,7 @@ for j = ms
             st = dbstack;
             i = i+1;
             lnum2{i} = st.line;
-            cmd{i} = ['[y,w]=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} params{j} ');'];
+            cmd{i} = ['[y,w]=sde_euler(' f{j} ',' g{j} ',' tspan{j} ',' y0{j} opts{j} ');'];
             test1{i} = 'w(1,:)';
             test2{i} = 0;
         end

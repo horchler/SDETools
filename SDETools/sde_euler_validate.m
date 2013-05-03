@@ -6,18 +6,25 @@ function varargout=sde_euler_validate(dt,n,a,b,options)
 %   YM = SDE_EULER_VALIDATE(DT,N,OPTIONS)
 %	YM = SDE_EULER_VALIDATE(DT,N,A,B,OPTIONS)
 %	[YM,YV] = SDE_EULER_VALIDATE(DT,N,...)
+%
+%   Example:
+%       % Convergence order of Euler-Heun (Stratonovich) & Euler-Maruyama (Ito)
+%       dt = logspace(-3,-1,3); n = 1e3; a = 1; b = 1;  % Try smaller b values
+%       opts = sdeset('RandSeed',1);
+%       sde_euler_validate(dt,n,a,b,opts);
+%       opts = sdeset(opts,'SDEType','Ito');
+%       sde_euler_validate(dt,n,a,b,opts);
 %   
-%   See also: SDE_EULER, SDE_MILSTEIN_VALIDATE
+%   See also: SDE_EULER, SDE_GBM, SDE_MILSTEIN_VALIDATE, SDESET
 
 %   For details of this validation method, see: Peter E. Kloeden and Eckhard
 %   Platen, "Numerical solution of Stochastic Differential Equations,"
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 11-1-10
-%   Revision: 1.2, 5-2-13
+%   Revision: 1.2, 5-3-13
 
 
-close all
 % Check inputs and outputs
 if nargin < 2
     error('SDETools:sde_euler_validate:NotEnoughInputs',...
@@ -95,13 +102,17 @@ if strcmp(sdeget(options,'Antithetic','no','flag'),'yes')
           'This function does not support antithetic random variates.');
 end
 
-% Integration method is dependent on if SDE is Stratonovich or Ito form
-Stratonovich = strcmp(sdeget(options,'SDEType','Stratonovich','flag'),...
-	'Stratonovich');
+% Set random seed unless already specified
+if isempty(sdeget(options,'RandSeed',[],'flag'))
+    options = sdeset(options,'RandSeed',1);
+end
 
 % Override non-diagonal noise, ConstFFUN, and ConstGFUN settings
 options = sdeset(options,'DiagonalNoise','yes','ConstFFUN','no',...
     'ConstGFUN','no');
+
+% Get SDE type for plot
+SDEType = sdeget(options,'SDEType','Stratonovich','flag');
 
 t0 = 0;
 tf = 20*dt(end);
@@ -111,16 +122,9 @@ f = @(t,y)a*y;
 g = @(t,y)b*y;
 Ym(ldt,1) = 0;
 Yv(ldt,1) = 0;
-if Stratonovich
-    c = a;
-    SDEType = 'Stratonovich';
-else
-    c = a-0.5*b^2;
-    SDEType = 'Ito';
-end
 
 % Warm up for timing
-[Y,W] = sde_euler(f,g,[t0 t0+dt(1)],y0,options);    %#ok<NASGU,ASGLU>
+[Yeuler,W] = sde_euler(f,g,[t0 t0+dt(1)],y0,options);	%#ok<NASGU,ASGLU>
 
 % Loop through time-steps
 ttotal = 0;
@@ -130,20 +134,22 @@ for i=1:length(dt)
     nsteps = nsteps+length(t);
     
     tic
-    [Y,W] = sde_euler(f,g,t,y0,options);
+    [Yeuler,W] = sde_euler(f,g,t,y0,options);
     ttotal = ttotal+toc;
     
+    Ygbm = sde_gbm(a,b,[t0 tf],y0,sdeset(options,'RandFun',W([1 end],:)));
+    
     % Calculate error between analytic and simulated solutions
-    Yerr = abs(y0(1)*exp(c*(t(end)-t0)+b*W(end,:))-Y(end,:));
+    Yerr = abs(Ygbm(end,:)-Yeuler(end,:));
     Ym(i) = mean(Yerr);
     Yv(i) = std(Yerr);
 end
 
 % Variable output
 if nargout == 0
-    disp(['Total simulation time: ' num2str(ttotal) ' seconds'])
-    disp(['Mean of N simulations/time-step: ' num2str(ttotal/(nsteps)) ...
-          ' seconds'])
+    disp(['Total simulation time: ' num2str(ttotal) ' seconds']);
+    disp(['Mean of ' int2str(n) ' simulations/time-step: ' ...
+        num2str(ttotal/(nsteps)) ' seconds']);
 else
     varargout{1} = Ym;
     if nargout == 2
@@ -163,7 +169,7 @@ text(xx(:,2)*10^(0.02*logdt),yy(:,2),cellstr(num2str(orders,'%1.1f')))
 axis([dt(1) dt(end) Ym(1) yy(end,2)])
 axis square
 grid on
-title(['SDE_EULER - ' SDEType ' - Convergence Order - ' num2str(n) ...
+title(['SDE_EULER - ' SDEType ' - Convergence Order - ' int2str(n) ...
        ' simulations/time-step, A = ' num2str(a) ', B = ' num2str(b)],...
        'Interpreter','none')
 xlabel('dt')

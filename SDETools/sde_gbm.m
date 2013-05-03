@@ -78,7 +78,7 @@ function [Y,W,TE,YE,WE,IE] = sde_gbm(mu,sig,tspan,y0,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
-%   Revision: 1.2, 5-2-13
+%   Revision: 1.2, 5-3-13
 
 
 func = 'SDE_GBM';
@@ -130,8 +130,8 @@ if ~all(strcmp(dataType,{class(mu),class(sig),class(tspan),class(y0)}))
 end
 
 % Handle function arguments (NOTE: ResetStream is called by onCleanup())
-[N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,CustomRandFUN,...
-    ResetStream,EventsFUN,EventsValue,OutputFUN,WSelect]...
+[N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,ResetStream,EventsFUN,...
+    EventsValue,OutputFUN,WSelect] ...
 	= sdearguments_process(func,tspan,y0,dataType,options);	%#ok<ASGLU>
 
 % Check mu and sig
@@ -205,33 +205,55 @@ if N > 1
     end
     y0 = y0.';
 end
-sig0 = (sig ~= 0);
 
-% Diffusion parameters are not all zero
-if any(sig0)
-    % Check output of alternative RandFUN if present
+% Check if alternative RandFUN function or W matrix is present
+CustomRandFUN = isempty(RandFUN);
+CustomWMatrix = (CustomRandFUN && ~isa(options.RandFUN,'function_handle'));
+
+% Reduce effective dimension of noise if integrated Wiener increments not needed
+if isW || CustomWMatrix
+    sig0 = true(1,N);
+    D = N;
+else
+    sig0 = (sig ~= 0);
     D = nnz(sig0);
-    if CustomRandFUN
+end
+
+if CustomRandFUN
+    if CustomWMatrix
+        % User-specified integrated Wiener increments
+        Y = sdeget(options,'RandFUN',[],'flag');
+        if ~isfloat(Y) || ~sde_ismatrix(Y) || any(size(Y) ~= [lt D])
+            error('SDETools:sde_gbm:RandFUNInvalidW',...
+                 ['RandFUN must be a function handle or a '...
+                  'LENGTH(TSPAN)-by-D (%d by %d) floating-point matrix of '...
+                  'integrated Wiener increments.  See %s.'],lt,D,func);
+        end
+    else
+        % User-specified function handle
+        RandFUN = sdeget(options,'RandFUN',[],'flag');    
+
         try
             % Store Wiener increments in Y indirectly
             r = feval(RandFUN,lt-1,D);
             if ~sde_ismatrix(r) || isempty(r) || ~isfloat(r)
                 error('SDETools:sde_gbm:RandFUNNot2DArray3',...
-                     ['RandFUN must return a non-empty matrix of floating '...
-                      'point values.  See %s.'],func);
+                     ['RandFUN must return a non-empty matrix of '...
+                      'floating-point values.  See %s.'],func);
             end
             [m,n] = size(r);
             if m ~= lt-1 || n ~= D
                 error('SDETools:sde_gbm:RandFUNDimensionMismatch3',...
-                     ['The specified alternative RandFUN did not output a '...
-                      '%d by %d matrix as requested.   See %s.',lt-1,D,func]);
+                     ['The specified alternative RandFUN did not output '...
+                      'a %d by %d matrix as requested.   See %s.'],lt-1,D,func);
             end
+            
             if D == 1 || ConstStep
                 Y(2:end,sig0) = tdir*sqrt(h).*r;
             else
                 Y(2:end,sig0) = bsxfun(@times,tdir*sqrt(h),r);
             end
-            clear r;    % Remove large temporary variable to save memory
+            clear r;            % Remove large temporary variable to save memory
         catch err
             switch err.identifier
                 case 'MATLAB:TooManyInputs'
@@ -244,27 +266,33 @@ if any(sig0)
                           'must return a non-empty matrix.  See %s.'],func);
                 case 'MATLAB:unassignedOutputs'
                     error('SDETools:sde_gbm:RandFUNUnassignedOutput',...
-                         ['The first output of RandFUN was not assigned.'...
-                          '  See %s.'],func);
+                         ['The first output of RandFUN was not assigned.  '...
+                          'See %s.'],func);
                 case 'MATLAB:minrhs'
                     error('SDETools:sde_gbm:RandFUNTooManyInputs',...
-                         ['RandFUN must not require more than two inputs.'...
-                          '  See %s.'],func);
+                         ['RandFUN must not require more than two inputs.  '...
+                          'See %s.'],func);
                 otherwise
                     rethrow(err);
             end
         end
-    else
-        % Store random variates in Y, no error checking needed for default RANDN
-        if D == 1 || ConstStep
-            Y(2:end,sig0) = tdir*sqrt(h).*feval(RandFUN,lt-1,D);
-        else
-            Y(2:end,sig0) = bsxfun(@times,tdir*sqrt(h),feval(RandFUN,lt-1,D));
-        end
     end
-    
+else
+    % Store random variates in Y, no error checking needed for default RANDN
+    if D == 1 || ConstStep
+        Y(2:end,sig0) = tdir*sqrt(h).*feval(RandFUN,lt-1,D);
+    else
+        Y(2:end,sig0) = bsxfun(@times,tdir*sqrt(h),feval(RandFUN,lt-1,D));
+    end
+end
+
+
+% Diffusion parameters are not all zero
+if D > 0
     % Integrate Wiener increments
-    Y(2:end,sig0) = cumsum(Y(2:end,sig0),1);
+    if ~CustomWMatrix
+        Y(2:end,sig0) = cumsum(Y(2:end,sig0),1);
+    end
     
     % Only allocate W matrix if requested as output or needed
     if isW
@@ -301,15 +329,6 @@ if any(sig0)
         end
     end
 else
-    % Only allocate W matrix if requested as output (it will be all zero)
-    if isW
-        if isDouble
-            W(lt,N) = 0;
-        else
-            W(lt,N) = single(0);
-        end
-    end
-    
     % Solution not a function of sig, Ito and Stratonovich coincide
     if any(mu ~= 0)
         if N == 1 || isscalar(mu)
