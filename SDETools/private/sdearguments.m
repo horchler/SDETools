@@ -7,7 +7,7 @@ function [N,D,tspan,tdir,lt,y0,f0,g0,dg0,h,ConstStep,dataType,NonNegative,...
 %
 %   See also:
 %       SDE_EULER, SDE_MILSTEIN, SDEARGUMENTS_PROCESS, SDEGET, SDEEVENTS,
-%       SDEZERO, SDEOUTPUT, SDERESET_STREAM, FUNCTION_HANDLE, RANDSTREAM
+%       SDEZERO, SDEOUTPUT, SDERESET_STREAM, FUNCTION_HANDLE
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 12-12-11
 %   Revision: 1.2, 5-3-13

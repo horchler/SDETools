@@ -55,20 +55,16 @@ function options = sdeset(varargin)
 %   these. If Matlab's default random number stream is used (i.e., RandSeed not
 %   specified) the stream's antithetic property is reset to it's previous state
 %   after use.
-%
-%RandStream - Specify independent random number stream  [RandStream object]
-%   Specify an alternative random number stream using a RandStream object
-%   created with the RandStream function. The RandSeed and Antithetic properties
-%   are ignored if the RandStream property is specified.
 %   
-%RandFUN - Alternative random number function  [ function_handle | matrix ]
-%   Set this property to a function handle in order to specify an alternative
+%RandFUN - Random variates  [ RandStream object | function_handle | matrix ]
+%   Specify a random number stream by setting this property to a RandStream
+%   object created via Matlab's RandStream function. To specify an alternative
 %   random number generator function, instead of using Matlab's random number
-%   generator, to calculate the Wiener increments. The corresponding function
-%   must take two arguments, M and N, and output an M by N matrix of normal
-%   variates. If a LENGTH(TSPAN)-by-D floating-point matrix, W, of integrated
-%   Wiener increments is specified, these will be used directly. The RandSeed,
-%   RandStream, and Antithetic properties are ignored if the RandFUN property is
+%   generators, set this property to a function handle. The corresponding
+%   function must take two arguments, M and N, and output an M-by-N matrix of
+%   normal variates. If a LENGTH(TSPAN)-by-D floating-point matrix, W, of
+%   integrated Wiener increments is specified, these are used directly. The
+%   RandSeed and Antithetic properties are ignored if the RandFUN property is
 %   specified.
 %
 %DiagonalNoise - Dimension of stochastic function  [ {yes} | no ]
@@ -159,7 +155,6 @@ options = struct(	'SDEType',          [],...
                     'DGFUN',            [],...
                     'RandSeed',         [],...
                     'Antithetic',       [],...
-                    'RandStream',       [],...
                     'RandFUN',          [],...
                     'DiagonalNoise',	[],...
                     'ConstFFUN',        [],...
@@ -177,8 +172,7 @@ Values = {	'{Stratonovich} | Ito'
             'function_handle | matrix'
             '0 <= integer < 2^32'
             ' yes  | {no}'
-            'RandStream object'
-            'function_handle | matrix'
+            'RandStream object | function_handle | matrix'
             '{yes} |  no'
             ' yes  | {no}'
             ' yes  | {no}'

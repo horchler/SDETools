@@ -5,7 +5,7 @@ function [N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,ResetStream,...
 %
 %   See also:
 %       SDE_BM, SDE_GBM, SDE_OU, SDEARGUMENTS, SDEGET, SDEEVENTS, SDEZERO,
-%       SDEOUTPUT, SDERESET_STREAMFUNCTION_HANDLE, RANDSTREAM
+%       SDEOUTPUT, SDERESET_STREAM, FUNCTION_HANDLE
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
 %   Revision: 1.2, 5-3-13

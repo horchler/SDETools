@@ -10,15 +10,13 @@ function [RandFUN,ResetStream]=sderandfun(solver,dataType,options)
 
 
 % Check if alternative random number generator function or W matrix specified
-if isempty(options) || ~isempty(options) && isempty(options.RandFUN)
-    % Use Matlab's random number generator for normal variates
-    Stream = sdeget(options,'RandStream',[],'flag');
-    if ~isempty(Stream)
-        if ~isa(Stream,'RandStream')
-            error('SDETools:sderandfun:InvalidRandStream',...
-                  'RandStream must be a RandStream object.  See %s.',solver);
-        end
+isStream = (~isempty(options) && isa(options.RandFUN,'RandStream'));
+if isempty(options) || isStream || ~isempty(options) && isempty(options.RandFUN)
+    if isStream
+        % User-specified RandStream object, ignore RandSeed and Antithetic
+        Stream = options.RandFUN;
     else
+        % Use Matlab's random number generator for normal variates
         RandSeed = sdeget(options,'RandSeed',[],'flag');
         if ~isempty(RandSeed)
             if ~isscalar(RandSeed) || ~isnumeric(RandSeed) ...
