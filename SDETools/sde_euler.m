@@ -54,8 +54,9 @@ function [Y,W,TE,YE,WE,IE] = sde_euler(f,g,tspan,y0,options)
 %   Example:
 %       % Solve 2-D Stratonovich SDE using Euler-Heun method
 %       mu = 1; sig = [0.1;0.5]; dt = 1e-2; t = 0:dt:1;
-%       f = @(t,y)mu.*y; g = @(t,y)sig.*y;
-%       y = sde_euler(f,g,t,[1 1],opts); plot(t,y);
+%       f = @(t,y)mu.*y; g = @(t,y)sig.*y; opts = sdeset('RandSeed',1);
+%       y = sde_euler(f,g,t,[1 1],opts);
+%       figure; plot(t,y);
 %       title(['Euler-Heun Method, dt = ' num2str(dt) ', \mu = ' num2str(mu)]);
 %       txt = {['\sigma = ' num2str(sig(1))],['\sigma = ' num2str(sig(2))]};
 %       legend(txt,2); legend boxoff; xlabel('t'); ylabel('y(t)');
@@ -79,7 +80,7 @@ function [Y,W,TE,YE,WE,IE] = sde_euler(f,g,tspan,y0,options)
 %       Explicit SDE solvers:	SDE_MILSTEIN
 %       Implicit SDE solvers:   
 %       Stochastic processes:	SDE_BM, SDE_GBM, SDE_OU
-%       Option handling:        SDESET, SDEGET
+%       Option handling:        SDESET, SDEGET, SDEPLOT
 %       SDE demos/validation:   SDE_EULER_VALIDATE, SDE_MILSTEIN_VALIDATE
 %   	Other:                  FUNCTION_HANDLE, RANDSTREAM
 
@@ -93,7 +94,7 @@ function [Y,W,TE,YE,WE,IE] = sde_euler(f,g,tspan,y0,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 10-28-10
-%   Revision: 1.0, 4-29-13
+%   Revision: 1.2, 5-2-13
 
 
 solver = 'SDE_EULER';
@@ -125,10 +126,10 @@ else
 end
 
 % Handle solver arguments (NOTE: ResetStream is called by onCleanup())
-[N,D,D0,tspan,tdir,lt,y0,fout,gout,h,ConstStep,dataType,idxNonNegative,...
-    NonNegative,DiagonalNoise,ScalarNoise,idxConstFFUN,ConstFFUN,...
-    idxConstGFUN,ConstGFUN,Stratonovich,RandFUN,CustomRandFUN,ResetStream,...
-    EventsFUN,EventsValue,OutputFUN] ...
+[N,D,tspan,tdir,lt,y0,fout,gout,dgout,h,ConstStep,dataType,NonNegative,...
+    idxNonNegative,DiagonalNoise,ScalarNoise,OneDNoise,ConstFFUN,ConstGFUN,...
+    ConstDGFUN,Stratonovich,RandFUN,CustomRandFUN,ResetStream,EventsFUN,...
+    EventsValue,OutputFUN,WSelect] ...
     = sdearguments(solver,f,g,tspan,y0,options);	%#ok<ASGLU>
 
 % Initialize outputs for zero-crossing events
@@ -144,7 +145,7 @@ if isEvents
                 YE = [];
                 if nargout >= 5
                     WE = [];
-                    if nargout >= 6
+                    if nargout == 6
                         IE = [];
                     end
                 end
@@ -166,26 +167,71 @@ end
 
 % Initialize output function
 isOutput = ~isempty(OutputFUN);
-
-% State array
-if strcmp(dataType,'double')
-    Y(lt,N) = 0;
+isW = (isEvents || WSelect);
+if isW
+    Wi = 0;
 else
-    Y(lt,N) = single(0);
+    Wi = [];
 end
 
-% Calculate Wiener increments from normal variates, store in state if possible
+% If drift or diffusion functions, FFUN and GFUN, exist
+isDrift = ~(ConstFFUN && isscalar(fout) && fout == 0);
+isDiffusion = ~(ConstGFUN && isscalar(gout) && gout == 0);
+
+% Is Y allocated and output
+isYOutput = (nargout > 0);
+
+% Location of stored Wiener increments, if they are needed and pre-calculated
+dWinY = (isDiffusion && D <= N && isYOutput);	% Store Wiener increments in Y
+dWinW = (isDiffusion && D > N && nargout >= 2);	% Store Wiener increments in W
+
+% Allocate state array, Y, if needed (may be allocated in place below)
+if isYOutput && (~(CustomRandFUN && dWinY) ...
+        || ~(ConstFFUN && ConstGFUN && dWinW && ~NonNegative))
+    if strcmp(dataType,'double')
+        Y(lt,N) = 0;
+    else
+        Y(lt,N) = single(0);
+    end
+end
+    
+% Calculate Wiener increments from normal variates, store in Y if possible, or W
 sh = tdir*sqrt(h);
 h = tdir*h;
-if CustomRandFUN    % check output of alternative RandFUN
-    try
-        if D > N
-            if nargout >= 2 % Store Wiener increments in W
+if isDiffusion
+    if CustomRandFUN                        % Check alternative RandFUN output
+        try
+            if dWinY                        % Store Wiener increments in Y
+                Y = feval(RandFUN,lt-1,D);
+                if ~sde_ismatrix(Y) || isempty(Y) || ~isfloat(Y)
+                    error('SDETools:sde_euler:RandFUNNot2DArray3',...
+                         ['RandFUN must return a non-empty matrix of '...
+                          'floating-point values.  See %s.'],solver);
+                end
+                [m,n] = size(Y);
+                if m ~= lt-1 || n ~= D
+                    error('SDETools:sde_euler:RandFUNDimensionMismatch3',...
+                         ['The specified alternative RandFUN did not output '...
+                          'a %d by %d matrix as requested.  See %s.',lt-1,D,...
+                          solver]);
+                end
+
+                if ScalarNoise || ConstStep
+                    Y = [zeros(1,D,dataType);
+                         sh.*Y zeros(lt-1,N-D,dataType)];
+                else
+                    Y = [zeros(1,D,dataType);
+                         bsxfun(@times,sh,Y) zeros(lt-1,N-D,dataType)];
+                end
+                if nargout >= 2
+                    W = cumsum(Y(:,1:D),1); % Integrated Wiener increments
+                end
+            elseif dWinW                    % Store Wiener increments in W
                 W = feval(RandFUN,lt-1,D);
                 if ~sde_ismatrix(W) || isempty(W) || ~isfloat(W)
                     error('SDETools:sde_euler:RandFUNNot2DArray1',...
                          ['RandFUN must return a non-empty matrix of '...
-                          'floating point values.  See %s.'],solver);
+                          'floating-point values.  See %s.'],solver);
                 end
                 [m,n] = size(W);
                 if m ~= lt-1 || n ~= D
@@ -194,17 +240,18 @@ if CustomRandFUN    % check output of alternative RandFUN
                           'a %d by %d matrix as requested.  See %s.',lt-1,D,...
                           solver]);
                 end
+
                 if ConstStep
-                    W = [zeros(1,D);sh*W];
+                    W = [zeros(1,D,dataType);sh.*W];
                 else
-                    W = [zeros(1,D);bsxfun(@times,sh,W)];
+                    W = [zeros(1,D,dataType);bsxfun(@times,sh,W)];
                 end
-            else            % Unable to store Wiener increments
+            else                            % Unable to store Wiener increments
                 dW = feval(RandFUN,1,D);
                 if ~isvector(dW) || isempty(dW) || ~isfloat(dW)
                     error('SDETools:sde_euler:RandFUNNot2DArray2',...
                          ['RandFUN must return a non-empty matrix of '...
-                          'floating point values.  See %s.'],solver);
+                          'floating-point values.  See %s.'],solver);
                 end
                 [m,n] = size(dW);
                 if m ~= 1 || n ~= D
@@ -213,108 +260,122 @@ if CustomRandFUN    % check output of alternative RandFUN
                           'a 1 by %d column vector as requested.  See %s.',D,...
                           solver]);
                 end
-                dW = sh(1)*dW;
-            end
-        elseif D == N       % Store Wiener increments in Y indirectly
-            r = feval(RandFUN,lt-1,D);
-            if ~sde_ismatrix(r) || isempty(r) || ~isfloat(r)
-                error('SDETools:sde_euler:RandFUNNot2DArray3',...
-                     ['RandFUN must return a non-empty matrix of floating '...
-                      'point values.  See %s.'],solver);
-            end
-            [m,n] = size(r);
-            if m ~= lt-1 || n ~= D
-                error('SDETools:sde_euler:RandFUNDimensionMismatch3',...
-                     ['The specified alternative RandFUN did not output a '...
-                      '%d by %d matrix as requested.   See %s.',lt-1,D,solver]);
-            end
-            if N == 1 || ConstStep
-                Y(2:end,1:D) = sh.*r;
-            else
-                Y(2:end,1:D) = bsxfun(@times,sh,r);
-            end
-            clear r;    % remove large temporary variable to save memory
-        end
-    catch err
-        switch err.identifier
-            case 'MATLAB:TooManyInputs'
-                error('SDETools:sde_euler:RandFUNTooFewInputs',...
-                      'RandFUN must have at least two inputs.  See %s.',solver);
-            case 'MATLAB:TooManyOutputs'
-                error('SDETools:sde_euler:RandFUNNoOutput',...
-                     ['The output of RandFUN was not specified. RandFUN '...
-                      'must return a non-empty matrix.  See %s.'],solver);
-            case 'MATLAB:unassignedOutputs'
-                error('SDETools:sde_euler:RandFUNUnassignedOutput',...
-                     ['The first output of RandFUN was not assigned.'...
-                      '  See %s.'],solver);
-            case 'MATLAB:minrhs'
-                error('SDETools:sde_euler:RandFUNTooManyInputs',...
-                     ['RandFUN must not require more than two inputs.'...
-                      '  See %s.'],solver);
-            otherwise
-                rethrow(err);
-        end
-    end
-else    % No error checking needed if default RANDN used
-    if D > N
-        if nargout >= 2 % Store Wiener increments in W
-            if ConstStep
-                W(2:end,:) = sh*feval(RandFUN,lt-1,D);
-            else
-                W(2:end,:) = bsxfun(@times,sh,feval(RandFUN,lt-1,D));
-            end
-        else            % Unable to store Wiener increments
-            dW = sh(1)*feval(RandFUN,1,D);
-        end
-    else                % Store Wiener increments in Y
-        if D > 0 && ~isempty(D0)
-            if N == 1 && DiagonalNoise || ConstStep
-                Y(2:end,D0) = sh.*feval(RandFUN,lt-1,D);
-            else
-                Y(2:end,D0) = bsxfun(@times,sh,feval(RandFUN,lt-1,D));
-            end
-        end
-    end
-end
 
-% Only allocate W matrix if requested as output
-if nargout >= 2 && D <= N
-	W = cumsum(Y(:,D0),1);
+                dW = sh(1)*dW;
+                if ConstStep
+                    RandFUN = @(i)sh*feval(RandFUN,1,D);
+                else
+                    RandFUN = @(i)sh(i)*feval(RandFUN,1,D);
+                end
+            end
+        catch err
+            switch err.identifier
+                case 'MATLAB:TooManyInputs'
+                    error('SDETools:sde_euler:RandFUNTooFewInputs',...
+                          'RandFUN must have at least two inputs.  See %s.',...
+                          solver);
+                case 'MATLAB:TooManyOutputs'
+                    error('SDETools:sde_euler:RandFUNNoOutput',...
+                         ['The output of RandFUN was not specified. RandFUN '...
+                          'must return a non-empty matrix.  See %s.'],solver);
+                case 'MATLAB:unassignedOutputs'
+                    error('SDETools:sde_euler:RandFUNUnassignedOutput',...
+                         ['The first output of RandFUN was not assigned.'...
+                          '  See %s.'],solver);
+                case 'MATLAB:minrhs'
+                    error('SDETools:sde_euler:RandFUNTooManyInputs',...
+                         ['RandFUN must not require more than two inputs.'...
+                          '  See %s.'],solver);
+                otherwise
+                    rethrow(err);
+            end
+        end
+    else
+        % No error checking needed if default RANDN used
+        if dWinY                            % Store Wiener increments in Y
+            if ScalarNoise || ConstStep
+                Y(2:end,1:D) = sh.*feval(RandFUN,lt-1,D);
+            else
+                Y(2:end,1:D) = bsxfun(@times,sh,feval(RandFUN,lt-1,D));
+            end
+            if nargout >= 2
+                W = cumsum(Y(:,1:D),1);     % Integrated Wiener increments
+            end
+        elseif dWinW                        % Store Wiener increments in W
+            if ConstStep
+                W = [zeros(1,D,dataType);sh.*feval(RandFUN,lt-1,D)];
+            else
+                W = [zeros(1,D,dataType);...
+                     bsxfun(@times,sh,feval(RandFUN,lt-1,D))];
+            end
+        else                                % Unable to store Wiener increments
+            if ConstStep
+                RandFUN = @(i)sh*feval(RandFUN,1,D);
+            else
+                RandFUN = @(i)sh(i)*feval(RandFUN,1,D);
+            end
+            dW = RandFUN(1);
+        end
+    end
 end
 
 % Integrate
-if ConstFFUN && ConstGFUN && (D <= N || nargout >= 2) && ~NonNegative	% no FOR loop needed
-    if D > N
-        W = cumsum(W,1);
-    elseif nargout < 2
-        Y = cumsum(Y(:,D0),1);
-        if isEvents
-            W = Y;
+if ConstFFUN && ConstGFUN && ((~isDiffusion && isYOutput) || dWinY || dWinW) ...
+        && ~NonNegative
+    % No FOR loop needed
+    if dWinY
+     	Y = cumsum(Y,1);                    % Integrate Wiener increments in Y
+        if isW
+            W = Y(:,1:D);                   % If needed for events or output
         end
-    end
-    
-    % Evaluate analytic solution
-    if N == 1 && DiagonalNoise
-        Y = y0+tspan*fout+Y*gout;
-    else
-        if ScalarNoise
-            Y = bsxfun(@plus,y0.',bsxfun(@plus,tspan*fout.',Y*gout));
-        elseif DiagonalNoise
-            Y = bsxfun(@plus,y0.',tspan*fout.'+bsxfun(@times,Y(:,D0),gout(D0).'));
-        else
-            if D > N
-                Y = bsxfun(@plus,y0.',tspan*fout.'+W*gout.');
+        if isDrift
+            if OneDNoise                    % 1-D scalar (and diagonal) noise
+                Y = y0+tspan*fout+Y*gout;
+            elseif DiagonalNoise
+                Y = bsxfun(@plus,y0.',tspan*fout.'+bsxfun(@times,Y,gout.'));
             else
-                Y = bsxfun(@plus,y0.',tspan*fout.'+Y*gout.');
+                Y = bsxfun(@plus,y0.',tspan*fout.'+Y(:,1:D)*gout.');
             end
+        else
+            if OneDNoise                    % 1-D scalar (and diagonal) noise
+                Y = y0+Y*gout;
+            elseif DiagonalNoise
+                Y = bsxfun(@plus,y0.',bsxfun(@times,Y,gout.'));
+            else
+                Y = bsxfun(@plus,y0.',Y(:,1:D)*gout.');
+            end
+        end
+    elseif dWinW
+        W = cumsum(W,1);                    % Integrate Wiener increments in W
+        if isDrift
+            Y = bsxfun(@plus,y0.',tspan*fout.'+W*gout.');
+        else
+            Y = bsxfun(@plus,y0.',W*gout.');
+        end
+    else
+        if isW                              % If needed for events or output
+            if strcmp(dataType,'double')
+                W(lt,D) = 0;
+            else
+                W(lt,D) = single(0);
+            end
+        end
+        if isDrift
+            if N == 1
+                Y = y0+tspan*fout;
+            else
+                Y = bsxfun(@plus,y0.',tspan*fout.');
+            end
+        else
+            Y = ones(lt,1,dataType)*y0.';
         end
     end
     
     % Check for and handle zero-crossing events, and output function
     if isEvents
         for i = 2:lt
-            [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i),Y(i,:),W(i,:),EventsValue);
+            [te,ye,we,ie,EventsValue,IsTerminal] ...
+                = sdezero(EventsFUN,tspan(i),Y(i,:),W(i,:),EventsValue);
             if ~isempty(te)
                 if nargout >= 3
                     TE = [TE;te];               %#ok<AGROW>
@@ -322,7 +383,7 @@ if ConstFFUN && ConstGFUN && (D <= N || nargout >= 2) && ~NonNegative	% no FOR l
                         YE = [YE;ye];           %#ok<AGROW>
                         if nargout >= 5
                             WE = [WE;we];       %#ok<AGROW>
-                            if nargout >= 6
+                            if nargout == 6
                                 IE = [IE;ie];	%#ok<AGROW>
                             end
                         end
@@ -333,106 +394,86 @@ if ConstFFUN && ConstGFUN && (D <= N || nargout >= 2) && ~NonNegative	% no FOR l
                     if nargout >= 2
                         W = W(1:i,:);
                     end
-                    return;
+                    break;
                 end
             end
             
             if isOutput
-                OutputFUN(tspan(i),Y(i,:));
+                OutputFUN(tspan(i),Y(i,:),'',W(i,:));
             end
         end
     elseif isOutput
-        for i = 2:lt
-            OutputFUN(tspan(i),Y(i,:));
+        if isW
+            for i = 2:lt
+                OutputFUN(tspan(i),Y(i,:),'',W(i,:));
+            end
+        else
+            for i = 2:lt
+                OutputFUN(tspan(i),Y(i,:),'',[]);
+            end
         end
     end
 else
-    % Optimized integration loop for 1-D scalar noise case
-    if N == 1 && DiagonalNoise
-        dt = h(1);  % Step size for first time step and fixed step-size
-        Y(1) = y0;	% Set initial conditions
-        dW = Y(2);  % Wiener increment
-        
-        % Use existing fout and gout to calculate the first time step, Y(2)
-        if ConstGFUN
-            Y(2) = y0+fout*dt+gout*dW;
-        else
-            if Stratonovich     % Use Euler-Heun step
-                Y(2) = y0+fout*dt+0.5*(gout+g(tspan(2),y0+gout*dW))*dW;
-            else
-                Y(2) = y0+fout*dt+gout*dW;
-            end
-        end
-        if NonNegative
-            Y(2) = max(Y(2),0);
-        end
-        
-        % Check for and handle zero-crossing events
-        if isEvents
-            Wi = dW;
-            [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(2),Y(2),Wi,EventsValue);
-            if ~isempty(te)
-                if nargout >= 3
-                    TE = [TE;te];
-                    if nargout >= 4
-                        YE = [YE;ye];
-                        if nargout >= 5
-                            WE = [WE;we];
-                            if nargout >= 6
-                                IE = [IE;ie];
-                            end
-                        end
-                    end
-                end
-                if IsTerminal
-                    Y = Y(1:2);
-                    if nargout >= 2
-                        W = W(1:2);
-                    end
-                    return;
-                end
-            end
-        end
-        
-        % Check for and handle output function
-        if isOutput
-            OutputFUN(tspan(2),Y(2));
+    dt = h(1);                              % Fixed step size
+    Ti = tspan(1);                          % Current time
+  	Yi = y0;                                % Set initial conditions
+    
+    if OneDNoise
+        % Optimized 1-D scalar (and diagonal) noise case
+        if isYOutput
+            Y(1) = Yi;                      % Store initial conditions
         end
         
         % Integration loop using Wiener increments stored in Y(i+1)
-        for i = 2:lt-1
+        for i = 1:lt-1
             if ~ConstStep
-                dt = h(i);  % Step size
+                dt = h(i);                  % Step size
             end
-            dW = Y(i+1);    % Wiener increment
-
+            if dWinY
+                dW = Y(i+1);                % Wiener increment
+            elseif i > 1
+                dW = RandFUN(i);            % Generate Wiener increment
+            end
+            
             % Calculate next time step
             if ConstGFUN
-              	Y(i+1) = Y(i)+f(tspan(i+1),Y(i))*dt+gout*dW;
+              	Yi = Yi+f(Ti,Yi)*dt+gout*dW;
             else
                 if ~ConstFFUN
-                    fout = f(tspan(i+1),Y(i))*dt;
+                    fout = f(Ti,Yi)*dt;
                 end
-                gout = g(tspan(i+1),Y(i));
-
-                if Stratonovich     % Use Euler-Heun step
-                    Y(i+1) = Y(i)+fout+0.5*(gout+g(tspan(i+1),Y(i)+gout*dW))*dW;
+                gout = g(Ti,Yi);
+                
+                if Stratonovich             % Use Euler-Heun step
+                    Yi = Yi+fout+0.5*(gout+g(Ti,Yi+gout*dW))*dW;
                 else
-                    Y(i+1) = Y(i)+fout+gout*dW;
+                    Yi = Yi+fout+gout*dW;
                 end
             end
+            
+            % Force solution to be >= 0
             if NonNegative
-                Y(i+1) = max(Y(i+1),0);
+                Yi = max(Yi,0);
+            end
+            
+            Ti = tspan(i+1);                % Increment current time
+            if isYOutput
+                Y(i+1) = Yi;              	% Store solution
+            end
+            
+            % Integrated Wiener increments for events and output functions
+            if isW
+                if nargout >= 2
+                    Wi = W(i+1);            % Use stored W
+                else
+                    Wi = Wi+dW;             % Integrate Wiener increment
+                end
             end
             
             % Check for and handle zero-crossing events
             if isEvents
-                if nargout >= 2
-                    Wi = W(i+1);
-                else
-                    Wi = Wi+dW; % Integrate Wiener increment
-                end
-                [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i+1),Y(i+1),Wi,EventsValue);
+                [te,ye,we,ie,EventsValue,IsTerminal] ...
+                    = sdezero(EventsFUN,Ti,Yi,Wi,EventsValue);
                 if ~isempty(te)
                     if nargout >= 3
                         TE = [TE;te];               %#ok<AGROW>
@@ -440,7 +481,7 @@ else
                             YE = [YE;ye];           %#ok<AGROW>
                             if nargout >= 5
                                 WE = [WE;we];       %#ok<AGROW>
-                                if nargout >= 6
+                                if nargout == 6
                                     IE = [IE;ie];	%#ok<AGROW>
                                 end
                             end
@@ -451,128 +492,55 @@ else
                         if nargout >= 2
                             W = W(1:i+1);
                         end
-                        return;
+                        break;
                     end
                 end
             end
             
             % Check for and handle output function
             if isOutput
-                OutputFUN(tspan(i+1),Y(i+1));
+                OutputFUN(Ti,Yi,'',Wi);
             end
         end
     else
-        % step size and Wiener increment for first time-step and fixed step-size
-        dt = h(1);	% Step size for first time step and fixed step-size
-        if D > N
-            if nargout >= 2     % dW already exists if D > N && nargin == 1
-                dW = W(2,:);
-            else
-                sdt = sh(1);
-            end
-        else
-            dW = Y(2,D0);
-        end
-        dW = dW(:);
-
-        Y(1,:) = y0;	% Set initial conditions
-
-        % Use existing fout and gout to calculate the first time step, Y(2,:)
-        if ConstGFUN
-            if DiagonalNoise
-                Yi = y0+fout*dt+gout.*dW;
-            else
-                Yi = y0+fout*dt+gout*dW;
-            end
-        else
-            if Stratonovich	% Use Euler-Heun step
-                if DiagonalNoise
-                    Yi = y0+fout*dt+0.5*(gout+g(tspan(2),y0+gout.*dW)).*dW;
-                else
-                    Yi = y0+fout*dt+0.5*(gout+g(tspan(2),y0+gout*dW))*dW;
-                end
-            else
-                if DiagonalNoise
-                    Yi = y0+fout*dt+gout.*dW;
-                else
-                    Yi = y0+fout*dt+gout*dW;
-                end
-            end
-        end
-        if NonNegative
-            Yi(idxNonNegative) = max(Yi(idxNonNegative),0);
-        end
-        Y(2,:) = Yi;
-        
-        % Check for and handle zero-crossing events
-        if isEvents
-            Wi = dW;
-            [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(2),Yi,Wi,EventsValue);
-            if ~isempty(te)
-                if nargout >= 3
-                    TE = [TE;te];
-                    if nargout >= 4
-                        YE = [YE;ye];
-                        if nargout >= 5
-                            WE = [WE;we];
-                            if nargout >= 6
-                                IE = [IE;ie];
-                            end
-                        end
-                    end
-                end
-                if IsTerminal
-                    Y = Y(1:2,:);
-                    if nargout >= 2
-                        W = W(1:2,:);
-                    end
-                    return;
-                end
-            end
+        % General case
+        if isYOutput
+            Y(1,:) = Yi;                	% Store initial conditions
         end
         
-        % Check for and handle output function
-        if isOutput
-            OutputFUN(tspan(2),Yi);
-        end
-        
-        % Integration loop using cached state, Yi, and increment, dW
-        for i = 2:lt-1
-            % Step size and Wiener increment
+        % Integration loop using cached state, Yi, and Wiener increments, dW
+        for i = 1:lt-1
             if ~ConstStep
-                dt = h(i);
-                sdt = sh(i);
+                dt = h(i);                  % Variable step size
             end
-            if D > N
-                if nargout >= 2
-                    dW = W(i+1,:);
-                    W(i+1,:) = W(i,:)+dW;      	% Integrate Wiener increments
-                else
-                    dW = sdt*feval(RandFUN,1,D);	% Generate Wiener increments
-                end
-            else
-                dW = Y(i+1,D0);
+            if dWinY
+                dW = Y(i+1,1:D);            % Wiener increments stored in Y
+            elseif dWinW
+                dW = W(i+1,:);              % Wiener increments stored in W
+                W(i+1,:) = W(i,:)+dW;       % Integrate Wiener increments
+            elseif i > 1
+                dW = RandFUN(i);            % Generate Wiener increments
             end
-            dW = dW(:);
+            dW = dW(:);                     % Wiener increments
             
             % Calculate next time step
             if ConstGFUN
                 if DiagonalNoise
-                    Yi = Yi+f(tspan(i+1),Yi)*dt+gout.*dW;
+                    Yi = Yi+f(Ti,Yi)*dt+gout.*dW;
                 else
-                    Yi = Yi+f(tspan(i+1),Yi)*dt+gout*dW;
+                    Yi = Yi+f(Ti,Yi)*dt+gout*dW;
                 end
             else
                 if ~ConstFFUN
-                    fout = f(tspan(i+1),Yi)*dt;
+                    fout = f(Ti,Yi)*dt;
                 end
-                gout = g(tspan(i+1),Yi);
+                gout = g(Ti,Yi);
 
-                if Stratonovich     % Use Euler-Heun step
+                if Stratonovich	% Use Euler-Heun step
                     if DiagonalNoise
-                        Yi = Yi+fout+0.5*(gout+g(tspan(i+1),Yi+gout.*dW)).*dW;
+                        Yi = Yi+fout+0.5*(gout+g(Ti,Yi+gout.*dW)).*dW;
                     else
-                        Yi = Yi+fout+0.5*(gout+g(tspan(i+1),Yi+gout*dW))*dW;
+                        Yi = Yi+fout+0.5*(gout+g(Ti,Yi+gout*dW))*dW;
                     end
                 else
                     if DiagonalNoise
@@ -582,19 +550,30 @@ else
                     end
                 end
             end
+            
+            % Force specified solution indices to be >= 0
             if NonNegative
                 Yi(idxNonNegative) = max(Yi(idxNonNegative),0);
             end
-            Y(i+1,:) = Yi;
+            
+            Ti = tspan(i+1);                % Increment current time
+            if isYOutput
+                Y(i+1,:) = Yi;           	% Store solution
+            end
+            
+            % Integrated Wiener increments for events and output functions
+            if isW
+                if nargout >= 2
+                    Wi = W(i+1,:);          % Use stored W
+                else
+                    Wi = Wi+dW;             % Integrate Wiener increments
+                end
+            end
             
             % Check for and handle zero-crossing events
             if isEvents
-                if nargout >= 2
-                    Wi = W(i+1,:);
-                else
-                    Wi = Wi+dW; % Integrate Wiener increments
-                end
-                [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i+1),Yi,Wi,EventsValue);
+                [te,ye,we,ie,EventsValue,IsTerminal] ...
+                    = sdezero(EventsFUN,Ti,Yi,Wi,EventsValue);
                 if ~isempty(te)
                     if nargout >= 3
                         TE = [TE;te];               %#ok<AGROW>
@@ -602,7 +581,7 @@ else
                             YE = [YE;ye];           %#ok<AGROW>
                             if nargout >= 5
                                 WE = [WE;we];       %#ok<AGROW>
-                                if nargout >= 6
+                                if nargout == 6
                                     IE = [IE;ie];	%#ok<AGROW>
                                 end
                             end
@@ -613,15 +592,20 @@ else
                         if nargout >= 2
                             W = W(1:i+1,:);
                         end
-                        return;
+                        break;
                     end
                 end
             end
             
             % Check for and handle output function
             if isOutput
-                OutputFUN(tspan(i+1),Yi);
+                OutputFUN(Ti,Yi,'',Wi);
             end
         end
     end
+end
+
+% Finalize output
+if isOutput
+    OutputFUN([],[],'done',[]);
 end

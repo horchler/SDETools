@@ -1,11 +1,10 @@
 function bool=sde_ismatrix(V)
 %SDE_ISMATRIX  Replicate functionality of builtin ismatrix for pre-R2010b Matlab
 %
-%   See also:
-%       ISMATRIX
+%   See also: ISMATRIX, SDE_ISSQUARE, SDE_ISDIAG
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 5-9-12
-%   Revision: 1.0, 6-30-12
+%   Revision: 1.0, 4-30-13
 
 
 try

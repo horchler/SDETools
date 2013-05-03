@@ -10,16 +10,19 @@ function opts = sdeget(options,name,default,noErrorCheck)
 %   but returns VAL = DEFAULT if the named property is not specified in OPTIONS.
 %
 %   Example:
-%       % Returns val = 'Ito' if the SDEType property is not specified in opts
-%       val = sdeget(opts,'SDEType','Ito');
+%       % SDEGET returns 'Ito' if the SDEType property is not specified in opts
+%       opts = sdeset('RandSeed',1);
+%       val = sdeget(opts,'SDEType','Ito')
+%       opts = sdeset(opts,'SDEType','Stratonovich');
+%       val = sdeget(opts,'SDEType','Ito')
 %   
 %   See also:
-%       SDESET, SDE_EULER, SDE_MILSTEIN, SDE_BM, SDE_GBM, SDE_OU
+%       SDESET, SDEPLOT, SDE_EULER, SDE_MILSTEIN, SDE_BM, SDE_GBM, SDE_OU
 
 %   SDEGET is based on an updating of version 1.37.4.5 of Matlab's ODEGET
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-28-10
-%   Revision: 1.0, 4-28-13
+%   Revision: 1.2, 5-2-13
 
 
 % Undocumented usage for fast access with no error checking

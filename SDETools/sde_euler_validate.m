@@ -14,7 +14,7 @@ function varargout=sde_euler_validate(dt,n,a,b,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 11-1-10
-%   Revision: 1.0, 4-7-13
+%   Revision: 1.2, 5-2-13
 
 
 close all
@@ -85,31 +85,19 @@ else
     b = 1;
 end
 
+% Check random number generation
+if ~isempty(sdeget(options,'RandFUN',[],'flag'))
+    error('SHCTools:sde_euler_validate:InvalidRandFUN',...
+          'This function only supports the default random number stream.');
+end
+if strcmp(sdeget(options,'Antithetic','no','flag'),'yes')
+    error('SHCTools:sde_euler_validate:Antithetic',...
+          'This function does not support antithetic random variates.');
+end
+
 % Integration method is dependent on if SDE is Stratonovich or Ito form
 Stratonovich = strcmp(sdeget(options,'SDEType','Stratonovich','flag'),...
 	'Stratonovich');
-
-% Create random number stream
-RandSeed = sdeget(options,'RandSeed',[],'flag');
-if ~isempty(RandSeed)
-    if ~isscalar(RandSeed) || ~isnumeric(RandSeed) || ~isreal(RandSeed) ...
-            || ~isfinite(RandSeed) || RandSeed >= 2^32 || RandSeed < 0
-        error('SDETools:sde_euler_validate:InvalidRandSeed',...
-              'RandSeed must be a non-negative integer value less than 2^32.');
-    end
-    % Create new stream based on seed value
-	Stream = RandStream.create('mt19937ar','Seed',RandSeed);
-else
-    % Use default stream
-    try
-        Stream = RandStream.getGlobalStream;
-    catch                                       %#ok<CTCH>
-        Stream = RandStream.getDefaultStream;	%#ok<GETRS>
-    end
-end
-
-% Override RandFun setting and specifiy stream via RANDN
-options = sdeset(options,'RandFun',@(M,N)randn(Stream,M,N));
 
 % Override non-diagonal noise, ConstFFUN, and ConstGFUN settings
 options = sdeset(options,'DiagonalNoise','yes','ConstFFUN','no',...

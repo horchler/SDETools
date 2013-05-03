@@ -11,7 +11,7 @@ function morrislecar2_sde_euler
 %   251-292.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-26-13
-%   Revision: 1.0, 4-29-13
+%   Revision: 1.2, 5-2-13
 
 % Morris-Lecar Type I parameters (Rinzel & Ermentrout 1998)
 V1 = -1.2; V2 = 18; V3 = 2; V4 = 30;

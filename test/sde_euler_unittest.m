@@ -18,7 +18,7 @@ function sde_euler_unittest(tests)
 %       SDE_MILSTEIN_UNITTEST, WAITTEXT
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 12-20-11
-%   Revision: 1.0, 6-30-12
+%   Revision: 1.2, 5-2-13
 
 
 % Make sure toolbox on path, otherwise ensure we're in right location and add it
@@ -417,49 +417,49 @@ st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandSeed'',ones(1,1,2)));';
-msg{i} = 'SDETools:sdearguments:InvalidRandSeed';
+msg{i} = 'SDETools:sderandfun:InvalidRandSeed';
 
 % inavlid RandSeed, not a scalar
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandSeed'',[0,0]));';
-msg{i} = 'SDETools:sdearguments:InvalidRandSeed';
+msg{i} = 'SDETools:sderandfun:InvalidRandSeed';
 
 % inavlid RandSeed, not finite
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandSeed'',NaN));';
-msg{i} = 'SDETools:sdearguments:InvalidRandSeed';
+msg{i} = 'SDETools:sderandfun:InvalidRandSeed';
 
 % inavlid RandSeed, not real
 st = dbstack;
 i = i+1;
 lnum{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandSeed'',1i));';
-msg{i} = 'SDETools:sdearguments:InvalidRandSeed';
+msg{i} = 'SDETools:sderandfun:InvalidRandSeed';
 
 % inavlid RandSeed, not numeric
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandSeed'',logical(0)));';
-msg{i} = 'SDETools:sdearguments:InvalidRandSeed';
+msg{i} = 'SDETools:sderandfun:InvalidRandSeed';
 
 % RandSeed too small
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandSeed'',-1));';
-msg{i} = 'SDETools:sdearguments:InvalidRandSeed';
+msg{i} = 'SDETools:sderandfun:InvalidRandSeed';
 
 % RandSeed too large
 st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandSeed'',2^32));';
-msg{i} = 'SDETools:sdearguments:InvalidRandSeed';
+msg{i} = 'SDETools:sderandfun:InvalidRandSeed';
 
 
 % RandFUN:
@@ -469,7 +469,7 @@ st = dbstack;
 i = i+1;
 lnum1{i} = st.line;
 cmd{i} = 'y=sde_euler(@(t,x)x+1,@(t,x)x+1,0:0.1:1,0,sdeset(''RandFUN'',0));';
-msg{i} = 'SDETools:sdearguments:RandFUNNotAFunctionHandle';
+msg{i} = 'SDETools:sderandfun:RandFUNNotAFunctionHandle';
 
 % undefined RandFUN
 st = dbstack;

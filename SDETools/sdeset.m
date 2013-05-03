@@ -80,21 +80,18 @@ function options = sdeset(varargin)
 %   components of the Wiener process. In this case, the stochastic function
 %   argument, GFUN (and DGFUN, if specified), must return a N-by-D matrix.
 %
-%ConstFFUN - Deterministic function constant  [ yes | {no} | vector of indices ]
+%ConstFFUN - Deterministic function is constant  [ yes | {no} ]
 %   Set this property to 'yes' if the determinstic function, f(t,y), of the SDE
 %   is constant and therefore not a function of time or state. The function is
 %   then evaluated only once by the integration routine, improving performance.
-%   A vector of indices specifies individual components of the deterministic
-%   function, f(t,y), that are constant. An empty vector, [], is equivalent to
-%   'no'.
+%   An empty vector, [], is equivalent to 'no'.
 %
-%ConstGFUN - Stochastic function is constant  [ yes | {no} | vector of indices ]
+%ConstGFUN - Stochastic function is constant  [ yes | {no} ]
 %   Set this property to 'yes' in the case of time-independent additive noise,
 %   i.e., if the stochastic function, g(t,y), of the SDE is constant and
 %   therefore not a function of time or state. The function is then evaluated
-%   only once by the integration routine, improving performance. A vector of
-%   indices specifies individual components of the stochastic function, g(t,y),
-%   that are constant. An empty vector, [], is equivalent to 'no'.
+%   only once by the integration routine, improving performance. An empty
+%   vector, [], is equivalent to 'no'.
 %
 %ConstDGFUN - Derivative of stochastic function is constant  [ yes | {no} ]
 %   Set this property to 'yes' if the derivative of th stochastic function,
@@ -103,10 +100,11 @@ function options = sdeset(varargin)
 %   improving performance.
 %
 %NonNegative - Non-negative components  [ yes | {no} | vector of indices ]
-%   Set to 'yes' to specify that all components of the solution are
+%   Set to 'yes' to specify that all components of the solution are to be kept
 %   non-negative. A vector of indices specifies individual components of the
-%   solution vector that must be non-negative. An empty vector, [], is
-%   equivalent to 'no'.
+%   solution vector to be kept non-negative. An empty vector, [], is equivalent
+%   to 'no'. This option does not apply to the stochastic process functions,
+%   which are based on analytic solutions.
 %
 %EventsFUN - Locate multiple zero-crossing events  [ function_handle ]
 %   Set this property to a function handle in order to specify an events
@@ -125,11 +123,12 @@ function options = sdeset(varargin)
 %OutputFUN - Function called by solver after each time-step  [ function_handle ]
 %   Set this property to a function handle in order to specify a function that
 %   will be called upon completion of each time-step. By default, the output
-%   function must take two arguments: the current integration time, T, and a
-%   vector of solution components, Y. The OutputYSelect option can be used to
-%   pass only subsets (or none) of the solution components to the output
-%   function. The OutputWSelect option can be enabled to pass integrated Wiener
-%   increments, W, as a third argument to the output function. See SDEPLOT.
+%   function must take three arguments: the current integration time, T, a
+%   vector of solution components, Y, and a status string. The OutputYSelect
+%   option can be used to pass only subsets (or none) of the solution components
+%   to the output function. The OutputWSelect option can be enabled to pass
+%   integrated Wiener increments, W, as an optional fourth argument to the
+%   output function. See SDEPLOT for further output function requirements.
 %
 %OutputYSelect - Y Output selection indices  [ {yes} | no | vector of integers ]
 %   A vector of indices specifies a subset of solution vector components of the
@@ -150,7 +149,7 @@ function options = sdeset(varargin)
 %   SDESET is based on an updating of version 1.46.4.10 of Matlab's ODESET.
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-27-10
-%   Revision: 1.0, 4-28-13
+%   Revision: 1.2, 5-2-13
 
 
 options = struct(	'SDEType',          [],...
@@ -178,9 +177,9 @@ Values = {	'{Stratonovich} | Ito'
             ' yes  | {no}'
             'RandStream object'
             'function_handle'
-            '{yes} |  no '
-            ' yes  | {no} | vector'
-            ' yes  | {no} | vector'
+            '{yes} |  no'
+            ' yes  | {no}'
+            ' yes  | {no}'
             ' yes  | {no}'
             ' yes  | {no} | vector'
             'function_handle'

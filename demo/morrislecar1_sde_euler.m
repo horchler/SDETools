@@ -11,7 +11,7 @@ function morrislecar1_sde_euler
 %   251-292.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 9-11-12
-%   Revision: 1.0, 4-29-13
+%   Revision: 1.2, 5-2-13
 
 % Morris-Lecar Type I parameters (Rinzel & Ermentrout 1998)
 V1 = -1.2; V2 = 18; V3 = 12; V4 = 17.4;
@@ -40,7 +40,7 @@ w_diffusion = @(V,w)sqrt(lam(V).*(winf(V)-tv(V).*w)/NK);
 f = @(t,y)[V_drift(y(1:N),y(N+1:end));w_drift(y(1:N),y(N+1:end))];
 g = @(t,y)[zeros(N,1);w_diffusion(y(1:N),y(N+1:end))];
 
-% Keep w positive, set random seed
+% Indicate that fisrt part of w is constant, Keep w positive, set random seed
 opts = sdeset('NonNegative',N+1:2*N,'RandSeed',1);
 
 % Use Euler-Maruyama to integrate SDEs

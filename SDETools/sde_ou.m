@@ -66,7 +66,7 @@ function [Y,W,TE,YE,WE,IE] = sde_ou(th,mu,sig,tspan,y0,options)
 %       Explicit SDE solvers:	SDE_EULER, SDE_MILSTEIN
 %       Implicit SDE solvers:   
 %       Stochastic processes:	SDE_BM, SDE_GBM
-%       Option handling:        SDESET, SDEGET
+%       Option handling:        SDESET, SDEGET, SDEPLOT
 %       SDE demos/validation:   SDE_EULER_VALIDATE, SDE_MILSTEIN_VALIDATE
 %   	Other:                  FUNCTION_HANDLE, RANDSTREAM
 
@@ -80,7 +80,7 @@ function [Y,W,TE,YE,WE,IE] = sde_ou(th,mu,sig,tspan,y0,options)
 %   of Mathematics, Vol. 43, No. 2, pp. 351-369, April 1942.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-8-12
-%   Revision: 1.0, 4-29-13
+%   Revision: 1.2, 5-2-13
 
 
 func = 'SDE_OU';
@@ -139,8 +139,8 @@ end
 
 % Handle function arguments (NOTE: ResetStream is called by onCleanup())
 [N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,CustomRandFUN,...
-    ResetStream,EventsFUN,EventsValue]...
-	= sdearguments_special(func,tspan,y0,dataType,options);	%#ok<ASGLU>
+    ResetStream,EventsFUN,EventsValue,OutputFUN,WSelect]...
+	= sdearguments_process(func,tspan,y0,dataType,options);	%#ok<ASGLU>
 
 % Check th, mu, and sig sizes
 if ~any(length(th) == [1 N])
@@ -179,7 +179,7 @@ if isEvents
                 YE = [];
                 if nargout >= 5
                     WE = [];
-                    if nargout >= 6
+                    if nargout == 6
                         IE = [];
                     end
                 end
@@ -198,6 +198,10 @@ else
         end
     end
 end
+
+% Initialize output function
+isOutput = ~isempty(OutputFUN);
+isW = (nargout >= 2 || isEvents || WSelect);
 
 % State array
 isDouble = strcmp(dataType,'double');
@@ -243,7 +247,7 @@ if any(sig0)
 
             % Store random variates in Y
             Y(2:end,sig0) = r;
-            clear r;    % remove large temporary variable to save memory
+            clear r;    % Remove large temporary variable to save memory
         catch err
             switch err.identifier
                 case 'MATLAB:TooManyInputs'
@@ -307,8 +311,8 @@ if any(sig0)
     % Integrate Wiener increments
     Y(2:end,sig0) = cumsum(Y(2:end,sig0),1);
     
-    % Only allocate W matrix if requested as output
-    if nargout >= 2 || isEvents
+    % Only allocate W matrix if requested as output or needed
+    if isW
         W = Y;
     end
     
@@ -368,7 +372,7 @@ if any(sig0)
     end
 else
     % Only allocate W matrix if requested as output (it will be all zero)
-    if nargout >= 2 || isEvents
+    if isW
         if isDouble
             W(lt,N) = 0;
         else
@@ -419,10 +423,11 @@ else
     end
 end
 
-% Check for and handle zero-crossing events
+% Check for and handle zero-crossing events, and output function
 if isEvents
     for i = 2:lt
-        [te,ye,we,ie,EventsValue,IsTerminal] = sdezero(EventsFUN,tspan(i),Y(i,:),W(i,:),EventsValue);
+        [te,ye,we,ie,EventsValue,IsTerminal] ...
+            = sdezero(EventsFUN,tspan(i),Y(i,:),W(i,:),EventsValue);
         if ~isempty(te)
             if nargout >= 3
                 TE = [TE;te];               %#ok<AGROW>
@@ -430,7 +435,7 @@ if isEvents
                     YE = [YE;ye];           %#ok<AGROW>
                     if nargout >= 5
                         WE = [WE;we];       %#ok<AGROW>
-                        if nargout >= 6
+                        if nargout == 6
                             IE = [IE;ie];	%#ok<AGROW>
                         end
                     end
@@ -444,5 +449,24 @@ if isEvents
                 return;
             end
         end
+        
+        if isOutput
+            OutputFUN(tspan(i),Y(i,:),'',W(i,:));
+        end
     end
+elseif isOutput
+    if isW
+        for i = 2:lt
+            OutputFUN(tspan(i),Y(i,:),'',W(i,:));
+        end
+    else
+        for i = 2:lt
+            OutputFUN(tspan(i),Y(i,:),'',[]);
+        end
+    end
+end
+
+% Finalize output
+if isOutput
+    OutputFUN([],[],'done',[]);
 end

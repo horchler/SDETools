@@ -1,16 +1,16 @@
-function [N,D,D0,tspan,tdir,lt,y0,f0,g0,h,ConstStep,dataType,idxNonNegative,...
-          NonNegative,DiagonalNoise,ScalarNoise,idxConstFFUN,ConstFFUN,...
-          idxConstGFUN,ConstGFUN,Stratonovich,RandFUN,CustomRandFUN,...
-          ResetStream,EventsFUN,EventsValue,OutputFUN]...
+function [N,D,tspan,tdir,lt,y0,f0,g0,dg0,h,ConstStep,dataType,NonNegative,...
+          idxNonNegative,DiagonalNoise,ScalarNoise,OneDNoise,ConstFFUN,...
+          ConstGFUN,ConstDGFUN,Stratonovich,RandFUN,CustomRandFUN,...
+          ResetStream,EventsFUN,EventsValue,OutputFUN,WSelect] ...
           = sdearguments(solver,f,g,tspan,y0,options)
 %SDEARGUMENTS  Process arguments for all SDE solvers.
 %
 %   See also:
-%       SDE_EULER, SDE_MILSTEIN, SDEARGUMENTS_SPECIAL, SDEGET, FUNCTION_HANDLE,
-%       RANDSTREAM
+%       SDE_EULER, SDE_MILSTEIN, SDEARGUMENTS_PROCESS, SDEGET, SDEEVENTS,
+%       SDEZERO, SDEOUTPUT, SDERESET_STREAM, FUNCTION_HANDLE, RANDSTREAM
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 12-12-11
-%   Revision: 1.0, 4-29-13
+%   Revision: 1.2, 5-2-13
 
 %   SDEARGUMENTS is partially based on an updating of version 1.12.4.15 of
 %   Matlab's ODEARGUMENTS.
@@ -24,7 +24,7 @@ if lt < 2
 end
 if ~isfloat(tspan) || ~isreal(tspan)
     error('SDETools:sdearguments:InvalidTSpanDataType',...
-          'TSPAN vector must be a real floating point value.  See %s.',solver);
+          'TSPAN vector must be a real floating-point value.  See %s.',solver);
 end
 if any(~isfinite(tspan))
     warning('SDETools:sdearguments:TSpanNotFinite',...
@@ -88,20 +88,33 @@ else
     NonNegative = false;
 end
 
-% Ensure first solver input is function handle, or matrix for constant function
+% Check for events function
+[EventsFUN,EventsValue] = sdeeventsfun(solver,t0,y0,options);
+
+% Check for output function
+[OutputFUN,WSelect] = sdeoutputfun(solver,tspan,y0,N,options);
+
+% Ensure first solver input is function handle, or vector for constant function
 if ~isa(f,'function_handle')
     if isempty(f) && isvector(f) && all(size(f) == 0) && isnumeric(f)
-        f0 = 0;
+        f0 = zeros(1,class(f));   	% Driftless diffusion
     elseif ~isempty(f) && isvector(f) && isfloat(f)
         f0 = f(:);
+        if length(f0) ~= N
+            error('SDETools:sdearguments:FFUNDimensionMismatchVector',...
+                 ['FFUN must return a vector the same length as Y0.  ',...
+                  'See %s.'],solver);
+        end
+        if all(f0 == 0)
+            f0 = zeros(1,class(f));	% Driftless diffusion
+        end
     else
         error('SDETools:sdearguments:InvalidFFUN',...
              ['The input FFUN must be a function handle, a vector of '...
-              'floating point values, or an empty numeric matrix, [], '...
+              'floating-point values, or an empty numeric matrix, [], '...
               'denoting no deterministic function.  See %s.'],solver);
     end
-    idxConstFFUN = 1:N;
-    ConstFFUN = true;
+    ConstFFUN = true;   % FFUN is constant
 else
     % Check output of FFUN and save it
     try
@@ -128,62 +141,42 @@ else
         end
     end
     
-    % Check for constant FFUN components
-    idxConstFFUN = sdeget(options,'ConstFFUN','no','flag');
-    if strcmp(idxConstFFUN,'yes')
-        idxConstFFUN = 1:N;
-        ConstFFUN = true;
-    elseif ~strcmp(idxConstFFUN,'no') && ~isempty(idxConstFFUN)
-        if ~isnumeric(idxConstFFUN) || ~isreal(idxConstFFUN) ...
-                || ~all(isfinite(idxConstFFUN)) || ~isvector(idxConstFFUN)
-            error('SDETools:sdearguments:InvalidConstFFUN',...
-                 ['ConstFFUN option must be a finite real numeric vector.'...
-                  '  See %s.'],solver);
-        end
-        if any(idxConstFFUN < 1) || any(idxConstFFUN > N) ...
-                || ~all(idxConstFFUN == floor(idxConstFFUN))
-            error('SDETools:sdearguments:InvalidIndexConstFFUN',...
-                 ['ConstFFUN option must be a vector of integer indices no '...
-                  'greater than the length of Y0.  See %s.'],solver);
-        end
-        if any(diff(sort(idxConstFFUN)) == 0)
-            error('SDETools:sdearguments:RepeatedIndexConstFFUN',...
-                 ['ConstFFUN vector cannot contain repeated indices.'...
-                  '  See %s.'],solver);
-        end
-        ConstFFUN = true;
-    else
-        idxConstFFUN = [];
-        ConstFFUN = false;
+    % Ensure that size and type of output of FFUN is consistent
+    [m,n] = size(f0);
+    if ~isvector(f0) || n > 1 || isempty(f0) || ~isfloat(f0)
+        error('SDETools:sdearguments:FFUNNotColumnVector',...
+             ['FFUN must return a non-empty column vector of floating-point '...
+              'values.  See %s.'],solver);
     end
-end
-
-% Ensure that size and type of output of FFUN is consistent
-[m,n] = size(f0);
-if ~isvector(f0) || n > 1 || isempty(f0) || ~isfloat(f0)
-    error('SDETools:sdearguments:FFUNNotColumnVector',...
-         ['FFUN must return a non-empty column vector of floating point '...
-          'values.  See %s.'],solver);
-end
-if m ~= N
-    error('SDETools:sdearguments:FFUNDimensionMismatch',...
-          'FFUN must return a vector the same length as Y0.  See %s.',solver);
+    if m ~= N
+        error('SDETools:sdearguments:FFUNDimensionMismatch',...
+              'FFUN must return a vector the same length as Y0.  See %s.',...
+              solver);
+    end
+    
+    % Check if FFUN specified as constant
+    ConstFFUN = strcmp(sdeget(options,'ConstFFUN','no','flag'),'yes');
+    if ConstFFUN && all(f0 == 0)
+        f0 = zeros(1,class(f0));	% Driftless diffusion
+    end
 end
 
 % Ensure second solver input is function handle, or matrix for constant function
 if ~isa(g,'function_handle')
     if isempty(g) && sde_ismatrix(g) && all(size(g) == 0) && isnumeric(g)
-        g0 = 0;
+        g0 = zeros(1,class(g));     % Noiseless drift
     elseif ~isempty(g) && sde_ismatrix(g) && isfloat(g)
         g0 = g;
+        if all(g0(:) == 0)
+            g0 = zeros(1,class(g));	% Noiseless drift
+        end
     else
         error('SDETools:sdearguments:InvalidGFUN',...
              ['The input GFUN must be a function handle, a matrix of '...
-              'floating point values, or an empty numeric matrix, [], '...
+              'floating-point values, or an empty numeric matrix, [], '...
               'denoting no stochastic function.  See %s.'],solver);
     end
-    idxConstGFUN = 1:size(g0,1);
-    ConstGFUN = true;
+    ConstGFUN = true;   % GFUN is constant
 else
     % Check output of GFUN and save it
     try
@@ -209,309 +202,187 @@ else
                 rethrow(err);
         end
     end
+    if ~sde_ismatrix(g0) || isempty(g0) || ~isfloat(g0)
+        error('SDETools:sdearguments:GFUNNotMatrix',...
+             ['GFUN must return a non-empty matrix of floating-point values.'...
+              '  See %s.'],solver);
+    end
     
-    % Check for constant GFUN components
-    idxConstGFUN = sdeget(options,'ConstGFUN','no','flag');
-    if strcmp(idxConstGFUN,'yes')
-        idxConstGFUN = 1:size(g0,1);
-        ConstGFUN = true;
-    elseif ~strcmp(idxConstGFUN,'no') && ~isempty(idxConstGFUN)
-        if ~isnumeric(idxConstGFUN) || ~isreal(idxConstGFUN) ...
-                || ~all(isfinite(idxConstGFUN)) || ~isvector(idxConstGFUN)
-            error('SDETools:sdearguments:InvalidConstGFUN',...
-                 ['ConstGFUN option must be a finite real numeric vector.'...
-                  '  See %s.'],solver);
-        end
-        if any(idxConstGFUN < 1) || any(idxConstGFUN > N) ...
-                || ~all(idxConstGFUN == floor(idxConstGFUN))
-            error('SDETools:sdearguments:InvalidIndexConstGFUN',...
-                 ['ConstGFUN option must be a vector of integer indices no '...
-                  'greater than the length of Y0.  See %s.'],solver);
-        end
-        if any(diff(sort(idxConstGFUN)) == 0)
-            error('SDETools:sdearguments:RepeatedIndexConstGFUN',...
-                 ['ConstGFUN vector cannot contain repeated indices.'...
-                  '  See %s.'],solver);
-        end
-        ConstGFUN = true;
+    % Check if GFUN specified as constant
+    ConstGFUN = strcmp(sdeget(options,'ConstGFUN','no','flag'),'yes');
+    if ConstGFUN && all(g0(:) == 0)
+        g0 = zeros(1,class(g0));	% Noiseless drift
+    end
+end
+
+% If diffusion function exists (not constant and all zero)
+isDiffusion = ~(ConstGFUN && isscalar(g0) && g0 == 0);
+if isDiffusion
+    [d,D] = size(g0);
+    
+    if ConstGFUN
+        dg0 = zeros(0,class(g0));
+        ConstDGFUN = false;
+        Derivative = false;
     else
-        idxConstGFUN = [];
-        ConstGFUN = false;
-    end
-end
+        % If GFUN not constant and optional derivative function property set
+        dg = sdeget(options,'DGFUN',[],'fast');
 
-% If noise is specified as diagonal, i.e., uncorrelated
-DiagonalNoise = strcmp(sdeget(options,'DiagonalNoise','yes','flag'),'yes');
-
-% Ensure that size and type of output of GFUN is consistent
-if ~sde_ismatrix(g0) || isempty(g0) || ~isfloat(g0)
-    error('SDETools:sdearguments:GFUNNotMatrix',...
-         ['GFUN must return a non-empty matrix of floating point values.'...
-          '  See %s.'],solver);
-end
-[m,n] = size(g0);
-if DiagonalNoise
-    if n ~= 1 || ~(m == N || m == 1)
-        error('SDETools:sdearguments:GFUNDimensionMismatchDiagonal',...
-             ['For diagonal noise, GFUN must return a scalar value or a '...
-              'non-empty column vector the same length as Y0.  See %s.'],...
-              solver);
-    end
-	ScalarNoise = (N == 1);
-    D = N;
-elseif m == 1 && n == 1	% Scalar noise doesn't depend on N
-    ScalarNoise = true;
-    D = 1;
-else
-    if m ~= N
-        error('SDETools:sdearguments:GFUNDimensionMismatchNonDiagonal',...
-             ['For non-diagonal noise, GFUN must return a scalar value or a '...
-              'non-empty matrix with the same number of rows as the length '...
-              'as Y0.  See %s.'],solver);
-    end
-    ScalarNoise = false;
-    D = n;
-end
-if ConstGFUN && ~DiagonalNoise
-    D0 = find(g0(idxConstGFUN) ~= 0);
-    D = length(D0);
-else
-    D0 = 1:D;
-end
-
-% Determine the dominant data type, single or double
-if ~all(strcmp(class(t0),{class(y0),class(f0),class(g0)}))
-    warning('SDETools:sdearguments:InconsistentDataType',...
-           ['Mixture of single and double data for inputs TSPAN and Y0 and '...
-            'outputs of FFUN and GFUN.']);
-end
-dataType = superiorfloat(t0,y0,f0,g0);
-
-% Create function handle to be used for generating Wiener increments
-RandFUN = sdeget(options,'RandFUN',[],'flag');
-if ~isempty(RandFUN)	% Use alternative random number generator
-    if ~isa(RandFUN,'function_handle')
-        error('SDETools:sdearguments:RandFUNNotAFunctionHandle',...
-              'RandFUN must be a function handle.  See %s.',solver);
-    end
-    CustomRandFUN = true;
-    ResetStream = [];
-else                % Use Matlab's random number generator for normal variates
-    Stream = sdeget(options,'RandStream',[],'flag');
-    if ~isempty(Stream)
-        if ~isa(Stream,'RandStream')
-            error('SDETools:sdearguments:InvalidRandStream',...
-                  'RandStream must be a RandStream object.  See %s.',solver);
-        end
-    else
-        RandSeed = sdeget(options,'RandSeed',[],'flag');
-        if ~isempty(RandSeed)
-            if ~isscalar(RandSeed) || ~isnumeric(RandSeed) ...
-                    || ~isreal(RandSeed) || ~isfinite(RandSeed) ...
-                    || RandSeed >= 2^32 || RandSeed < 0
-                error('SDETools:sdearguments:InvalidRandSeed',...
-                     ['RandSeed must be a non-negative integer value less '...
-                      'than 2^32.  See %s.'],solver);
+        % Ensure DGFUN is function handle, or matrix for constant function
+        if ~isa(dg,'function_handle')
+            if isempty(dg) && sde_ismatrix(dg) && all(size(dg) == 0) ...
+                    && isnumeric(dg)
+                dg0 = zeros(0,class(dg));
+                ConstDGFUN = false;
+                Derivative = false;
+            elseif ~isempty(dg) && sde_ismatrix(dg) && isfloat(dg)
+                dg0 = dg;
+                ConstDGFUN = true;  % DGFUN is constant
+                Derivative = true;
+            else
+                error('SDETools:sde_milstein:InvalidDGFUN',...
+                     ['The input DGFUN must be a function handle, a matrix '...
+                      'of floating-point values, or an empty numeric '...
+                      'matrix, [], denoting no stochastic derivative '...
+                      'function.  See %s.'],solver);
             end
-            % Create new stream based on seed value
-            Stream = RandStream.create('mt19937ar','Seed',RandSeed);
         else
-            % Use default stream
-            try
-                Stream = RandStream.getGlobalStream;
-            catch                                       %#ok<CTCH>
-                Stream = RandStream.getDefaultStream;	%#ok<GETRS>
+            % If stochastic derivative function specified as constant
+            ConstDGFUN = strcmp(sdeget(options,'ConstDGFUN','no','flag'),'yes');
+
+            % Check output of DGFUN and save it
+            if ConstDGFUN || ~strcmp(solver,'SDE_EULER')
+                try
+                    dg0 = dg(t0,y0);
+                catch err
+                    switch err.identifier
+                        case 'MATLAB:TooManyInputs'
+                            error('SDETools:sde_milstein:DGFUNTooFewInputs',...
+                                 ['DGFUN must have at least two inputs.  '...
+                                  'See %s.'],solver);
+                        case 'MATLAB:TooManyOutputs'
+                            error('SDETools:sde_milstein:DGFUNNoOutput',...
+                                 ['The output of DGFUN was not specified. '...
+                                  'DGFUN must return a non-empty matrix.  '...
+                                  'See %s.'],solver);
+                        case 'MATLAB:unassignedOutputs'
+                            error('SDETools:sde_milstein:DGFUNUnassignedOutput',...
+                                 ['The first output of DGFUN was not '...
+                                  'assigned.  See %s.'],solver);
+                        case 'MATLAB:minrhs'
+                            error('SDETools:sde_milstein:DGFUNTooManyInputs',...
+                                 ['DGFUN requires one or more input '...
+                                  'arguments (parameters) that were not '...
+                                  'supplied.  See %s.'],solver);
+                        otherwise
+                            rethrow(err);
+                    end
+                end
+                if ~sde_ismatrix(dg0) || isempty(dg0) || ~isfloat(dg0)
+                    error('SDETools:sde_milstein:DGFUNNot2DArray',...
+                         ['DGFUN must return a non-empty matrix of '...
+                          'floating-point values.  See %s.'],solver);
+                end
+                Derivative = true;
+            else
+                dg0 = zeros(1,class(g0));
+                Derivative = false;
             end
         end
         
-        % Set property if antithetic random variates option is specified
-        Antithetic = strcmp(sdeget(options,'Antithetic','no','flag'),'yes');
-        if Antithetic ~= Stream.Antithetic
-            set(Stream,'Antithetic',Antithetic);
+        % Ensure that size of output of GFUN and DGFUN is consistent
+        if Derivative && any([d D] ~= size(dg0))
+            error('SDETools:sdearguments:GFUNDimensionMismatchDGFUN',...
+                 ['The output of DGFUN must be the same dimension as the '...
+                  'output of GFUN.  See %s.'],solver);
+        end
+        if ConstDGFUN && all(dg0(:) == 0)
+            ConstGFUN = true;   % Derivative is always zero, so GFUN is constant
+            if all(g0(:) == 0)
+                g0 = zeros(1,class(g0));	% Noiseless drift
+            end
+        end
+    end
+else
+    % No diffusion function (or all zero), use defaults
+    dg0 = zeros(0,class(g0));
+    ConstDGFUN = false;
+    Derivative = false;
+end
+
+% Determine the dominant data type, single or double
+if Derivative
+    if ~all(strcmp(class(t0),{class(y0),class(f0),class(g0),class(dg0)}))
+        warning('SDETools:sdearguments:InconsistentDataTypeDerivative',...
+               ['Mixture of single and double data for inputs TSPAN and Y0 '...
+                'and outputs of FFUN, GFUN, and DGFUN.']);
+    end
+    dataType = superiorfloat(t0,y0,f0,g0,dg0);
+else
+    % Determine the dominant data type, single or double
+    if ~all(strcmp(class(t0),{class(y0),class(f0),class(g0)}))
+        warning('SDETools:sdearguments:InconsistentDataType',...
+               ['Mixture of single and double data for inputs TSPAN and Y0 '...
+                'and outputs of FFUN and GFUN.']);
+    end
+    dataType = superiorfloat(t0,y0,f0,g0);
+end
+
+% Check again if diffusion function exists, ConstGFUN and g0 updated
+if isDiffusion && ~(ConstGFUN && isscalar(g0) && g0 == 0)
+    % If noise is specified as diagonal, i.e., uncorrelated
+    DiagonalNoise = strcmp(sdeget(options,'DiagonalNoise','yes','flag'),'yes');
+    
+    if DiagonalNoise
+        if D ~= 1 || (d ~= N && d ~= 1)
+            error('SDETools:sdearguments:GFUNDimensionMismatchDiagonal',...
+                 ['For diagonal noise, GFUN must return a non-empty column '...
+                  'vector the same length as Y0. Set the DiagonalNoise '...
+                  'option to ''no'' with SDESET for general noise case.  '...
+                  'See %s.'],solver);
+        end
+        D = N;
+    else
+        if d ~= N
+            error('SDETools:sdearguments:GFUNDimensionMismatchNonDiagonal',...
+                 ['For non-diagonal noise, GFUN must return a non-empty '...
+                  'matrix with the same number of rows as the length as '...
+                  'Y0.  See %s.'],solver);
+        end
+        if ConstGFUN && sde_isdiag(g0)
+            D = N;
+            g0 = g0(1:N+1:end).';
+            if Derivative
+                dg0 = dg0(1:N+1:end).';
+            end
+            DiagonalNoise = true;   % Not specified, noise is actually diagonal
         end
     end
     
-    RandFUN = @(M,N)randn(Stream,M,N,dataType);
-	CustomRandFUN = false;
+    % GFUN is N-by-1, i.e., D = 1, not diagonal unless N = 1, then equivalent
+    ScalarNoise = ((~DiagonalNoise || N == 1) && D == 1);
     
-    % Function to be call on completion or early termination of integration
-    ResetStream = onCleanup(@()sdereset_stream(Stream));
-end
+    % GFUN is 1-by-1 scalar and diagonal, i.e., N = 1, D = 1
+    OneDNoise = (DiagonalNoise && ScalarNoise);
+    
+    % Create function handle to be used for generating Wiener increments
+    [RandFUN,CustomRandFUN,ResetStream] = sderandfun(solver,dataType,options);
 
-% Integration method is dependent on if SDE is Stratonovich or Ito form
-if ConstGFUN
-    % Stochastic function is constant or additive, i.e., not a function of state
+    % Integration method is dependent on if SDE is Stratonovich or Ito form
+    if ConstGFUN
+        % Stochastic function constant or additive, i.e., not function of state
+        Stratonovich = false;
+    else
+        Stratonovich = strcmp(sdeget(options,'SDEType','Stratonovich',...
+            'flag'),'Stratonovich');
+    end
+else
+    % No diffusion function (or all zero), use defaults
+    DiagonalNoise = true;
+    ScalarNoise = true;
+    OneDNoise = true;
     Stratonovich = false;
-else
-    Stratonovich = strcmp(sdeget(options,'SDEType','Stratonovich','flag'),...
-        'Stratonovich');
-end
-
-% Check for events function
-EventsFUN = sdeget(options,'EventsFUN',[],'flag');
-if ~isempty(EventsFUN)
-    if ~isa(EventsFUN,'function_handle')
-        error('SDETools:sdearguments:EventsFUNNotAFunctionHandle',...
-              'EventsFUN, if specified, must be a function handle.  See %s.',...
-              solver);
-    end
-    
-    % Check output of EventsFUN at initial condition and save value
-    try
-        [EventsValue,isterminal,direction] = EventsFUN(tspan(1),y0);
-    catch err
-        switch err.identifier
-            case 'MATLAB:TooManyInputs'
-                error('SDETools:sdearguments:EventsFUNTooFewInputs',...
-                      'EventsFUN must have at least two inputs.  See %s.',...
-                      solver);
-            case 'MATLAB:TooManyOutputs'
-                error('SDETools:sdearguments:EventsFUNNoOutput',...
-                     ['The output of EventsFUN was not specified. EventsFUN '...
-                      'must return three non-empty vectors.  See %s.'],solver);
-            case 'MATLAB:unassignedOutputs'
-                error('SDETools:sdearguments:EventsFUNUnassignedOutput',...
-                     ['The first output of EventsFUN was not assigned.  '...
-                      'See %s.'],solver);
-            case 'MATLAB:minrhs'
-                error('SDETools:sdearguments:EventsFUNTooManyInputs',...
-                     ['EventsFUN requires one or more input arguments '...
-                      '(parameters) that were not supplied.  See %s.'],solver);
-            otherwise
-                rethrow(err);
-        end
-    end
-    if ~isvector(EventsValue) || isempty(EventsValue)...
-            || ~all(isfinite(EventsValue)) 
-        error('SDETools:sdearguments:InvalidEventsValue',...
-             ['The first output of EventsFUN, ''Value'', must be a '...
-              'non-empty finite vector.  See %s.'],solver);
-    end
-    if ~isvector(isterminal)...
-            || ~any(length(isterminal) == [length(EventsValue) 1])
-        error('SDETools:sdearguments:EventsIsterminalDimensionMismatch',...
-             ['The second output of EventsFUN, ''IsTerminal'', must be a '...
-              'scalar or a vector the same length as the first output.  '...
-              'See %s.'],solver);
-    end
-    if ~all(isterminal == 0 | isterminal == 1)
-        error('SDETools:sdearguments:InvalidEventsIsterminal',...
-             ['The elements of the second output of EventsFUN, '...
-              '''IsTerminal'', must be equal to 0 (false) or 1 (true).  '...
-              'See %s.'],solver);
-    end
-    if ~isempty(direction)
-        if ~isvector(direction)...
-                || ~any(length(direction) == [length(EventsValue) 1])
-            error('SDETools:sdearguments:EventsDirectionDimensionMismatch',...
-                 ['If the third output of EventsFUN, ''Direction'', is not '...
-                  'specified as the empty matrix, [], it must be a scalar '...
-                  'or a vector the same length as first output.  See %s.'],...
-                  solver);
-        end
-        if ~all(direction == 0 | direction == 1 | direction == -1)
-            error('SDETools:sdearguments:InvalidEventsDirection',....
-                 ['The third output of EventsFUN, ''Direction'', must be '...
-                  'equal to 0 (default), 1, or -1.  See %s.'],solver);
-        end
-    end
-else
-    EventsValue = [];
-end
-
-% Check for output function
-OutputFUN = sdeget(options,'OutputFUN',[],'flag');
-if ~isempty(OutputFUN)
-    if ~isa(OutputFUN,'function_handle')
-        error('SDETools:sdearguments:OutputFUNNotAFunctionHandle',...
-              'OutputFUN, if specified, must be a function handle.  See %s.',...
-              solver);
-    end
-    
-    % Check for selected Y components
-    idxY = sdeget(options,'OutputYSelect','yes','flag');
-    if strcmp(idxY,'yes')
-        idxY = 1:N;
-        YSelect = true;
-    elseif ~strcmp(idxY,'no') && ~isempty(idxY)
-        if ~isnumeric(idxY) || ~isreal(idxY) || ~all(isfinite(idxY)) ...
-                || ~isvector(idxY)
-            error('SDETools:sdearguments:InvalidOutputYSelect',...
-                 ['OutputYSelect option must be a finite real numeric '...
-                  'vector.  See %s.'],solver);
-        end
-        if any(idxY < 1) || any(idxY > N) || ~all(idxY == floor(idxY))
-            error('SDETools:sdearguments:InvalidIndexOutputYSelect',...
-                 ['OutputYSelect option must be a vector of integer indices '...
-                  'no greater than the length of Y0.  See %s.'],solver);
-        end
-        if any(diff(sort(idxY)) == 0)
-            error('SDETools:sdearguments:RepeatedIndexOutputYSelect',...
-                 ['OutputYSelect vector cannot contain repeated indices.  '...
-                  'See %s.'],solver);
-        end
-        YSelect = true;
-    else
-        idxY = [];
-        YSelect = false;
-    end
-    
-    % Check for selected W components
-    idxW = sdeget(options,'OutputWSelect','no','flag');
-    if strcmp(idxW,'yes')
-        idxW = 1:N;
-        WSelect = true;
-    elseif ~strcmp(idxW,'no') && ~isempty(idxW)
-        if ~isnumeric(idxW) || ~isreal(idxW) || ~all(isfinite(idxW)) ...
-                || ~isvector(idxW)
-            error('SDETools:sdearguments:InvalidOutputWSelect',...
-                 ['OutputWSelect option must be a finite real numeric '...
-                  'vector.  See %s.'],solver);
-        end
-        if any(idxW < 1) || any(idxW > N) || ~all(idxW == floor(idxW))
-            error('SDETools:sdearguments:InvalidIndexOutputWSelect',...
-                 ['OutputWSelect option must be a vector of integer indices '...
-                  'no greater than the length of Y0.  See %s.'],solver);
-        end
-        if any(diff(sort(idxW)) == 0)
-            error('SDETools:sdearguments:RepeatedIndexOutputWSelect',...
-                 ['OutputWSelect vector cannot contain repeated indices.  '...
-                  'See %s.'],solver);
-        end
-        WSelect = true;
-    else
-        idxW = [];
-        WSelect = false;
-    end
-    
-    if WSelect
-        OutputFUN = @(t,y,w)OutputFUN(t,y(idxY(~isempty(y),:)),...
-            w(idxW(~isempty(w),:)));
-    elseif YSelect
-        OutputFUN = @(t,y,w)OutputFUN(t,y(idxY(~isempty(y),:)));
-    else
-        OutputFUN = @(t,y,w)OutputFUN(t);
-    end
-    
-    % Check output of new OutputFUN at initial condition
-    try
-        OutputFUN(tspan([1 end]),y0,zeros(N,1));
-    catch err
-        switch err.identifier
-            case 'MATLAB:TooManyInputs'
-                error('SDETools:sdearguments:OutputFUNTooFewInputs',...
-                      'OutputFUN must have at least two inputs.  See %s.',...
-                      solver);
-            case 'MATLAB:unassignedOutputs'
-                error('SDETools:sdearguments:OutputFUNUnassignedOutput',...
-                     ['The first output of OutputFUN was not assigned.  '...
-                      'See %s.'],solver);
-            case 'MATLAB:minrhs'
-                error('SDETools:sdearguments:OutputFUNTooManyInputs',...
-                     ['OutputFUN requires one or more input arguments '...
-                      '(parameters) that were not supplied.  See %s.'],solver);
-            otherwise
-                rethrow(err);
-        end
-    end
+    RandFUN = [];
+    CustomRandFUN = false;
+    ResetStream = [];
 end

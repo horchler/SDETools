@@ -7,27 +7,27 @@ function brusselator_sde_milstein
 %   Inspired by: http://en.wikipedia.org/wiki/File:Brusselator_space.gif
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-28-13
-%   Revision: 1.0, 4-29-13
+%   Revision: 1.2, 5-2-13
 
 
-t = 0:0.05:800;     % Time vector
-n = 64;             % Width and height of 
-N = n^2;            % Number of Brusselators
-y0 = 2*rand(2*N,1); % Randomize initial conditions
+t = 0:0.05:800;   	% Final time and time vector
+n = 64;           	% Width and height of 
+N = n^2;           	% Number of Brusselators
+y0 = 2*rand(2*N,1);	% Randomize initial conditions
 
-a = 1; b = 3;       % Reaction constants
-sig = 5e-2;         % Noise magnitude
+a = 1; b = 3;      	% Reaction constants
+sig = 5e-2;       	% Noise magnitude
 k = [0 0.25 0;
      0.25 -1 0.25;
-     0 0.25 0];     % Laplace convolution kernel
-dx = [0.2;0.02];    % X and Y diffusion coefficients
+     0 0.25 0];  	% Laplace convolution kernel
+dx = [0.2;0.02];   	% X and Y diffusion coefficients
 
 % Mask for borders
 m = ones(n); m([1 n],1:n) = 0; m(2:n-1,[1 n]) = 0; m = [m(:);m(:)];
 
 % Set derivative of diffusion, initialize output function, Ito, set random seed
 opts = sdeset('DGFUN',dg(sig,m,N),...
-              'OutputFUN',@(t,y)out(t,y,n,N),...
+              'OutputFUN',@(t,y,flag)out(t,y,flag,n,N),...
               'SDEType','Ito',...
               'RandSeed',1);
 
@@ -55,23 +55,36 @@ function y=dg(sig,m,N)
 y = sig*m.*[-ones(N,1);ones(N,1)];
 
 
-function out(t,y,n,N)
+function out(t,y,flag,n,N)
 % Simple output function for 2-D Brusselator
-persistent h z i
-if isempty(h)
-    i = 0;
-    figure;
-    z = zeros(n);
-    z(:) = y(1:N);
-    imagesc(z);
-    axis square;
-    title(['Brusselator, Time = ' sprintf('%.1f',t(1))])
-    h = get(gca,'Children');
+persistent i tf z h;
+switch flag
+    case 'init'
+        i = 0;
+        tf = sprintf('%.1f',t(end));
+        figure;
+        z = zeros(n);
+        z(:) = y(1:N);
+        h = imagesc(z);
+        axis square;
+        title('Brusselator, Intializing...');
+        drawnow('expose');
+    case 'done'
+        i = []; tf = []; z = []; h = [];
+    case ''
+        if isempty(i)
+            error('SHCTools:brusselator_sde_milstein:out:NotCalledWithInit',...
+                 ['Output function has not been initialized. Use syntax '...
+                  'OutputFUN(tspan,y0,''init'').'])
+        end
+        if mod(i,4) == 0
+            z(:) = y(1:N);
+            set(h,'CData',z);
+            title(['Brusselator, Time = ' sprintf('%.1f',t(1)) ' of ' tf]);
+            drawnow('expose');
+        end
+        i = i+1;
+    otherwise
+        error('SHCTools:brusselator_sde_milstein:out:InvalidFlag',...
+              'Invalid status flag passed to output function.')
 end
-if mod(i,4) == 0
-    z(:) = y(1:N);
-    set(h,'CData',z);
-    title(['Brusselator, Time = ' sprintf('%.1f',t(1))])
-    drawnow('expose');
-end
-i = i+1;

@@ -2,11 +2,11 @@ function sdereset_stream(Stream)
 %SDERESET_STREAM  Reset global stream or delete custom random stream.
 %
 %   See also:
-%       SDEARGUMENTS, SDEARGUMENTS_SPECIAL, ONCLEANUP, FUNCTION_HANDLE,
+%       SDEARGUMENTS, SDEARGUMENTS_PROCESS, ONCLEANUP, FUNCTION_HANDLE,
 %       RANDSTREAM
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 12-30-12
-%   Revision: 1.0, 12-31-12
+%   Revision: 1.2, 5-2-13
 
 
 % Called by onCleanup to reset antihetic property for global stream
