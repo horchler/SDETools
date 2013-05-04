@@ -11,7 +11,7 @@ function brusselator_sde_milstein
 
 
 t = 0:0.05:800;   	% Final time and time vector
-n = 64;           	% Width and height of 
+n = 64;           	% Width and height of spatial grid
 N = n^2;           	% Number of Brusselators
 y0 = 2*rand(2*N,1);	% Randomize initial conditions
 
@@ -68,8 +68,12 @@ switch flag
         h = imagesc(z);
         axis square;
         title('Brusselator, Intializing...');
-        drawnow('expose');
+        drawnow;
     case 'done'
+        if ishghandle(h)
+            title(['Brusselator, Time = ' tf ' of ' tf]);
+            refresh;
+        end
         i = []; tf = []; z = []; h = [];
     case ''
         if isempty(i)
@@ -77,13 +81,21 @@ switch flag
                  ['Output function has not been initialized. Use syntax '...
                   'OutputFUN(tspan,y0,''init'').']);
         end
-        if mod(i,4) == 0
-            z(:) = y(1:N);
-            set(h,'CData',z);
-            title(['Brusselator, Time = ' sprintf('%.1f',t(1)) ' of ' tf]);
-            drawnow('expose');
+        
+        % If image still there
+        if ishghandle(h)
+            if mod(i,4) == 0
+                z(:) = y(1:N);
+                set(h,'CData',z);
+                title(['Brusselator, Time = ' sprintf('%.1f',t(1)) ' of ' tf]);
+                if mod(i,40) == 0
+                    drawnow;
+                else
+                    drawnow('expose');
+                end
+            end
+            i = i+1;
         end
-        i = i+1;
     otherwise
         error('SHCTools:brusselator_sde_milstein:out:InvalidFlag',...
               'Invalid status flag passed to output function.');
