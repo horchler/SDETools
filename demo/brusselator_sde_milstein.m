@@ -2,12 +2,12 @@ function brusselator_sde_milstein
 %BRUSSELATOR_SDE_MILSTEIN  Noisy 2-D Brusselator demo using SDE_MILSTEIN.
 %   Run a 2-D spatial simulation of noisy Brusselator equations.
 %
-%   See also: SDE_MILSTEIN, SDE_SET
+%   See also: SDE_MILSTEIN, SDESET
 
 %   Inspired by: http://en.wikipedia.org/wiki/File:Brusselator_space.gif
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-28-13
-%   Revision: 1.2, 5-2-13
+%   Revision: 1.2, 5-3-13
 
 
 t = 0:0.05:800;   	% Final time and time vector
@@ -75,7 +75,7 @@ switch flag
         if isempty(i)
             error('SHCTools:brusselator_sde_milstein:out:NotCalledWithInit',...
                  ['Output function has not been initialized. Use syntax '...
-                  'OutputFUN(tspan,y0,''init'').'])
+                  'OutputFUN(tspan,y0,''init'').']);
         end
         if mod(i,4) == 0
             z(:) = y(1:N);
@@ -86,5 +86,5 @@ switch flag
         i = i+1;
     otherwise
         error('SHCTools:brusselator_sde_milstein:out:InvalidFlag',...
-              'Invalid status flag passed to output function.')
+              'Invalid status flag passed to output function.');
 end
