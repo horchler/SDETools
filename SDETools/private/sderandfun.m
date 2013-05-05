@@ -6,16 +6,13 @@ function [RandFUN,ResetStream]=sderandfun(solver,dataType,options)
 %       FUNCTION_HANDLE
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 5-2-13
-%   Revision: 1.2, 5-3-13
+%   Revision: 1.2, 5-4-13
 
 
 % Check if alternative random number generator function or W matrix specified
-isStream = (~isempty(options) && isa(options.RandFUN,'RandStream'));
-if isempty(options) || isStream || ~isempty(options) && isempty(options.RandFUN)
-    if isStream
-        % User-specified RandStream object, ignore RandSeed and Antithetic
-        Stream = options.RandFUN;
-    else
+isNoRandFUN = (isempty(options) || ~isfield(options,'RandFUN'));
+if isNoRandFUN || isa(options.RandFUN,'RandStream')
+    if isNoRandFUN
         % Use Matlab's random number generator for normal variates
         RandSeed = sdeget(options,'RandSeed',[],'flag');
         if ~isempty(RandSeed)
@@ -42,6 +39,9 @@ if isempty(options) || isStream || ~isempty(options) && isempty(options.RandFUN)
         if Antithetic ~= Stream.Antithetic
             set(Stream,'Antithetic',Antithetic);
         end
+    else
+        % User-specified RandStream object, ignore RandSeed and Antithetic
+        Stream = options.RandFUN;
     end
     
     % Create function handle to be used for generating Wiener increments

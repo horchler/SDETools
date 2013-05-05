@@ -97,6 +97,11 @@ function options = sdeset(varargin)
 %   state. The function is then evaluated only once by the integration routine,
 %   improving performance.
 %
+%MaxStep - Upper bound on step size  [ scalar >= 0 ]
+%   If any step size in TSPAN is greater than MaxStep, the interval will be
+%   equally subdivided until the step size is less than or equal to MaxStep.
+%   These sub-steps and their associated Wiener increments are not output.
+%
 %NonNegative - Non-negative components  [ yes | {no} | vector of indices ]
 %   Set to 'yes' to specify that all components of the solution are to be kept
 %   non-negative. A vector of indices specifies individual components of the
@@ -147,7 +152,7 @@ function options = sdeset(varargin)
 %   SDESET is based on an updating of version 1.46.4.10 of Matlab's ODESET.
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-27-10
-%   Revision: 1.2, 5-3-13
+%   Revision: 1.2, 5-4-13
 
 
 options = struct(	'SDEType',          [],...
@@ -160,6 +165,7 @@ options = struct(	'SDEType',          [],...
                     'ConstFFUN',        [],...
                     'ConstGFUN',        [],...
                     'ConstDGFUN',       [],...
+                    'MaxStep',          [],...
                     'NonNegative',      [],...
                     'EventsFUN',        [],...
                     'OutputFUN',        [],...
@@ -167,21 +173,22 @@ options = struct(	'SDEType',          [],...
                     'OutputWSelect',    []...
                 );
 
-Values = {	'{Stratonovich} | Ito'
+Values = {	'{Stratonovich} |  Ito '
             'function_handle | vector'
             'function_handle | matrix'
             '0 <= integer < 2^32'
-            ' yes  | {no}'
+            ' yes  | {no} '
             'RandStream object | function_handle | matrix'
-            '{yes} |  no'
+            '{yes} |  no '
             ' yes  | {no}'
             ' yes  | {no}'
             ' yes  | {no}'
-            ' yes  | {no} | vector'
+            'scalar >= 0'
+            ' yes  | {no} | vector '
             'function_handle'
             'function_handle'
-            ' {yes}  | no | vector'
-            ' yes  | {no} | vector'
+            '{yes} |  no  | vector '
+            ' yes  | {no} | vector '
          };
 
 Names = fieldnames(options);
