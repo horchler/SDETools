@@ -6,7 +6,7 @@ function [te,ye,we,ie,vnew,stop] = sdezero(EventsFUN,t,y,w,value)
 %       SDEARGUMENTS_PROCESS, SDEGET, SDESET, FUNCTION_HANDLE
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 12-30-11
-%   Revision: 1.0, 5-2-13
+%   Revision: 1.2, 5-4-13
 
 %   SDEZERO is loosely based on Matlab's ODEZERO helper function.
 

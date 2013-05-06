@@ -4,7 +4,7 @@ function bool=sde_ismatrix(V)
 %   See also: ISMATRIX, SDE_ISSQUARE, SDE_ISDIAG
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 5-9-12
-%   Revision: 1.0, 4-30-13
+%   Revision: 1.2, 5-4-13
 
 
 try
