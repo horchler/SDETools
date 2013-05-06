@@ -6,11 +6,11 @@ function [RandFUN,ResetStream]=sderandfun(solver,dataType,options)
 %       FUNCTION_HANDLE
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 5-2-13
-%   Revision: 1.2, 5-4-13
+%   Revision: 1.2, 5-6-13
 
 
 % Check if alternative random number generator function or W matrix specified
-isNoRandFUN = (isempty(options) || ~isfield(options,'RandFUN'));
+isNoRandFUN = (~isfield(options,'RandFUN') || isempty(options.RandFUN));
 if isNoRandFUN || isa(options.RandFUN,'RandStream')
     if isNoRandFUN
         % Use Matlab's random number generator for normal variates

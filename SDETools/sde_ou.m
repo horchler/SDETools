@@ -80,7 +80,7 @@ function [Y,W,TE,YE,WE,IE] = sde_ou(th,mu,sig,tspan,y0,options)
 %   of Mathematics, Vol. 43, No. 2, pp. 351-369, April 1942.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-8-12
-%   Revision: 1.2, 5-3-13
+%   Revision: 1.2, 5-6-13
 
 
 func = 'SDE_OU';
@@ -225,7 +225,7 @@ end
 th0 = (th ~= 0);
 
 % Check if alternative RandFUN function or W matrix is present
-CustomRandFUN = isempty(RandFUN);
+CustomRandFUN = (isempty(RandFUN) && isfield(options,'RandFUN'));
 CustomWMatrix = (CustomRandFUN && ~isa(options.RandFUN,'function_handle'));
 
 % Reduce effective dimension of noise if integrated Wiener increments not needed

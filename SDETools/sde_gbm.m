@@ -78,7 +78,7 @@ function [Y,W,TE,YE,WE,IE] = sde_gbm(mu,sig,tspan,y0,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
-%   Revision: 1.2, 5-3-13
+%   Revision: 1.2, 5-6-13
 
 
 func = 'SDE_GBM';
@@ -207,7 +207,7 @@ if N > 1
 end
 
 % Check if alternative RandFUN function or W matrix is present
-CustomRandFUN = isempty(RandFUN);
+CustomRandFUN = (isempty(RandFUN) && isfield(options,'RandFUN'));
 CustomWMatrix = (CustomRandFUN && ~isa(options.RandFUN,'function_handle'));
 
 % Reduce effective dimension of noise if integrated Wiener increments not needed

@@ -95,7 +95,7 @@ function [Y,W,TE,YE,WE,IE] = sde_euler(f,g,tspan,y0,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 10-28-10
-%   Revision: 1.2, 5-3-13
+%   Revision: 1.2, 5-6-13
 
 
 solver = 'SDE_EULER';
@@ -182,7 +182,7 @@ isDiffusion = ~(ConstGFUN && isscalar(gout) && gout == 0);
 isYOutput = (nargout > 0);
 
 % Check if alternative RandFUN function or W matrix is present
-if isempty(RandFUN) && ~isempty(options)
+if isempty(RandFUN) && isfield(options,'RandFUN')
     CustomRandFUN = isa(options.RandFUN,'function_handle');
     CustomWMatrix = ~CustomRandFUN;
 else
