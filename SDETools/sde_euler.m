@@ -592,7 +592,8 @@ else
             % Integrated Wiener increments for events and output functions
             if isW
                 if nargout >= 2
-                    Wi(:,1) = W(i+1,:);     % Use stored W
+                    Wi = W(i+1,:);          % Use stored W
+                    Wi = Wi(:);
                 else
                     Wi = Wi+dW;             % Integrate Wiener increments
                 end
