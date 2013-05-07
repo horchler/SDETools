@@ -403,7 +403,7 @@ if ConstFFUN && ConstGFUN && ((~isDiffusion && isYOutput) || dWinY || dWinW) ...
     if isEvents
         for i = 2:lt
             [te,ye,we,ie,EventsValue,IsTerminal] ...
-                = sdezero(EventsFUN,tspan(i),Y(i,:),W(i,:),EventsValue);
+                = sdezero(EventsFUN,tspan(i),Y(i,:).',W(i,:).',EventsValue);
             if ~isempty(te)
                 if nargout >= 3
                     TE = [TE;te];               %#ok<AGROW>
@@ -427,17 +427,17 @@ if ConstFFUN && ConstGFUN && ((~isDiffusion && isYOutput) || dWinY || dWinW) ...
             end
             
             if isOutput
-                OutputFUN(tspan(i),Y(i,:),'',W(i,:));
+                OutputFUN(tspan(i),Y(i,:).','',W(i,:).');
             end
         end
     elseif isOutput
         if isW
             for i = 2:lt
-                OutputFUN(tspan(i),Y(i,:),'',W(i,:));
+                OutputFUN(tspan(i),Y(i,:).','',W(i,:).');
             end
         else
             for i = 2:lt
-                OutputFUN(tspan(i),Y(i,:),'',[]);
+                OutputFUN(tspan(i),Y(i,:).','',[]);
             end
         end
     end
@@ -592,7 +592,7 @@ else
             % Integrated Wiener increments for events and output functions
             if isW
                 if nargout >= 2
-                    Wi = W(i+1,:);          % Use stored W
+                    Wi(:,1) = W(i+1,:);     % Use stored W
                 else
                     Wi = Wi+dW;             % Integrate Wiener increments
                 end
@@ -601,7 +601,7 @@ else
             % Check for and handle zero-crossing events
             if isEvents
                 [te,ye,we,ie,EventsValue,IsTerminal] ...
-                    = sdezero(EventsFUN,Ti,Yi,Wi,EventsValue);
+                    = sdezero(EventsFUN,Ti,Yi(:),Wi,EventsValue);
                 if ~isempty(te)
                     if nargout >= 3
                         TE = [TE;te];               %#ok<AGROW>
@@ -627,7 +627,7 @@ else
             
             % Check for and handle output function
             if isOutput
-                OutputFUN(Ti,Yi,'',Wi);
+                OutputFUN(Ti,Yi(:),'',Wi);
             end
         end
     end

@@ -443,7 +443,7 @@ end
 if isEvents
     for i = 2:lt
         [te,ye,we,ie,EventsValue,IsTerminal] ...
-            = sdezero(EventsFUN,tspan(i),Y(i,:),W(i,:),EventsValue);
+            = sdezero(EventsFUN,tspan(i),Y(i,:).',W(i,:).',EventsValue);
         if ~isempty(te)
             if nargout >= 3
                 TE = [TE;te];               %#ok<AGROW>
@@ -462,22 +462,22 @@ if isEvents
                 if nargout >= 2
                     W = W(1:i,:);
                 end
-                return;
+                break;
             end
         end
         
         if isOutput
-            OutputFUN(tspan(i),Y(i,:),'',W(i,:));
+            OutputFUN(tspan(i),Y(i,:).','',W(i,:).');
         end
     end
 elseif isOutput
     if isW
         for i = 2:lt
-            OutputFUN(tspan(i),Y(i,:),'',W(i,:));
+            OutputFUN(tspan(i),Y(i,:).','',W(i,:).');
         end
     else
         for i = 2:lt
-            OutputFUN(tspan(i),Y(i,:),'',[]);
+            OutputFUN(tspan(i),Y(i,:).','',[]);
         end
     end
 end

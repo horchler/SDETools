@@ -6,7 +6,7 @@ function [OutputFUN,WSelect]=sdeoutputfun(solver,tspan,y0,N,options)
 %       FUNCTION_HANDLE
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 5-2-13
-%   Revision: 1.2, 5-2-13
+%   Revision: 1.2, 5-6-13
 
 
 % Check for output function
@@ -40,6 +40,7 @@ if ~isempty(OutputFUN)
                  ['OutputYSelect vector cannot contain repeated indices.  '...
                   'See %s.'],solver);
         end
+        idxY = idxY(:);
         YSelect = true;
         YAll = false;
     else
@@ -53,7 +54,7 @@ if ~isempty(OutputFUN)
         if YAll
             OutputFUN = @(t,y,flag,w)OutputFUN(t,y,flag,w);
         elseif YSelect
-            OutputFUN = @(t,y,flag,w)OutputFUN(t,y(idxY(~isempty(y),:)),flag,w);
+            OutputFUN = @(t,y,flag,w)OutputFUN(t,y(idxY(:,~isempty(y))),flag,w);
         else
             OutputFUN = @(t,y,flag,w)OutputFUN(t,[],flag,w);
         end
@@ -75,19 +76,20 @@ if ~isempty(OutputFUN)
                  ['OutputWSelect vector cannot contain repeated indices.  '...
                   'See %s.'],solver);
         end
+        idxW = idxW(:);
         if YAll
-            OutputFUN = @(t,y,flag,w)OutputFUN(t,y,flag,w(idxW(~isempty(w),:)));
+            OutputFUN = @(t,y,flag,w)OutputFUN(t,y,flag,w(idxW(:,~isempty(w))));
         elseif YSelect
-            OutputFUN = @(t,y,flag,w)OutputFUN(t,y(idxY(~isempty(y),:)),flag,...
-                w(idxW(~isempty(w),:)));
+            OutputFUN = @(t,y,flag,w)OutputFUN(t,y(idxY(:,~isempty(y))),flag,...
+                w(idxW(:,~isempty(w))));
         else
             OutputFUN = @(t,y,flag,w)OutputFUN(t,[],flag,...
-                w(idxW(~isempty(w),:)));
+                w(idxW(:,~isempty(w))));
         end
         WSelect = true;
     else
         if YSelect && ~YAll
-            OutputFUN = @(t,y,flag,w)OutputFUN(t,y(idxY(~isempty(y),:)),flag);
+            OutputFUN = @(t,y,flag,w)OutputFUN(t,y(idxY(:,~isempty(y))),flag);
         elseif ~YSelect
             OutputFUN = @(t,y,flag,w)OutputFUN(t,[],flag);
         else
