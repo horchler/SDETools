@@ -53,7 +53,7 @@ switch flag
         set(AX_HANDLE,'Units',units);
         
         % Use figure axis width and TSPAN length determine redraw chunk
-        LEN_TSPAN = length(t);
+        LEN_TSPAN = 0.3*length(t);
         chunk = min(ceil(LEN_TSPAN/pos(3)),LEN_TSPAN);
         N = length(y);
         
@@ -83,7 +83,7 @@ switch flag
                 ud.lines = plot(ud.t(1),ud.y(:,1),'-','EraseMode','none');
             else
                 ud.lines = plot(ud.t(1),ud.y(:,1),'-');
-                set(AX_HANDLE,'XLim',[min(t) max(t)]);  
+                set(AX_HANDLE,'XLim',[min(t) 0.3*max(t)]);  
             end
         end
         
@@ -115,6 +115,7 @@ switch flag
             oldi = ud.i;
             newi = oldi+lt;
             if newi <= lY
+                % Append new data to UserData
                 ud.t(oldi+1:newi) = t;
                 ud.y(:,oldi+1:newi) = y;
                 if isW
@@ -122,13 +123,7 @@ switch flag
                 end
                 ud.i = newi;
             else
-                % Check if figure width has changed
-                units = get(AX_HANDLE,'Units');
-                set(AX_HANDLE,'Units','Pixels');
-                pos = get(AX_HANDLE,'OuterPosition');
-                set(AX_HANDLE,'Units',units);
-                
-                % Set line data and draw
+                % Set line data
                 XYData = get(ud.lines,{'XData','YData'});
                 for j = 1:N
                     XYData{j,1} = [XYData{j,1} ud.t];
@@ -141,12 +136,30 @@ switch flag
                     end
                 end
                 set(ud.lines,{'XData','YData'},XYData);
-                drawnow;
+                
+                % Set x-axis limits to auto if exceeded
+                if ~ishold
+                    if strcmp(get(AX_HANDLE,'XLimMode'),'manual')
+                        XLim = get(AX_HANDLE,'XLim');
+                        if min(ud.t) < XLim(1) || max(ud.t) > XLim(2)
+                            set(AX_HANDLE,'XLimMode','auto');
+                            LEN_TSPAN = max(length(XYData{1,1}),LEN_TSPAN);
+                        end
+                    else
+                        LEN_TSPAN = max(length(XYData{1,1}),LEN_TSPAN);
+                    end
+                end
+                
+                % Check if figure width has changed
+                units = get(AX_HANDLE,'Units');
+                set(AX_HANDLE,'Units','Pixels');
+                pos = get(AX_HANDLE,'OuterPosition');
+                set(AX_HANDLE,'Units',units);
                 
                 % Use figure axis width and TSPAN length determine redraw chunk
                 chunk = min(ceil(LEN_TSPAN/pos(3)),LEN_TSPAN);
                 
-                % Reset UserData
+                % Reset UserData and append new data
                 ud.t(1,chunk) = 0;
                 ud.y(:,chunk) = 0;
                 ud.t(1:lt) = t;
@@ -158,8 +171,11 @@ switch flag
                 ud.i = 1;
             end
             
-            % Store updated UserData
+            % Store updated UserData and draw if redraw chunk was full
             set(FIG_HANDLE,'UserData',ud);
+            if newi > lY
+                drawnow;
+            end
         else
             status = 0;
         end
