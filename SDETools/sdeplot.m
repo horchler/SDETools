@@ -36,25 +36,25 @@ function status=sdeplot(t,y,flag,w)
 %   Revision: 1.2, 5-8-13
 
 
-persistent fig_handle ax_handle len_tspan;
+persistent FIG_HANDLE AX_HANDLE LEN_TSPAN;
 status = 1;
 isW = (nargin > 3);
 
 switch flag
     case 'init'
         % Initialize persitent handle variables
-        fig_handle = figure;
-        ax_handle = gca;
+        FIG_HANDLE = figure;
+        AX_HANDLE = gca;
         
         % Set units to pixels to get width of axis, set back to default
-        units = get(ax_handle,'Units');
-        set(ax_handle,'Units','Pixels');
-        pos = get(ax_handle,'OuterPosition');
-        set(ax_handle,'Units',units);
+        units = get(AX_HANDLE,'Units');
+        set(AX_HANDLE,'Units','Pixels');
+        pos = get(AX_HANDLE,'OuterPosition');
+        set(AX_HANDLE,'Units',units);
         
         % Use figure axis width and TSPAN length determine redraw chunk
-        len_tspan = length(t);
-        chunk = min(ceil(len_tspan/pos(3)),len_tspan);
+        LEN_TSPAN = length(t);
+        chunk = min(ceil(LEN_TSPAN/pos(3)),LEN_TSPAN);
         N = length(y);
         
         % Initialize UserData
@@ -76,22 +76,22 @@ switch flag
                     'EraseMode','none');
             else
                 ud.lines = plot(ud.t(1),ud.y(:,1),'-',ud.t(1),ud.y(:,1),'--');
-                set(ax_handle,'XLim',[min(t) max(t)]);  
+                set(AX_HANDLE,'XLim',[min(t) max(t)]);  
             end
         else
             if ishold
                 ud.lines = plot(ud.t(1),ud.y(:,1),'-','EraseMode','none');
             else
                 ud.lines = plot(ud.t(1),ud.y(:,1),'-');
-                set(ax_handle,'XLim',[min(t) max(t)]);  
+                set(AX_HANDLE,'XLim',[min(t) max(t)]);  
             end
         end
         
         % Store UserData and draw
-        set(fig_handle,'UserData',ud);
+        set(FIG_HANDLE,'UserData',ud);
         drawnow;
     case ''
-        if isempty(fig_handle)
+        if isempty(FIG_HANDLE)
             if nargin > 3
                 error('SDETools:sdeplot:NotCalledWithInitW',...
                      ['Output function has not been initialized. Use syntax '...
@@ -105,9 +105,9 @@ switch flag
         end
         
         % If figure is open
-        if ishghandle(fig_handle) && ishghandle(ax_handle)
+        if ishghandle(FIG_HANDLE) && ishghandle(AX_HANDLE)
             % Get UserData
-            ud = get(fig_handle,'UserData');
+            ud = get(FIG_HANDLE,'UserData');
             lt = length(t);
             [N,lY] = size(ud.y);
             
@@ -123,10 +123,10 @@ switch flag
                 ud.i = newi;
             else
                 % Check if figure width has changed
-                units = get(ax_handle,'Units');
-                set(ax_handle,'Units','Pixels');
-                pos = get(ax_handle,'OuterPosition');
-                set(ax_handle,'Units',units);
+                units = get(AX_HANDLE,'Units');
+                set(AX_HANDLE,'Units','Pixels');
+                pos = get(AX_HANDLE,'OuterPosition');
+                set(AX_HANDLE,'Units',units);
                 
                 % Set line data and draw
                 XYData = get(ud.lines,{'XData','YData'});
@@ -144,7 +144,7 @@ switch flag
                 drawnow;
                 
                 % Use figure axis width and TSPAN length determine redraw chunk
-                chunk = min(ceil(len_tspan/pos(3)),len_tspan);
+                chunk = min(ceil(LEN_TSPAN/pos(3)),LEN_TSPAN);
                 
                 % Reset UserData
                 ud.t(1,chunk) = 0;
@@ -159,16 +159,16 @@ switch flag
             end
             
             % Store updated UserData
-            set(fig_handle,'UserData',ud);
+            set(FIG_HANDLE,'UserData',ud);
         else
             status = 0;
         end
     case 'done'
         % Rename and delete persistent handles
-        hf = fig_handle;
-        fig_handle = [];
-        ha = ax_handle;
-        ax_handle = [];
+        hf = FIG_HANDLE;
+        FIG_HANDLE = [];
+        ha = AX_HANDLE;
+        AX_HANDLE = [];
         
         % If figure is open
         if ishghandle(hf) && ishghandle(ha)

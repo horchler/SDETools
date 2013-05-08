@@ -1,21 +1,24 @@
 %SDETools
-%   Version 1.2, 5-2-13
+%   Version 1.2, 5-8-13
 %
 %   Stochastic differential equation (SDE) solvers.
-%       sde_euler       - Euler-Maruyama (Ito) and Euler-Heun (Stratonovich) 
+%       sde_euler       - Euler-Maruyama (Ito) and Euler-Heun (Stratonovich).
 %       sde_milstein    - Milstein method, derivative and derivative-free.
+%
+%   SDE solver utilities.
+%       sdeget          - Get SDE OPTIONS structure parameters.
+%       sdeplot         - Time series SDE output function.
+%       sdeset          - Create/alter SDE OPTIONS structure.
 %
 %   Stochastic differential equation (SDE) processes.
 %       sde_bm          - Brownian motion process, analytic solution.
 %       sde_gbm         - Geometric Brownian motion process, analytic solution.
 %       sde_ou          - Ornstein-Uhlenbeck process, analytic solution.
 %
-%   Stochastic interpolatolation and SDE solver utilities.
+%   Stochastic interpolatolation utilities.
 %       sde_interp      - Brownian bridge interpolation.
 %       sde_interpq     - Quick Brownian bridge interpolation.
 %       sde_interpqn    - Quick linearly-spaced Brownian bridge interpolation.
-%       sdeget          - Get SDE OPTIONS structure parameters.
-%       sdeset          - Create/alter SDE OPTIONS structure.
 %
 %   Numerical validation.
 %       sde_euler_validate  - Test sde_euler performance and convergence order.
@@ -28,7 +31,7 @@
 %   Compatibility maintained back through Matlab 7.4 (R2007a)
 
 %   Andrew D. Horchler, adh9 @ case . edu
-%   Created: 12-18-11, Revision: 1.2, 5-2-13
+%   Created: 12-18-11, Revision: 1.2, 5-8-13
 
 
 %   Acknowledgment of support: This material is based upon work supported by the

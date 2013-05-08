@@ -1,25 +1,28 @@
 SDETools
 ========
 #####A Matlab Toolbox for the Numerical Solution of Stochastic Differential Equations (SDEs).#####
-######Version 1.2, 5-2-13######
+######Version 1.2, 5-8-13######
 #####Download Repository: [ZIP Archive](https://github.com/horchler/SDETools/archive/master.zip)#####
 &nbsp;
 
-Stochastic differential equation solvers.  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_euler```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_euler.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Euler-Maruyama (Ito) and Euler-Heun (Stratonovich)  
+Stochastic differential equation (SDE) solvers.  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_euler```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_euler.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Euler-Maruyama (Ito) and Euler-Heun (Stratonovich).  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_milstein```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_milstein.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Milstein method, derivative and derivative-free.
 
-Stochastic differential equation processes.  
+SDE solver utilities.  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdeget```](https://github.com/horchler/SDETools/blob/master/SDETools/sdeget.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Get SDE OPTIONS structure parameters.  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdeplot```](https://github.com/horchler/SDETools/blob/master/SDETools/sdeplot.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Time series SDE output function.  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdeset```](https://github.com/horchler/SDETools/blob/master/SDETools/sdeset.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Create/alter SDE OPTIONS structure.
+
+Stochastic differential equation (SDE) processes.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_bm```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_bm.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Brownian motion process, analytic solution.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_gbm```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_gbm.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Geometric Brownian motion process, analytic solution.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_ou```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_ou.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Ornstein-Uhlenbeck process, analytic solution.
 
-Stochastic interpolatolation and SDE solver utilities.  
+Stochastic interpolatolation utilities.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_interp```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_interp.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Brownian bridge interpolation.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_interpq```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_interpq.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Quick Brownian bridge interpolation.  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_interpqn```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_interpqn.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Quick linearly-spaced Brownian bridge interpolation.  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdeget```](https://github.com/horchler/SDETools/blob/master/SDETools/sdeget.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Get SDE OPTIONS structure parameters.  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdeset```](https://github.com/horchler/SDETools/blob/master/SDETools/sdeset.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Create/alter SDE OPTIONS structure.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_interpqn```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_interpqn.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Quick linearly-spaced Brownian bridge interpolation.
 
 Numerical validation.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_euler_validate```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_euler_validate.m)&nbsp;- Test sde_euler performance and convergence order.  
@@ -28,7 +31,7 @@ Numerical validation.
 --------
 
 Andrew D. Horchler, *adh9 @ case . edu*, [biorobots.case.edu](http://biorobots.case.edu/)  
-Created: 12-18-11, Revision: 1.2, 5-2-13  
+Created: 12-18-11, Revision: 1.2, 5-8-13  
 
 This version tested with Matlab 8.0.0.783 (R2012b)  
 Mac OS X 10.8.3 (Build: 12D78), Java 1.6.0_45-b06-451-11M4406  
