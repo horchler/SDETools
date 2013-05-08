@@ -37,8 +37,8 @@ function status=sdeplot(t,y,flag,w)
 
 
 persistent FIG_HANDLE AX_HANDLE LEN_TSPAN;
-status = 1;
-isW = (nargin > 3);
+status = 1;         % Figure widow still open and and plot axis still present
+isW = (nargin > 3); % Have integrated Wiener increments been passed
 
 switch flag
     case 'init'
@@ -52,12 +52,16 @@ switch flag
         pos = get(AX_HANDLE,'OuterPosition');
         set(AX_HANDLE,'Units',units);
         
+        % Number of time samples to expect
+        LEN_TSPAN = length(t);
+        
         % Use figure axis width and TSPAN length determine redraw chunk
-        LEN_TSPAN = 0.3*length(t);
         chunk = min(ceil(LEN_TSPAN/pos(3)),LEN_TSPAN);
+        
+        % Number of solution variables, Y (cannot change)
         N = length(y);
         
-        % Initialize UserData
+        % Initialize UserData, T and Y
         ud = [];
         ud.t(1,chunk) = 0;
         ud.y(N,chunk) = 0;
@@ -67,7 +71,10 @@ switch flag
         
         % Plot initial data and set axis limits
         if isW
+            % Number of integrated Wiener increment variables, W (cannot change)
             D = length(w);
+            
+            % Initialize UserData, W
             ud.w(D,chunk) = 0;
             ud.w(:,1) = w;
             
@@ -83,7 +90,7 @@ switch flag
                 ud.lines = plot(ud.t(1),ud.y(:,1),'-','EraseMode','none');
             else
                 ud.lines = plot(ud.t(1),ud.y(:,1),'-');
-                set(AX_HANDLE,'XLim',[min(t) 0.3*max(t)]);  
+                set(AX_HANDLE,'XLim',[min(t) max(t)]);  
             end
         end
         
@@ -92,14 +99,14 @@ switch flag
         drawnow;
     case ''
         if isempty(FIG_HANDLE)
-            if nargin > 3
+            if isW
                 error('SDETools:sdeplot:NotCalledWithInitW',...
                      ['Output function has not been initialized. Use syntax '...
-                      'OutputFUN(tspan,y0,''init'',w).']);
+                      'OutputFUN(TSPAN,Y0,''init'',w).']);
             else
                 error('SDETools:sdeplot:NotCalledWithInit',...
                      ['Output function has not been initialized. Use syntax '...
-                      'OutputFUN(tspan,y0,''init'').']);
+                      'OutputFUN(TSPAN,Y0,''init'').']);
 
             end
         end
@@ -216,8 +223,12 @@ switch flag
             if ishold
                 drawnow;
             else
-                if ishghandle(ha)
-                    set(ha,'XLimMode','auto');
+                % Set x-axis limits
+                XLim = get(ha,'XLim');
+                if min(XYData{1,1}) ~= XLim(1)
+                    set(ha,'XLim',[min(XYData{1,1}) XLim(2)]);
+                elseif max(XYData{1,1}) ~= XLim(2)
+                    set(ha,'XLim',[XLim(1) max(XYData{1,1})]);
                 end
                 refresh;
             end
