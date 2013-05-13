@@ -33,7 +33,7 @@ function status=sdeplot(t,y,flag,w)
 %   SDEPLOT is based on an updating of Matlab's ODEPLOT, version 1.25.4.9
 
 %   Andrew D. Horchler, adh9 @ case . edu, 4-29-13
-%   Revision: 1.2, 5-12-13
+%   Revision: 1.2, 5-13-13
 
 
 persistent FIG_HANDLE AX_HANDLE LEN_TSPAN;
@@ -99,7 +99,7 @@ switch flag
             if isW
                 error('SDETools:sdeplot:NotCalledWithInitW',...
                      ['Output function has not been initialized. Use syntax '...
-                      'OutputFUN(TSPAN,Y0,''init'',w).']);
+                      'OutputFUN(TSPAN,Y0,''init'',W0).']);
             else
                 error('SDETools:sdeplot:NotCalledWithInit',...
                      ['Output function has not been initialized. Use syntax '...

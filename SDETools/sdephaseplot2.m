@@ -37,7 +37,7 @@ function status=sdephaseplot2(t,y,flag,w)
 %   SDEPHASEPLOT2 is based on an updating of Matlab's ODEPHAS2, version 1.26.4.9
 
 %   Andrew D. Horchler, adh9 @ case . edu, 5-11-13
-%   Revision: 1.2, 5-12-13
+%   Revision: 1.2, 5-13-13
 
 
 persistent FIG_HANDLE AX_HANDLE;
@@ -114,7 +114,7 @@ switch flag
             if isW
                 error('SDETools:sdephaseplot2:NotCalledWithInitW',...
                      ['Output function has not been initialized. Use syntax '...
-                      'OutputFUN(TSPAN,Y0,''init'',w).']);
+                      'OutputFUN(TSPAN,Y0,''init'',W0).']);
             else
                 error('SDETools:sdephaseplot2:NotCalledWithInit',...
                      ['Output function has not been initialized. Use syntax '...

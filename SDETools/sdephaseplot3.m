@@ -38,7 +38,7 @@ function status=sdephaseplot3(t,y,flag,w)
 %   version 1.27.4.10
 
 %   Andrew D. Horchler, adh9 @ case . edu, 5-11-13
-%   Revision: 1.2, 5-12-13
+%   Revision: 1.2, 5-13-13
 
 
 persistent FIG_HANDLE AX_HANDLE;
@@ -118,7 +118,7 @@ switch flag
             if isW
                 error('SDETools:sdephaseplot3:NotCalledWithInitW',...
                      ['Output function has not been initialized. Use syntax '...
-                      'OutputFUN(TSPAN,Y0,''init'',w).']);
+                      'OutputFUN(TSPAN,Y0,''init'',W0).']);
             else
                 error('SDETools:sdephaseplot3:NotCalledWithInit',...
                      ['Output function has not been initialized. Use syntax '...
