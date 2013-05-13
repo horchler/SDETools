@@ -1,5 +1,5 @@
 %SDETools
-%   Version 1.2, 5-8-13
+%   Version 1.2, 5-12-13
 %
 %   Stochastic differential equation (SDE) solvers.
 %       sde_euler       - Euler-Maruyama (Ito) and Euler-Heun (Stratonovich).
@@ -7,7 +7,10 @@
 %
 %   SDE solver utilities.
 %       sdeget          - Get SDE OPTIONS structure parameters.
+%       sdephaseplot2   - 2-D phase plane SDE output function.
+%       sdephaseplot3   - 3-D phase space SDE output function.
 %       sdeplot         - Time series SDE output function.
+%       sdeprint        - Command window printing SDE output function.
 %       sdeset          - Create/alter SDE OPTIONS structure.
 %
 %   Stochastic differential equation (SDE) processes.
@@ -31,7 +34,7 @@
 %   Compatibility maintained back through Matlab 7.4 (R2007a)
 
 %   Andrew D. Horchler, adh9 @ case . edu
-%   Created: 12-18-11, Revision: 1.2, 5-8-13
+%   Created: 12-18-11, Revision: 1.2, 5-12-13
 
 
 %   Acknowledgment of support: This material is based upon work supported by the

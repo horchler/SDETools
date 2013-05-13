@@ -1,7 +1,7 @@
 SDETools
 ========
 #####A Matlab Toolbox for the Numerical Solution of Stochastic Differential Equations (SDEs).#####
-######Version 1.2, 5-8-13######
+######Version 1.2, 5-12-13######
 #####Download Repository: [ZIP Archive](https://github.com/horchler/SDETools/archive/master.zip)#####
 &nbsp;
 
@@ -11,7 +11,10 @@ Stochastic differential equation (SDE) solvers.
 
 SDE solver utilities.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdeget```](https://github.com/horchler/SDETools/blob/master/SDETools/sdeget.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Get SDE OPTIONS structure parameters.  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdephaseplot2```](https://github.com/horchler/SDETools/blob/master/SDETools/sdephaseplot2.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 2-D phase plane SDE output function.  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdephaseplot3```](https://github.com/horchler/SDETools/blob/master/SDETools/sdephaseplot3.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 3-D phase space SDE output function.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdeplot```](https://github.com/horchler/SDETools/blob/master/SDETools/sdeplot.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Time series SDE output function.  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdeprint```](https://github.com/horchler/SDETools/blob/master/SDETools/sdeprint.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Command window printing SDE output function.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdeset```](https://github.com/horchler/SDETools/blob/master/SDETools/sdeset.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Create/alter SDE OPTIONS structure.
 
 Stochastic differential equation (SDE) processes.  
@@ -31,7 +34,7 @@ Numerical validation.
 --------
 
 Andrew D. Horchler, *adh9 @ case . edu*, [biorobots.case.edu](http://biorobots.case.edu/)  
-Created: 12-18-11, Revision: 1.2, 5-8-13  
+Created: 12-18-11, Revision: 1.2, 5-12-13  
 
 This version tested with Matlab 8.0.0.783 (R2012b)  
 Mac OS X 10.8.3 (Build: 12D78), Java 1.6.0_45-b06-451-11M4406  
