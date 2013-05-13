@@ -11,7 +11,7 @@ function morrislecar2_sde_euler
 %   251-292.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-26-13
-%   Revision: 1.2, 5-3-13
+%   Revision: 1.2, 5-12-13
 
 % Morris-Lecar Type I parameters (Rinzel & Ermentrout 1998)
 V1 = -1.2; V2 = 18; V3 = 2; V4 = 30;
@@ -24,7 +24,7 @@ lam = @(V)phi*cosh(0.5*(V-V3)/V4);
 tv = @(V)tanh((V-V3)/V4);
 winf = @(V)0.5*(1+tv(V));
 
-t = 0:1e-1:100;         % Time vector
+t = 0:1e-2:100;         % Time vector
 N = 5;                  % Number of neurons, different numbers of K+ channels
 Ia = 93;                % Applied current
 NK = logspace(2,4,N).';	% Vary number of K+ channels
@@ -45,7 +45,7 @@ opts = sdeset('NonNegative',N+1:2*N,...
               'RandSeed',1,...
               'SDEType','Ito',...
               'OutputFUN',@sdeplot,...
-              'OutputYSelect',N+1:2*N);
+              'OutputYSelect',[N+1:2*N]);
 
 % Use Euler-Maruyama to integrate SDEs
 y = sde_euler(f,g,t,[V0(:);w0(:)],opts);

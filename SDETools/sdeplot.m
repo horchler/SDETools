@@ -9,41 +9,44 @@ function status=sdeplot(t,y,flag,w)
 %   property. SDEPLOT is the default output function of the solvers when they
 %   are called with no output arguments.
 %
-%   At the start of integration, the SDE solver calls SDEPLOT(TSPAN,Y0,'init')
-%   to initialize the output function. After each integration step to a new time
-%   point T and solution vector Y, the solver calls STATUS = SDEPLOT(T,Y,'').
-%   If the solver's 'Refine' property is greater than one (see SDESET), T is a 
-%   column vector of new output times and Y is an array of corresponding column
+%   At the start of integration, the solver calls SDEPLOT(TSPAN,Y0,'init') to
+%   initialize the output function. After each integration step to new time, T,
+%   and solution vector, Y, the solver calls STATUS = SDEPLOT(T,Y,''). If the
+%   solver's 'Refine' property is greater than one (see SDESET), T is a column
+%   vector of new output times and Y is an array of corresponding column
 %   vectors. The STATUS return value is 1 if the figure window and plot axis are
 %   still open and 0 otherwise. When the integration is complete, the solver
 %   calls SDEPLOT([],[],'done').
 %
 %   Set the 'OutputWSelect' SDE options property to 'yes' or to a vector of
-%   indices to output the integrated Wiener increments, W. The Wiener increments
-%   are passed to SDEPLOT as a fourth argument, SDEPLOT(T,Y,'',W). If the
-%   'OutputWSelect' property is set to 'yes' or a non-empty vector of indices
-%   the SDE solver calls SDEPLOT(TSPAN,Y0,'init',W0) to initialize the output
-%   function at the start of integration and SDEPLOT([],[],'done',[]) when the
-%   integration is complete.
+%   indices to output the integrated Wiener increments, W. The integrated Wiener
+%   increments are passed to SDEPLOT as a fourth argument, SDEPLOT(T,Y,'',W). If
+%   the 'OutputWSelect' property is set to 'yes' or a non-empty vector of
+%   indices the solver calls SDEPLOT(TSPAN,Y0,'init',W0) to initialize the
+%   output function at the start of integration and SDEPLOT([],[],'done',[])
+%   when the integration is complete.
 %   
 %   See also:
-%       SDESET, SDEGET, SDE_EULER, SDE_MILSTEIN, SDE_BM, SDE_GBM, SDE_OU,
-%       ODEPLOT
+%       SDEPHASEPLOT2, SDEPHASEPLOT3, SDEIMGPLOT, SDEPRINT, SDESET, SDEGET,
+%       SDE_EULER, SDE_MILSTEIN, SDE_BM, SDE_GBM, SDE_OU, ODEPLOT
 
-%   SDEPLOT is based on an updating of version 1.25.4.9 of Matlab's ODEPLOT
+%   SDEPLOT is based on an updating of Matlab's ODEPLOT, version 1.25.4.9
 
 %   Andrew D. Horchler, adh9 @ case . edu, 4-29-13
-%   Revision: 1.2, 5-8-13
+%   Revision: 1.2, 5-12-13
 
 
 persistent FIG_HANDLE AX_HANDLE LEN_TSPAN;
 status = 1;         % Figure widow still open and and plot axis still present
 isW = (nargin > 3); % Have integrated Wiener increments been passed
+if nargin < 3
+    flag = '';
+end
 
 switch flag
     case 'init'
         % Initialize persitent handle variables
-        FIG_HANDLE = figure;
+        FIG_HANDLE = figure(gcf);
         AX_HANDLE = gca;
         
         % Set units to pixels to get width of axis, set back to default
@@ -69,7 +72,7 @@ switch flag
         ud.t(1) = t(1);
         ud.y(:,1) = y;
         
-        % Plot initial data and set axis limits
+        % Plot initial data
         if isW
             % Number of integrated Wiener increment variables, W (cannot change)
             D = length(w);
@@ -78,27 +81,21 @@ switch flag
             ud.w(D,chunk) = 0;
             ud.w(:,1) = w;
             
-            if ishold
-                ud.lines = plot(ud.t(1),ud.y(:,1),'-',ud.t(1),ud.w(:,1),'--',...
-                    'EraseMode','none');
-            else
-                ud.lines = plot(ud.t(1),ud.y(:,1),'-',ud.t(1),ud.y(:,1),'--');
-                set(AX_HANDLE,'XLim',[min(t) max(t)]);  
-            end
+            ud.lines = plot(ud.t(1),ud.y(:,1),'-',ud.t(1),ud.w(:,1),'--');
         else
-            if ishold
-                ud.lines = plot(ud.t(1),ud.y(:,1),'-','EraseMode','none');
-            else
-                ud.lines = plot(ud.t(1),ud.y(:,1),'-');
-                set(AX_HANDLE,'XLim',[min(t) max(t)]);  
-            end
+            ud.lines = plot(ud.t(1),ud.y(:,1),'-');
+        end
+        
+        % Set x-axis limits
+        if ~ishold(FIG_HANDLE)
+            set(AX_HANDLE,'XLim',[min(t) max(t)]);
         end
         
         % Store UserData and draw
         set(FIG_HANDLE,'UserData',ud);
         drawnow;
     case ''
-        if isempty(FIG_HANDLE)
+        if isempty(FIG_HANDLE) || isempty(AX_HANDLE)
             if isW
                 error('SDETools:sdeplot:NotCalledWithInitW',...
                      ['Output function has not been initialized. Use syntax '...
@@ -121,15 +118,7 @@ switch flag
             % Update UserData
             oldi = ud.i;
             newi = oldi+lt;
-            if newi <= lY
-                % Append new data to UserData
-                ud.t(oldi+1:newi) = t;
-                ud.y(:,oldi+1:newi) = y;
-                if isW
-                    ud.w(:,oldi+1:newi) = w;
-                end
-                ud.i = newi;
-            else
+            if newi > lY
                 % Set line data
                 XYData = get(ud.lines,{'XData','YData'});
                 for j = 1:N
@@ -145,7 +134,7 @@ switch flag
                 set(ud.lines,{'XData','YData'},XYData);
                 
                 % Set x-axis limits to auto if exceeded
-                if ~ishold
+                if ~ishold(FIG_HANDLE)
                     if strcmp(get(AX_HANDLE,'XLimMode'),'manual')
                         XLim = get(AX_HANDLE,'XLim');
                         if min(ud.t) < XLim(1) || max(ud.t) > XLim(2)
@@ -166,21 +155,27 @@ switch flag
                 % Use figure axis width and TSPAN length determine redraw chunk
                 chunk = min(ceil(LEN_TSPAN/pos(3)),LEN_TSPAN);
                 
-                % Reset UserData and append new data
+                % Reset UserData
                 ud.t(1,chunk) = 0;
                 ud.y(:,chunk) = 0;
-                ud.t(1:lt) = t;
-                ud.y(:,1:lt) = y;
                 if isW
                     ud.w(:,chunk) = 0;
-                    ud.w(:,1:lt) = w;
                 end
-                ud.i = 1;
+                oldi = 0;
+                newi = lt;
             end
+            
+            % Append new data to UserData
+            ud.t(oldi+1:newi) = t;
+            ud.y(:,oldi+1:newi) = y;
+            if isW
+                ud.w(:,oldi+1:newi) = w;
+            end
+            ud.i = newi;
             
             % Store updated UserData and draw if redraw chunk was full
             set(FIG_HANDLE,'UserData',ud);
-            if newi > lY
+            if oldi == 0
                 drawnow;
             end
         else
@@ -194,7 +189,7 @@ switch flag
         AX_HANDLE = [];
         
         % If figure is open
-        if ishghandle(hf) && ishghandle(ha)
+        if ~isempty(hf) && ishghandle(hf) && ~isempty(ha) && ishghandle(ha)
             % Get non-zero UserData
             ud = get(hf,'UserData');
             ud.t = ud.t(1:ud.i);
@@ -220,7 +215,7 @@ switch flag
             set(hf,'UserData',[]);
             
             % Refresh or draw
-            if ishold
+            if ishold(hf)
                 drawnow;
             else
                 % Set x-axis limits
