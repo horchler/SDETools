@@ -11,10 +11,10 @@ Stochastic differential equation (SDE) solvers.
 
 SDE solver utilities.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdeget```](https://github.com/horchler/SDETools/blob/master/SDETools/sdeget.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Get SDE OPTIONS structure parameters.  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdephaseplot2```](https://github.com/horchler/SDETools/blob/master/SDETools/sdephaseplot2.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 2-D phase plane SDE output function.  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdephaseplot3```](https://github.com/horchler/SDETools/blob/master/SDETools/sdephaseplot3.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 3-D phase space SDE output function.  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdephaseplot2```](https://github.com/horchler/SDETools/blob/master/SDETools/sdephaseplot2.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 2-D phase plane SDE output function.  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdephaseplot3```](https://github.com/horchler/SDETools/blob/master/SDETools/sdephaseplot3.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- 3-D phase space SDE output function.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdeplot```](https://github.com/horchler/SDETools/blob/master/SDETools/sdeplot.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Time series SDE output function.  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdeprint```](https://github.com/horchler/SDETools/blob/master/SDETools/sdeprint.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Command window printing SDE output function.  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdeprint```](https://github.com/horchler/SDETools/blob/master/SDETools/sdeprint.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Command window printing SDE output function.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sdeset```](https://github.com/horchler/SDETools/blob/master/SDETools/sdeset.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Create/alter SDE OPTIONS structure.
 
 Stochastic differential equation (SDE) processes.  
