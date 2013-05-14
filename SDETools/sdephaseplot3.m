@@ -204,7 +204,7 @@ switch flag
             set(hf,'UserData',[]);
             
             % Refresh or draw
-            if ishold(hf)
+            if ishold(ha)
                 drawnow;
             else
                 refresh;

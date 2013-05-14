@@ -86,8 +86,9 @@ switch flag
             ud.lines = plot(ud.t(1),ud.y(:,1),'-');
         end
         
+        ishold(AX_HANDLE)
         % Set x-axis limits
-        if ~ishold(FIG_HANDLE)
+        if ~ishold(AX_HANDLE)
             set(AX_HANDLE,'XLim',[min(t) max(t)]);
         end
         
@@ -134,7 +135,7 @@ switch flag
                 set(ud.lines,{'XData','YData'},XYData);
                 
                 % Set x-axis limits to auto if exceeded
-                if ~ishold(FIG_HANDLE)
+                if ~ishold(AX_HANDLE)
                     if strcmp(get(AX_HANDLE,'XLimMode'),'manual')
                         XLim = get(AX_HANDLE,'XLim');
                         if min(ud.t) < XLim(1) || max(ud.t) > XLim(2)
@@ -215,7 +216,7 @@ switch flag
             set(hf,'UserData',[]);
             
             % Refresh or draw
-            if ishold(hf)
+            if ishold(ha)
                 drawnow;
             else
                 % Set x-axis limits
