@@ -93,7 +93,7 @@ function [Y,W,TE,YE,WE,IE] = sde_milstein(f,g,tspan,y0,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-25-10
-%   Revision: 1.2, 5-6-13
+%   Revision: 1.2, 6-17-13
 
 
 solver = 'SDE_MILSTEIN';
@@ -165,16 +165,17 @@ end
 
 % Initialize output function
 isOutput = ~isempty(OutputFUN);
-isW = (isEvents || WSelect);
+
+% If drift or diffusion functions, FFUN and GFUN, exist
+isDrift = ~(ConstFFUN && isscalar(fout) && fout == 0);
+isDiffusion = ~(ConstGFUN && isscalar(gout) && gout == 0);
+
+isW = isDiffusion && (isEvents || WSelect);
 if isW
     Wi = 0;
 else
     Wi = [];
 end
-
-% If drift or diffusion functions, FFUN and GFUN, exist
-isDrift = ~(ConstFFUN && isscalar(fout) && fout == 0);
-isDiffusion = ~(ConstGFUN && isscalar(gout) && gout == 0);
 
 % Is Y allocated and output
 isYOutput = (nargout > 0);
@@ -189,7 +190,7 @@ else
 end
 
 % Location of stored Wiener increments, if they are needed and pre-calculated
-dWinY = (isDiffusion && D <= N && isYOutput && ~CustomWMatrix);  	% Store in Y
+dWinY = (D <= N && isYOutput && ~CustomWMatrix || ~isDiffusion);  	% Store in Y
 dWinW = (isDiffusion && D > N && nargout >= 2 || CustomWMatrix);	% Store in W
 
 % Allocate state array, Y, if needed (may be allocated in place below)
@@ -205,8 +206,8 @@ end
 % Calculate Wiener increments from normal variates, store in Y if possible, or W
 sh = tdir*sqrt(h);
 h = tdir*h;
-if isDiffusion
-    if CustomRandFUN                        % Check alternative RandFUN output
+if isDiffusion || isW
+    if CustomRandFUN                            % Check alternative RandFUN
         if CustomWMatrix
             W = sdeget(options,'RandFUN',[],'flag');
             if ~isfloat(W) || ~sde_ismatrix(W) || any(size(W) ~= [lt D])
@@ -331,6 +332,8 @@ if isDiffusion
             dW = sh(1)*feval(RandFUN,1,D);
         end
     end
+elseif ~isDiffusion && nargout >= 2
+    W = zeros(lt,0,dataType);
 end
 
 % Integrate

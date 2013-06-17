@@ -10,7 +10,7 @@ function [N,D,tspan,tdir,lt,y0,f0,g0,dg0,h,ConstStep,dataType,NonNegative,...
 %       SDEZERO, SDEOUTPUT, SDERESET_STREAM, FUNCTION_HANDLE
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 12-12-11
-%   Revision: 1.2, 5-3-13
+%   Revision: 1.2, 6-17-13
 
 %   SDEARGUMENTS is partially based on an updating of version 1.12.4.15 of
 %   Matlab's ODEARGUMENTS.
@@ -56,7 +56,19 @@ if isempty(y0) || ~isfloat(y0)
 end
 y0 = y0(:);
 N = length(y0);             % Number of state variables
-
+%{
+% Check if max step size specified
+MaxStep = sdeget(options,'MaxStep',0,'flag');
+if MaxStep(:) ~= 0
+    if ~isscalar(MaxStep) || ~isfloat(MaxStep) || ~isreal(MaxStep)
+        
+    end
+    if ~isfinite(MaxStep) || MaxStep < 0
+        
+    end
+    
+end
+%}
 % Check for non-negative components
 idxNonNegative = sdeget(options,'NonNegative','no','flag');
 if strcmp(idxNonNegative,'yes')
@@ -305,6 +317,7 @@ if isDiffusion
     end
 else
     % No diffusion function (or all zero), use defaults
+    D = 1;
     dg0 = zeros(0,class(g0));
     ConstDGFUN = false;
     Derivative = false;
@@ -385,9 +398,8 @@ else
     % No diffusion function (or all zero), use defaults
     DiagonalNoise = true;
     ScalarNoise = true;
-    OneDNoise = true;
+    OneDNoise = (N==1);
     Stratonovich = false;
     RandFUN = [];
-    CustomRandFUN = false;
     ResetStream = [];
 end
