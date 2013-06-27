@@ -27,7 +27,7 @@ function [Y,W,TE,YE,WE,IE] = sde_milstein(f,g,tspan,y0,options)
 %   created with the SDESET function. See SDESET for details. The type of SDE to
 %   be integrated, 'Ito' or the default 'Stratonovich', can be specified via the
 %   SDEType property. By default, the derivative-free Milstein method is
-%   applied, but if the if the DGFUN property is set to a function handle or
+%   applied, but if the DGFUN property is set to a function handle or
 %   floating-point matrix to specify the derivative of the noise function
 %   g(t,y), then the general Milstein method is used. The DiagonalNoise property
 %   must be set to 'no' in order to apply the more general correlated noise case
@@ -93,7 +93,7 @@ function [Y,W,TE,YE,WE,IE] = sde_milstein(f,g,tspan,y0,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-25-10
-%   Revision: 1.2, 6-17-13
+%   Revision: 1.2, 6-27-13
 
 
 solver = 'SDE_MILSTEIN';
