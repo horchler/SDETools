@@ -95,7 +95,7 @@ function [Y,W,TE,YE,WE,IE] = sde_euler(f,g,tspan,y0,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 10-28-10
-%   Revision: 1.2, 6-17-13
+%   Revision: 1.2, 7-9-13
 
 
 solver = 'SDE_EULER';
@@ -172,7 +172,7 @@ isOutput = ~isempty(OutputFUN);
 isDrift = ~(ConstFFUN && isscalar(fout) && fout == 0);
 isDiffusion = ~(ConstGFUN && isscalar(gout) && gout == 0);
 
-isW = isDiffusion && (isEvents || WSelect)
+isW = isDiffusion && (isEvents || WSelect);
 if isW
     Wi = 0;
 else
