@@ -13,28 +13,32 @@ function bool=sde_isdiag(V,k)
 %   http://mathworks.com/matlabcentral/newsreader/view_thread/299383#806642
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-30-13
-%   Revision: 1.2, 5-4-13
+%   Revision: 1.2, 7-12-13
 
 
 bool = false;
 if ~isempty(V)
-    [m,n] = size(V);
-    if ndims(V) == 2 && m == n	%#ok<ISMAT>
-        if nargin == 2
-            if ~isscalar(k) || ~isnumeric(k) || any(k ~= floor(k))
-                error('SDETools:sde_isdiag:kthDiagInputNotInteger',...
-                      'K-th diagonal input must be a scalar integer.')
-            end
-            if isscalar(V)
-                bool = (k == 0);
-            elseif abs(k) < n
-                bool = (nnz(V) == nnz(diag(V,k)));
-            end
+    if nargin == 1
+        if isscalar(V)
+            bool = true;
         else
-            if isscalar(V)
-                bool = true;
-            else
+            [m,n] = size(V);
+            if ndims(V) == 2 && m == n	%#ok<ISMAT>
                 bool = (nnz(V) == nnz(diag(V)));
+            end
+        end
+    else
+        if ~isscalar(k) || ~isnumeric(k) || any(k ~= floor(k))
+            error('SDETools:sde_isdiag:kthDiagInputNotInteger',...
+                  'K-th diagonal input must be a scalar integer.')
+        end
+        
+        if isscalar(V)
+            bool = (k == 0);
+        else
+            [m,n] = size(V);
+            if ndims(V) == 2 && m == n && abs(k) < n	%#ok<ISMAT>
+                bool = (nnz(V) == nnz(diag(V,k)));
             end
         end
     end
