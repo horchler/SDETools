@@ -33,7 +33,7 @@ function status=sdeplot(t,y,flag,w)
 %   SDEPLOT is based on an updating of Matlab's ODEPLOT, version 1.25.4.9
 
 %   Andrew D. Horchler, adh9 @ case . edu, 4-29-13
-%   Revision: 1.2, 5-13-13
+%   Revision: 1.2, 7-16-13
 
 
 persistent FIG_HANDLE AX_HANDLE LEN_TSPAN;
@@ -86,7 +86,6 @@ switch flag
             ud.lines = plot(ud.t(1),ud.y(:,1),'-');
         end
         
-        ishold(AX_HANDLE)
         % Set x-axis limits
         if ~ishold(AX_HANDLE)
             set(AX_HANDLE,'XLim',[min(t) max(t)]);

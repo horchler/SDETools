@@ -11,6 +11,10 @@ function varargout=sde_correlate(c,r1)
 %   D = SDE_CORRELATE(C) without a second input argument returns only the N-by-N
 %   diffusion matrix, D, created from the correlation matrix, C.
 %
+%   Note:
+%       C may either be a symmetric positive semidefinite correlation matrix or
+%       covariance matrix.
+%
 %   Example:
 %       % Plot uncorrelated and correlated normally-distributed points
 %       r1 = randn(1e4,2); corr(r1)
@@ -20,7 +24,7 @@ function varargout=sde_correlate(c,r1)
 %   See also: SDE_DECORRELATE, RAND, RANDN, RANDSTREAM, RANDSTREAM/RANDN
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 5-20-13
-%   Revision: 1.2, 7-12-13
+%   Revision: 1.2, 7-17-13
 
 
 if nargout > min(nargin,2)
@@ -42,6 +46,7 @@ else
     end
     
     if sde_isdiag(c)
+        num = rank(c);
         c = diag(c);
         if any(c) < 0
             error('SDETools:sde_correlate:NegativeDiagonal',...
@@ -52,16 +57,21 @@ else
         d = sqrt(c);
         isDiag = isscalar(c);
     else
-        d = cholcov(c);
+        [d,num] = cholcov(c);
         if isempty(d)
             error('SDETools:sde_correlate:NonSymmetricSemiDefinite',...
                  ['The correlation matrix must be a symmetric positive '...
-                  'semi-definite matrix.']);
+                  'semidefinite matrix.']);
         end
         isDiag = false;
     end
     
     if nargin == 1
+        if num ~= m
+            warning('SDETools:sde_correlate:NonFullRank1',...
+                    'The correlation matrix is not full rank.');
+        end
+        
         if isDiag
             varargout{1} = diag(d);
         else
@@ -73,6 +83,12 @@ else
                  ['The number of columns in the matrix of normally '...
                   'distributed values must equal the dimension of the '...
                   'correlation matrix.']);
+        end
+        if num ~= m
+            warning('SDETools:sde_correlate:NonFullRank2',...
+                   ['The correlation matrix is not full rank. Only the '...
+                    'first %d columns of the input values will be '...
+                    'correlated.'],num);
         end
         
         if isDiag
