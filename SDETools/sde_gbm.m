@@ -78,7 +78,7 @@ function [Y,W,TE,YE,WE,IE] = sde_gbm(mu,sig,tspan,y0,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
-%   Revision: 1.2, 5-6-13
+%   Revision: 1.2, 7-18-13
 
 
 func = 'SDE_GBM';
@@ -286,7 +286,6 @@ else
     end
 end
 
-
 % Diffusion parameters are not all zero
 if D > 0
     % Integrate Wiener increments
@@ -323,7 +322,7 @@ if D > 0
             elseif isscalar(sig)
                 Y = bsxfun(@times,y0,exp(tspan*(mu(:).'-0.5*sig^2)+sig*Y));
             else
-                sig = sig(:)';
+                sig = sig(:).';
                 Y = bsxfun(@times,y0,exp(tspan*(mu(:).'-0.5*sig.^2)+bsxfun(@times,sig,Y)));
             end
         end
