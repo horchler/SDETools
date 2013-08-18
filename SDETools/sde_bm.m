@@ -6,7 +6,7 @@ function [Y,W,TE,YE,WE,IE] = sde_bm(mu,sig,tspan,y0,options)
 %   diagonal noise from time T0 to TFINAL (all increasing or all decreasing with
 %   arbitrary step size) with initial conditions Y0. TSPAN is a length M vector.
 %   Y0 is a length N vector. The drift parameter MU and the diffusion
-%   (volatility) parameter SIG are scalars or vectors of N. Each row in the
+%   (volatility) parameter SIG are scalars or length N vectors. Each row in the
 %   M-by-N solution array YOUT corresponds to a time in TSPAN.
 %
 %   [YOUT, W] = SDE_BM(MU,SIG,TSPAN,Y0,...) outputs the M-by-N matrix W of
@@ -69,13 +69,12 @@ function [Y,W,TE,YE,WE,IE] = sde_bm(mu,sig,tspan,y0,options)
 
 %   The conditional analytic solution Y = Y0+MU*t+SIG*W(t) is used, where W is a
 %   standard Wiener process.
-
-%   For details of this integration method, see: Peter E. Kloeden and Eckhard
-%   Platen, "Numerical solution of Stochastic Differential Equations,"
-%   Springer-Verlag, 1992.
+%
+%   From: Peter E. Kloeden and Eckhard Platen, "Numerical solution of Stochastic
+%   Differential Equations," Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 1-5-13
-%   Revision: 1.2, 5-6-13
+%   Revision: 1.2, 8-18-13
 
 
 func = 'SDE_BM';

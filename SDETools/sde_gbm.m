@@ -6,8 +6,8 @@ function [Y,W,TE,YE,WE,IE] = sde_gbm(mu,sig,tspan,y0,options)
 %   N-dimensional diagonal noise from time T0 to TFINAL (all increasing or all
 %   decreasing with arbitrary step size) with initial conditions Y0. TSPAN is a
 %   length M vector. Y0 is a length N vector. The drift parameter MU and the
-%   diffusion (volatility) parameter SIG are scalars or vectors of N. Each row
-%   in the M-by-N solution array YOUT corresponds to a time in TSPAN.
+%   diffusion (volatility) parameter SIG are scalars or length N vectors. Each
+%   row in the M-by-N solution array YOUT corresponds to a time in TSPAN.
 %
 %   [YOUT, W] = SDE_GBM(MU,SIG,TSPAN,Y0,...) outputs the M-by-N matrix W of
 %   integrated Wiener increments that were used. Each row of W corresponds to a
@@ -72,13 +72,12 @@ function [Y,W,TE,YE,WE,IE] = sde_gbm(mu,sig,tspan,y0,options)
 %   The conditional analytic solutions Y = Y0*exp((MU-SIG^2/2)*t+SIG*W) and
 %   Y = Y0*exp(MU*t+SIG*W) are used for Ito and Stratonovich cases,
 %   respectively, where W is a standard Wiener process.
-
-%   For details of this integration method, see: Peter E. Kloeden and Eckhard
-%   Platen, "Numerical solution of Stochastic Differential Equations,"
-%   Springer-Verlag, 1992.
+%
+%   From: Peter E. Kloeden and Eckhard Platen, "Numerical solution of Stochastic
+%   Differential Equations," Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
-%   Revision: 1.2, 7-18-13
+%   Revision: 1.2, 8-18-13
 
 
 func = 'SDE_GBM';
