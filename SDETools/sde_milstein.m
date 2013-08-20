@@ -93,7 +93,7 @@ function [Y,W,TE,YE,WE,IE] = sde_milstein(f,g,tspan,y0,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-25-10
-%   Revision: 1.2, 6-27-13
+%   Revision: 1.2, 8-19-13
 
 
 solver = 'SDE_MILSTEIN';
@@ -196,11 +196,7 @@ dWinW = (isDiffusion && D > N && nargout >= 2 || CustomWMatrix);	% Store in W
 % Allocate state array, Y, if needed (may be allocated in place below)
 if isYOutput && (~(CustomRandFUN && dWinY) ...
         || ~(ConstFFUN && ConstGFUN && dWinW && ~NonNegative))
-    if strcmp(dataType,'double')
-        Y(lt,N) = 0;
-    else
-        Y(lt,N) = single(0);
-    end
+    Y(lt,N) = cast(0,dataType);
 end
 
 % Calculate Wiener increments from normal variates, store in Y if possible, or W

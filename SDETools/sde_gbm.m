@@ -77,7 +77,7 @@ function [Y,W,TE,YE,WE,IE] = sde_gbm(mu,sig,tspan,y0,options)
 %   Differential Equations," Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
-%   Revision: 1.2, 8-18-13
+%   Revision: 1.2, 8-19-13
 
 
 func = 'SDE_GBM';
@@ -188,17 +188,12 @@ isOutput = ~isempty(OutputFUN);
 isW = (nargout >= 2 || isEvents || WSelect);
 
 % State array
-isDouble = strcmp(dataType,'double');
-if isDouble
-    Y(lt,N) = 0;
-else
-    Y(lt,N) = single(0);
-end
+Y(lt,N) = cast(0,dataType);
 
 % Expand and orient sig parameter and y0 vectors, find non-zero values
 if N > 1
     if isscalar(sig)
-        sig = sig(ones(1,N));
+        sig = zeros(1,N)+sig;
     else
         sig = sig(:).';
     end
