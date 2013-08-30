@@ -4,12 +4,14 @@ SDETools
 ######Version 1.2, 8-30-13######
 #####Download Repository: [ZIP Archive](https://github.com/horchler/SDETools/archive/master.zip)#####
 &nbsp;
+
 How to install (and uninstall) SDETools: 
  1. Download and expand the *[SDETools-master.zip](https://github.com/horchler/SDETools/archive/master.zip)* ZIP archive of the repository. 
  2. Move the resultant *SDETools-master* folder to the desired permanent location. 
  3. In Matlab, navigate to *SDETools-master/SDETools/* and run ```sde_install```. This adds the necessary files and folders to the Matlab search path. To uninstall SDETools, run ```sde_install('remove')```. 
 &nbsp; 
-&nbsp; 
+
+--------
 
 Stochastic differential equation (SDE) solvers.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_euler```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_euler.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Euler-Maruyama (Ito) and Euler-Heun (Stratonovich).  
