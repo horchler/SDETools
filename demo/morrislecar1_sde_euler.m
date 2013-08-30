@@ -8,10 +8,11 @@ function morrislecar1_sde_euler
 %   John Rinzel and G. Bard Ermentrout, "Analysis of Neural Excitability and
 %   Oscillations," in: "Methods in Neural Modeling: From Ions to Networks,"
 %   2nd Ed., Eds. C. Koch, I. Segev, MIT Press, Cambridge, MA, 1998, Ch. 7,
-%   251-292.
+%   251-292.  http://www.math.pitt.edu/~bard/classes/chapt7.ps
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 9-11-12
-%   Revision: 1.2, 5-3-13
+%   Revision: 1.2, 8-30-13
+
 
 % Morris-Lecar Type I parameters (Rinzel & Ermentrout 1998)
 V1 = -1.2; V2 = 18; V3 = 12; V4 = 17.4;
@@ -24,7 +25,7 @@ lam = @(V)phi*cosh(0.5*(V-V3)/V4);
 tv = @(V)tanh((V-V3)/V4);
 winf = @(V)0.5*(1+tv(V));
 
-t = 0:1e-2:100;	% Time vector
+t = 0:1e-2:30;	% Time vector
 Ia = 55;        % Applied current
 V0 = -35:10:35; % Initial Voltages
 w0 = winf(V0);  % Initial fraction of open K+ channels
@@ -40,15 +41,20 @@ w_diffusion = @(V,w)sqrt(lam(V).*(winf(V)-tv(V).*w)/NK);
 f = @(t,y)[V_drift(y(1:N),y(N+1:end));w_drift(y(1:N),y(N+1:end))];
 g = @(t,y)[zeros(N,1);w_diffusion(y(1:N),y(N+1:end))];
 
-% Keep w >= 0, set random seed, Ito
+% Keep w >= 0, set random seed, specify Ito
 opts = sdeset('NonNegative',N+1:2*N,...
               'RandSeed',1,...
               'SDEType','Ito');
 
 % Use Euler-Maruyama to integrate SDEs
-y = sde_euler(f,g,t,[V0(:);w0(:)],opts);
+y1 = sde_euler(f,g,t,[V0(:);w0(:)],opts);
 
 figure
-plot(y(:,1:N),y(:,N+1:end))
+plot(y1(:,1:N),y1(:,N+1:end))
 title('Morris-Lecar Type I');
 xlabel('V (mV)'); ylabel('w (Fraction open K+ channels)');
+
+y2 = sde_milstein(f,g,t,[V0(:);w0(:)],opts);
+
+figure
+plot(t,abs(y1-y2))

@@ -8,10 +8,11 @@ function morrislecar2_sde_euler
 %   John Rinzel and G. Bard Ermentrout, "Analysis of Neural Excitability and
 %   Oscillations," in: "Methods in Neural Modeling: From Ions to Networks,"
 %   2nd Ed., Eds. C. Koch, I. Segev, MIT Press, Cambridge, MA, 1998, Ch. 7,
-%   251-292.
+%   251-292.  http://www.math.pitt.edu/~bard/classes/chapt7.ps
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-26-13
-%   Revision: 1.2, 5-12-13
+%   Revision: 1.2, 8-30-13
+
 
 % Morris-Lecar Type I parameters (Rinzel & Ermentrout 1998)
 V1 = -1.2; V2 = 18; V3 = 2; V4 = 30;
@@ -45,7 +46,7 @@ opts = sdeset('NonNegative',N+1:2*N,...
               'RandSeed',1,...
               'SDEType','Ito',...
               'OutputFUN',@sdeplot,...
-              'OutputYSelect',[N+1:2*N]);
+              'OutputYSelect',N+1:2*N);
 
 % Use Euler-Maruyama to integrate SDEs
 y = sde_euler(f,g,t,[V0(:);w0(:)],opts);
