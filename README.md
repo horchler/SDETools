@@ -1,8 +1,14 @@
 SDETools
 ========
 #####A Matlab Toolbox for the Numerical Solution of Stochastic Differential Equations (SDEs).#####
-######Version 1.2, 5-12-13######
+######Version 1.2, 8-30-13######
 #####Download Repository: [ZIP Archive](https://github.com/horchler/SDETools/archive/master.zip)#####
+&nbsp;
+
+How to install (and uninstall) SDETools:
+ 1. Download and expand the *[SDETools-master.zip](https://github.com/horchler/SDETools/archive/master.zip)* ZIP archive of the repository. 
+ 2. Move the resultant *SDETools-master* folder to the desired permanent location. 
+ 3. In Matlab, navigate to and run *SDETools-master/SDETools/sde_install.m*. This adds the necessary files and folders to the Matlab search path. To uninstall SDETools, run ```sde_install('remove')```. 
 &nbsp;
 
 Stochastic differential equation (SDE) solvers.  
@@ -34,10 +40,10 @@ Numerical validation.
 --------
 
 Andrew D. Horchler, *adh9 @ case . edu*, [biorobots.case.edu](http://biorobots.case.edu/)  
-Created: 12-18-11, Revision: 1.2, 5-12-13  
+Created: 12-18-11, Revision: 1.2, 8-30-13  
 
-This version tested with Matlab 8.0.0.783 (R2012b)  
-Mac OS X 10.8.3 (Build: 12D78), Java 1.6.0_45-b06-451-11M4406  
+This version tested with Matlab 8.1.0.604 (R2013a)  
+Mac OS X 10.8.4 (Build: 12E55), Java 1.6.0_51-b11-457-11M4509  
 Compatibility maintained back through Matlab 7.4 (R2007a)  
 &nbsp;  
 
