@@ -1,7 +1,7 @@
 SDETools
 ========
 #####A Matlab Toolbox for the Numerical Solution of Stochastic Differential Equations (SDEs).#####
-######Version 1.2, 8-30-13######
+######Version 1.2, 9-21-13######
 #####Download Repository: [ZIP Archive](https://github.com/horchler/SDETools/archive/master.zip)#####
 
 How to install (and uninstall) SDETools:  
@@ -30,9 +30,7 @@ Stochastic differential equation (SDE) processes.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_ou```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_ou.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Ornstein-Uhlenbeck process, analytic solution.
 
 Stochastic interpolatolation utilities.  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_interp```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_interp.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Brownian bridge interpolation.  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_interpq```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_interpq.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Quick Brownian bridge interpolation.  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_interpqn```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_interpqn.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Quick linearly-spaced Brownian bridge interpolation.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_interp```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_interp.m)&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- Brownian bridge interpolation.
 
 Numerical validation.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[```sde_euler_validate```](https://github.com/horchler/SDETools/blob/master/SDETools/sde_euler_validate.m)&nbsp;- Test sde_euler performance and convergence order.  
@@ -41,7 +39,7 @@ Numerical validation.
 --------
 
 Andrew D. Horchler, *adh9 @ case . edu*, [biorobots.case.edu](http://biorobots.case.edu/)  
-Created: 12-18-11, Revision: 1.2, 8-30-13  
+Created: 12-18-11, Revision: 1.2, 9-21-13  
 
 This version tested with Matlab 8.1.0.604 (R2013a)  
 Mac OS X 10.8.4 (Build: 12E55), Java 1.6.0_51-b11-457-11M4509  

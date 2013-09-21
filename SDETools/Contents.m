@@ -1,5 +1,5 @@
 %SDETools
-%   Version 1.2, 8-30-13
+%   Version 1.2, 9-21-13
 %
 %   Stochastic differential equation (SDE) solvers.
 %       sde_euler       - Euler-Maruyama (Ito) and Euler-Heun (Stratonovich).
@@ -20,8 +20,6 @@
 %
 %   Stochastic interpolatolation utilities.
 %       sde_interp      - Brownian bridge interpolation.
-%       sde_interpq     - Quick Brownian bridge interpolation.
-%       sde_interpqn    - Quick linearly-spaced Brownian bridge interpolation.
 %
 %   Numerical validation.
 %       sde_euler_validate  - Test sde_euler performance and convergence order.
@@ -34,7 +32,7 @@
 %   Compatibility maintained back through Matlab 7.4 (R2007a)
 
 %   Andrew D. Horchler, adh9 @ case . edu
-%   Created: 12-18-11, Revision: 1.2, 8-30-13
+%   Created: 12-18-11, Revision: 1.2, 9-21-13
 
 
 %   Acknowledgment of support: This material is based upon work supported by the
