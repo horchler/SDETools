@@ -7,27 +7,22 @@ function sde_install(opt)
 %   from the Matlab search path and saving the path. If SDETools is not
 %   installed (on the path), a warning is issued.
 %
-%   See also path, addpath, rmpath, savepath
+%   See also: PATH, ADDPATH, RMPATH, SAVEPATH
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 8-12-13
-%   Revision: 1.2, 8-30-13
+%   Revision: 1.2, 11-16-13
 
 
-[success,msg] = fileattrib;
-if success
-    if nargin == 0 || any(strcmp(opt,{'add','install','addpath'}))
-        addpath(msg.Name);
-        status = true;
-    elseif any(strcmp(opt,{'remove','uninstall','rmpath','delete'}))
-        rmpath(msg.Name);
-        status = false;
-    else
-        error('SDETools:sde_install:UnknownOption',...
-              'Input argument must be the string ''remove'' to uninstall.');
-    end
+if nargin == 0 || any(strcmp(opt,{'add','install','addpath'}))
+    addpath(fileparts(mfilename('fullpath')));
+    status = true;
+elseif any(strcmp(opt,{'remove','uninstall','rmpath'}))
+    rmpath(fileparts(mfilename('fullpath')));
+    status = false;
 else
-    error('SDETools:sde_install:AddPathError',...
-          'Unable to find absolute path of this directory.');
+    error('SDETools:sde_install:UnknownOption',...
+         ['Input argument must be the string ''install'' to install or '...
+          '''remove'' to uninstall.']);
 end
 
 if savepath
@@ -35,6 +30,7 @@ if savepath
           'Unable to save pathdef.m file.');
 end
 rehash('toolbox');
+clear('sde_install');
 
 if status
     fprintf(1,'\n SDETools installed.\n\n');
