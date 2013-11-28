@@ -6,13 +6,13 @@ function [RandFUN,ResetStream]=sderandfun(solver,dataType,options)
 %       FUNCTION_HANDLE
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 5-2-13
-%   Revision: 1.2, 5-6-13
+%   Revision: 1.3, 9-2-13
 
 
-% Check if alternative random number generator function or W matrix specified
-isNoRandFUN = (~isfield(options,'RandFUN') || isempty(options.RandFUN));
-if isNoRandFUN || isa(options.RandFUN,'RandStream')
-    if isNoRandFUN
+ResetStream = [];
+RandFun = sdeget(options,'RandFun',[],'flag');
+if isempty(RandFun) || isa(RandFun,'RandStream')
+    if isempty(RandFun)
         % Use Matlab's random number generator for normal variates
         RandSeed = sdeget(options,'RandSeed',[],'flag');
         if ~isempty(RandSeed)
@@ -38,19 +38,65 @@ if isNoRandFUN || isa(options.RandFUN,'RandStream')
         Antithetic = strcmp(sdeget(options,'Antithetic','no','flag'),'yes');
         if Antithetic ~= Stream.Antithetic
             set(Stream,'Antithetic',Antithetic);
+            
+            % Reset property on completion or early termination of integration
+            ResetStream = onCleanup(@()set(Stream,'Antithetic',...
+                                           ~Stream.Antithetic));
         end
     else
         % User-specified RandStream object, ignore RandSeed and Antithetic
-        Stream = options.RandFUN;
+        Stream = RandFun;
     end
     
     % Create function handle to be used for generating Wiener increments
     RandFUN = @(M,N)randn(Stream,M,N,dataType);
-    
-    % Function to be call on completion or early termination of integration
-    ResetStream = onCleanup(@()sdereset_stream(Stream));
-else
-    % Function handle for generating Wiener increments created in main function
+elseif isa(RandFun,'function_handle')
+    % Create function handle to be used for generating Wiener increments
+    RandFUN = @(M,N)RandFunCheck(RandFun,M,N,solver);
+elseif sde_ismatrix(RandFun)
     RandFUN = [];
-    ResetStream = [];
+else
+    error('SDETools:sderandfun:InvalidRandFun',...
+     	 ['RandFun must be a RandStream object, function handle, or matrix '...
+          'of integrated Wiener increments.  See %s.'],solver);
+end
+
+
+function R=RandFunCheck(fun,M,N,solver)
+try
+    R = feval(fun,M,N);
+    if ~sde_ismatrix(R) || isempty(R) || ~isfloat(R)
+        error('SDETools:sderandfun:RandFunCheck:RandFUNNot2DArray3',...
+             ['RandFUN must return a non-empty matrix of '...
+              'floating-point values.  See %s.'],solver);
+    end
+    [m,n] = size(R);
+    if m ~= M || n ~= N
+        error('SDETools:sderandfun:RandFunCheck:RandFUNDimensionMismatch3',...
+             ['The specified alternative RandFUN did not '...
+              'output a %d by %d matrix as requested.  '...
+              'See %s.'],M,N,solver);
+    end
+catch err
+    switch err.identifier
+        case 'MATLAB:TooManyInputs'
+            error('SDETools:sderandfun:RandFunCheck:RandFUNTooFewInputs',...
+                 ['RandFUN must have at least two inputs.  '...
+                  'See %s.'],solver);
+        case 'MATLAB:TooManyOutputs'
+            error('SDETools:sderandfun:RandFunCheck:RandFUNNoOutput',...
+                 ['The output of RandFUN was not specified. '...
+                  'RandFUN must return a non-empty matrix.  '...
+                  'See %s.'],solver);
+        case 'MATLAB:unassignedOutputs'
+            error('SDETools:sderandfun:RandFunCheck:RandFUNUnassignedOutput',...
+                 ['The first output of RandFUN was not '...
+                  'assigned.  See %s.'],solver);
+        case 'MATLAB:minrhs'
+            error('SDETools:sderandfun:RandFunCheck:RandFUNTooManyInputs',...
+                 ['RandFUN must not require more than two '...
+                  'inputs.  See %s.'],solver);
+        otherwise
+            rethrow(err);
+    end
 end
