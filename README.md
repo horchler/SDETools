@@ -8,6 +8,7 @@ How to install (and uninstall) SDETools:
  1. Download and expand the *[SDETools-master.zip](https://github.com/horchler/SDETools/archive/master.zip)* ZIP archive of the repository.  
  2. Move the resultant *SDETools-master* folder to the desired permanent location.  
  3. In Matlab, navigate to *SDETools-master/SDETools/* and run ```sde_install```. This adds the necessary files and folders to the Matlab search path. To uninstall SDETools, run ```sde_install('remove')```.  
+ 4. Minor edits and bug reports and fixes can be submitted by [filing an issue](https://github.com/horchler/SDETools/issues) or via email. To add new functionality or make propose major changes, please [fork the repository](https://help.github.com/articles/fork-a-repo). Any new features should be accompanied by some means of testing. Email or file an issue if you have any questions.  
 &nbsp;  
 
 --------
@@ -51,7 +52,7 @@ Compatibility maintained back through Matlab 7.4 (R2007a)
 Acknowledgment of support: This material is based upon work supported by the [National Science Foundation](http://www.nsf.gov/) under [Grant No.&nbsp;1065489](http://www.nsf.gov/awardsearch/showAward.do?AwardNumber=1065489). Disclaimer: Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.  
 &nbsp;  
 
-Copyright &copy; 2011&ndash;2013, Andrew D. Horchler  
+Copyright &copy; 2011&ndash;2015, Andrew D. Horchler  
 All rights reserved.  
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
