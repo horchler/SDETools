@@ -80,7 +80,7 @@ function [Y,W,TE,YE,WE,IE] = sde_ou(th,mu,sig,tspan,y0,options)
 %   of Mathematics, Vol. 43, No. 2, pp. 351-369, April 1942.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-8-12
-%   Revision: 1.2, 8-19-13
+%   Revision: 1.2, 5-18-15
 
 
 func = 'SDE_OU';
@@ -341,7 +341,7 @@ if D > 0
         % All th ~= 0
         ett = exp(tt);
         if N == 1
-            Y = ett.*(y0-mu+(sig/sqrt(2*th))*Y);
+            Y = mu+ett.*(y0-mu+(sig/sqrt(2*th))*Y);
         elseif isscalar(th)
             if isscalar(mu)
                 Y = ett*(y0-mu)+mu+ett*(sig/sqrt(2*th)).*Y;
@@ -349,7 +349,11 @@ if D > 0
                 Y = ett*y0-expm1(tt)*mu+ett*(sig/sqrt(2*th)).*Y;
             end
         else
-            Y = ett.*(bsxfun(@plus,y0-mu,bsxfun(@times,sig./sqrt(2*th),Y)));
+            if isscalar(mu)
+                Y = mu+ett.*(bsxfun(@plus,y0-mu,bsxfun(@times,sig./sqrt(2*th),Y)));
+            else
+                Y = ett.*(bsxfun(@plus,y0,bsxfun(@times,sig./sqrt(2*th),Y)))-bsxfun(@times,expm1(tt),mu);
+            end
         end
 	elseif all(~th0)
         % All th = 0, driftless noise
