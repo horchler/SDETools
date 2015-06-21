@@ -1,4 +1,4 @@
-function [N,D,tspan,tdir,lt,y0,f0,g0,dg0,h,ConstStep,dataType,NonNegative,...
+function [N,D,tspan,tdir,lt,y0,f0,g0,dg0,dg,h,ConstStep,dataType,NonNegative,...
           idxNonNegative,DiagonalNoise,ScalarNoise,OneDNoise,ConstFFUN,...
           ConstGFUN,ConstDGFUN,Stratonovich,RandFUN,ResetStream,EventsFUN,...
           EventsValue,OutputFUN,WSelect] ...
@@ -10,7 +10,7 @@ function [N,D,tspan,tdir,lt,y0,f0,g0,dg0,h,ConstStep,dataType,NonNegative,...
 %       SDEZERO, SDEOUTPUT, SDERESET_STREAM, FUNCTION_HANDLE
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 12-12-11
-%   Revision: 1.2, 6-17-13
+%   Revision: 1.2, 6-21-15
 
 %   SDEARGUMENTS is partially based on an updating of version 1.12.4.15 of
 %   Matlab's ODEARGUMENTS.
@@ -234,6 +234,7 @@ if isDiffusion
     
     if ConstGFUN
         dg0 = zeros(0,class(g0));
+        dg = [];
         ConstDGFUN = false;
         Derivative = false;
     else
@@ -319,6 +320,7 @@ else
     % No diffusion function (or all zero), use defaults
     D = 1;
     dg0 = zeros(0,class(g0));
+    dg = [];
     ConstDGFUN = false;
     Derivative = false;
 end

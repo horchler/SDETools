@@ -28,20 +28,13 @@ function options = sdeset(varargin)
 %   noise, i.e., the stochastic function, g(t,y), is not a function of the state
 %   variables, g(t,y) = g(t).
 %
-%DFFUN - Derivative of the deterministic function  [ function_handle | vector ]
-%   Set this property to a function handle in order to specify the derivative of
-%   the deterministic function, df(t,y)/dy, to use derivative methods if
-%   available. If this property is not set, derivative-free methods are used. If
-%   a floating-point matrix is specified instead of a function handle, the
-%   ConstFFUN property is implicitly assumed.
-%
 %DGFUN - Derivative of the stochastic function  [ function_handle | matrix ]
-%   Set this property to a function handle in order to specify the derivative of
-%   the stochastic function, dg(t,y)/dy, to use derivative methods if available.
-%   If this property is not set, derivative-free methods are used. If a
-%   floating-point matrix is specified instead of a function handle, the
-%   ConstGFUN property is implicitly assumed. If all values are equal to zero,
-%   then the ConstDGFUN property is also assumed.
+%   Set this property to a function handle to specify the derivative of the
+%   stochastic function, dg(t,y)/dy, to use derivative methods if available
+%   (SDE_MILSTEN only). If this property is not set, derivative-free methods are
+%   used. If a floating-point matrix is specified instead of a function handle,
+%   the ConstGFUN property is implicitly assumed. If all values are equal to
+%   zero, then the ConstDGFUN property is also assumed.
 %   
 %RandSeed - Create random stream and set seed  [ 0 <= integer < 2^32 ]
 %   Create a random number stream separate from Matlab's default stream with the
@@ -94,8 +87,8 @@ function options = sdeset(varargin)
 %ConstDGFUN - Derivative of stochastic function is constant  [ yes | {no} ]
 %   Set this property to 'yes' if the derivative of th stochastic function,
 %   dg(t,y)/dy, of the SDE is constant and therefore not a function of time or
-%   state. The function is then evaluated only once by the integration routine,
-%   improving performance.
+%   state (SDE_MILSTEIN only). The function is then evaluated only once by the
+%   integration routine, improving performance.
 %
 %MaxStep - Upper bound on step size  [ scalar >= 0 ]
 %   If any step size in TSPAN is greater than MaxStep, the interval will be
@@ -152,7 +145,7 @@ function options = sdeset(varargin)
 %   SDESET is based on an updating of version 1.46.4.10 of Matlab's ODESET.
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-27-10
-%   Revision: 1.2, 5-4-13
+%   Revision: 1.2, 6-21-15
 
 
 options = struct(	'SDEType',          [],...

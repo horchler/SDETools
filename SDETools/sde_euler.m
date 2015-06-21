@@ -95,7 +95,7 @@ function [Y,W,TE,YE,WE,IE] = sde_euler(f,g,tspan,y0,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 10-28-10
-%   Revision: 1.2, 8-19-13
+%   Revision: 1.2, 6-21-15
 
 
 solver = 'SDE_EULER';
@@ -127,7 +127,7 @@ else
 end
 
 % Handle solver arguments (NOTE: ResetStream is called by onCleanup())
-[N,D,tspan,tdir,lt,y0,fout,gout,dgout,h,ConstStep,dataType,NonNegative,...
+[N,D,tspan,tdir,lt,y0,fout,gout,dgout,dg,h,ConstStep,dataType,NonNegative,...
     idxNonNegative,DiagonalNoise,ScalarNoise,OneDNoise,ConstFFUN,ConstGFUN,...
     ConstDGFUN,Stratonovich,RandFUN,ResetStream,EventsFUN,EventsValue,...
     OutputFUN,WSelect] = sdearguments(solver,f,g,tspan,y0,options);	%#ok<ASGLU>

@@ -22,7 +22,7 @@ function opts = sdeget(options,name,default,noErrorCheck)
 %   SDEGET is based on an updating of version 1.37.4.5 of Matlab's ODEGET
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-28-10
-%   Revision: 1.2, 5-3-13
+%   Revision: 1.3, 6-21-15
 
 
 % Undocumented usage for fast access with no error checking
@@ -48,7 +48,6 @@ if isempty(options)
 end
 
 Names = {   'SDEType'
-            'DFFUN'
             'DGFUN'
             'RandSeed'
             'Antithetic'
@@ -57,12 +56,16 @@ Names = {   'SDEType'
             'ConstFFUN'
             'ConstGFUN'
             'ConstDGFUN'
+            'Refine'
             'MaxStep'
             'NonNegative'
+            'NonNegativeFUN'
             'EventsFUN'
             'OutputFUN'
             'OutputYSelect'
             'OutputWSelect'
+            'Diagnostics'
+            'Stats'
         };
 
 j = find(strncmpi(name,Names,length(name)));
