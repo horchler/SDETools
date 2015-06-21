@@ -27,8 +27,8 @@
 %   Demos.
 %       
 
-%   Tested with Matlab 8.1.0.604 (R2013a)
-%   Mac OS X 10.8.4 (Build: 12E55), Java 1.6.0_51-b11-457-11M4509
+%   Tested with Matlab 8.5.0.173394 (R2015a)
+%   Mac OS X 10.10.3 (Build: 14D136), Java 1.7.0_60-b19
 %   Compatibility maintained back through Matlab 7.4 (R2007a)
 
 %   Andrew D. Horchler, adh9 @ case . edu
@@ -42,7 +42,7 @@
 %   of the National Science Foundation.
 
 
-%  Copyright © 2011-2013, Andrew D. Horchler
+%  Copyright © 2011-2015, Andrew D. Horchler
 %  All rights reserved.
 %
 %  Redistribution and use in source and binary forms, with or without

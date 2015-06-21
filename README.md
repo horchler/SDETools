@@ -42,8 +42,8 @@ Numerical validation.
 Andrew D. Horchler, *adh9 @ case . edu*, [biorobots.case.edu](http://biorobots.case.edu/)  
 Created: 12-18-11, Revision: 1.2, 9-21-13  
 
-This version tested with Matlab 8.1.0.604 (R2013a)  
-Mac OS X 10.8.4 (Build: 12E55), Java 1.6.0_51-b11-457-11M4509  
+This version tested with Matlab 8.5.0.173394 (R2015a)  
+Mac OS X 10.10.3 (Build: 14D136), Java 1.7.0_60-b19  
 Compatibility maintained back through Matlab 7.4 (R2007a)  
 &nbsp;  
 
