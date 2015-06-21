@@ -1,5 +1,5 @@
-function brusselator_sde_milstein
-%BRUSSELATOR_SDE_MILSTEIN  Noisy 2-D Brusselator demo using SDE_MILSTEIN.
+function brusselator2_sde_milstein
+%BRUSSELATOR2_SDE_MILSTEIN  Noisy 2-D Brusselator demo using SDE_MILSTEIN.
 %   Run a 2-D spatial simulation of noisy Brusselator equations.
 %
 %   See also: SDE_MILSTEIN, SDESET
@@ -7,7 +7,7 @@ function brusselator_sde_milstein
 %   Inspired by: http://en.wikipedia.org/wiki/File:Brusselator_space.gif
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-28-13
-%   Revision: 1.2, 5-3-13
+%   Revision: 1.2, 7-16-13
 
 
 t = 0:0.05:800;   	% Final time and time vector
@@ -36,7 +36,7 @@ sde_milstein(@(t,y)f(t,y,a,b,m,dx,k,n,N),@(t,y)g(t,y,sig,m,N),t,y0,opts);
 
 
 
-function y=f(t,y,a,b,m,dx,k,n,N)   %#ok<INUSL>
+function y=f(t,y,a,b,m,dx,k,n,N)	%#ok<INUSL>
 % 2-D Brusselator drift function using convolution
 X = y(1:N);
 Y = y(N+1:end);
@@ -45,7 +45,7 @@ cy = conv2(reshape(Y,[n n]),k,'same');
 y = m.*[a-(b+1-Y.*X).*X+dx(1)*cx(:);(b-Y.*X).*X+dx(2)*cy(:)];
 
 
-function y=g(t,y,sig,m,N)  %#ok<INUSL>
+function y=g(t,y,sig,m,N)           %#ok<INUSL>
 % Brusselator diffusion function
 y = sig*m.*[-y(1:N);y(1:N)];
 
@@ -77,7 +77,7 @@ switch flag
         i = []; tf = []; z = []; h = [];
     case ''
         if isempty(i)
-            error('SHCTools:brusselator_sde_milstein:out:NotCalledWithInit',...
+            error('SHCTools:brusselator2_sde_milstein:out:NotCalledWithInit',...
                  ['Output function has not been initialized. Use syntax '...
                   'OutputFUN(tspan,y0,''init'').']);
         end
@@ -97,6 +97,6 @@ switch flag
             i = i+1;
         end
     otherwise
-        error('SHCTools:brusselator_sde_milstein:out:InvalidFlag',...
+        error('SHCTools:brusselator2_sde_milstein:out:InvalidFlag',...
               'Invalid status flag passed to output function.');
 end
