@@ -44,7 +44,8 @@ function [Y,W,TE,YE,WE,IE] = sde_ou(th,mu,sig,tspan,y0,options)
 %       figure; h = plot(t([1 end]),[0 0],'k-.',t,y1,'b',t,y2,'r');
 %       mustr = num2str(mu); npstr = num2str(npaths); dtstr = num2str(dt);
 %       txt = {'Analytical solution',['Numerical solution, dt = ' dtstr]};
-%       legend(h([2 end]),txt,1); legend boxoff; xlabel('t'); ylabel('y(t)');
+%       legend(h([2 end]),txt,'Location','NorthEast'); legend boxoff;
+%       xlabel('t'); ylabel('y(t)');
 %       title(['Ornstein-Uhlenbeck processes, ' npstr ' paths, \mu = ' mustr]);
 %
 %   Note:
@@ -80,7 +81,7 @@ function [Y,W,TE,YE,WE,IE] = sde_ou(th,mu,sig,tspan,y0,options)
 %   of Mathematics, Vol. 43, No. 2, pp. 351-369, April 1942.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-8-12
-%   Revision: 1.2, 5-18-15
+%   Revision: 1.2, 4-8-16
 
 
 func = 'SDE_OU';

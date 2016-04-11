@@ -58,7 +58,8 @@ function [Y,W,TE,YE,WE,IE] = sde_milstein(f,g,tspan,y0,options)
 %       figure; plot(t,y);
 %       title(['Milstein Method, dt = ' num2str(dt) ', \mu = ' num2str(mu)]);
 %       txt = {['\sigma = ' num2str(sig(1))],['\sigma = ' num2str(sig(2))]};
-%       legend(txt,2); legend boxoff; xlabel('t'); ylabel('y(t)');
+%       legend(txt,'Location','NorthEast'); legend boxoff;
+%       xlabel('t'); ylabel('y(t)');
 %
 %   Notes:
 %       SDEs are assumed to be in Stratonovich form by default. SDEs in Ito form
@@ -93,7 +94,7 @@ function [Y,W,TE,YE,WE,IE] = sde_milstein(f,g,tspan,y0,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-25-10
-%   Revision: 1.2, 6-21-15
+%   Revision: 1.2, 4-8-16
 
 
 solver = 'SDE_MILSTEIN';

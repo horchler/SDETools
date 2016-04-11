@@ -45,7 +45,7 @@ function [Y,W,TE,YE,WE,IE] = sde_gbm(mu,sig,tspan,y0,options)
 %       figure; h = plot(t,y1,'b',t,y2,'r'); xlabel('t'); ylabel('y(t)');
 %       mustr = num2str(mu); npstr = num2str(npaths); dtstr = num2str(dt);
 %       txt = {'Analytical solution',['Numerical solution, dt = ' dtstr]};
-%       legend(h([1 end]),txt,2); legend boxoff;
+%       legend(h([1 end]),txt,'Location','NorthEast'); legend boxoff;
 %       title(['Geometric Brownian motion, ' npstr ' paths, \mu = ' mustr]);
 %
 %   Note:
@@ -77,7 +77,7 @@ function [Y,W,TE,YE,WE,IE] = sde_gbm(mu,sig,tspan,y0,options)
 %   Differential Equations," Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
-%   Revision: 1.2, 8-19-13
+%   Revision: 1.2, 4-8-16
 
 
 func = 'SDE_GBM';
