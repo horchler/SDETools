@@ -96,8 +96,9 @@ function options = sdeset(varargin)
 %   These sub-steps and their associated Wiener increments are not output.
 %
 %NonNegative - Non-negative components  [ yes | {no} | vector of indices ]
-%   Set to 'yes' to specify that all components of the solution are to be kept
-%   non-negative. A vector of indices specifies individual components of the
+%   Set to 'yes' to specify that all components of the solution, including the
+%   initial conditions, are to be kept non-negative by taking the absolute value
+%   after each step. A vector of indices specifies individual components of the
 %   solution vector to be kept non-negative. An empty vector, [], is equivalent
 %   to 'no'. This option does not apply to the stochastic process functions,
 %   which are based on analytic solutions.
@@ -145,7 +146,7 @@ function options = sdeset(varargin)
 %   SDESET is based on an updating of version 1.46.4.10 of Matlab's ODESET.
 
 %   Andrew D. Horchler, adh9 @ case . edu, 10-27-10
-%   Revision: 1.2, 6-21-15
+%   Revision: 1.3, 6-8-16
 
 
 options = struct(	'SDEType',          [],...

@@ -10,7 +10,7 @@ function [N,D,tspan,tdir,lt,y0,f0,g0,dg0,dg,h,ConstStep,dataType,NonNegative,...
 %       SDEZERO, SDEOUTPUT, SDERESET_STREAM, FUNCTION_HANDLE
         
 %   Andrew D. Horchler, adh9 @ case . edu, Created 12-12-11
-%   Revision: 1.2, 6-21-15
+%   Revision: 1.3, 6-8-16
 
 %   SDEARGUMENTS is partially based on an updating of version 1.12.4.15 of
 %   Matlab's ODEARGUMENTS.
@@ -73,7 +73,7 @@ end
 idxNonNegative = sdeget(options,'NonNegative','no','flag');
 if strcmp(idxNonNegative,'yes')
     idxNonNegative = 1:N;
-    y0 = max(y0,0);
+    y0 = abs(y0);
     NonNegative = true;
 elseif ~strcmp(idxNonNegative,'no') && ~isempty(idxNonNegative)
     if ~isnumeric(idxNonNegative) || ~isreal(idxNonNegative) ...
@@ -93,7 +93,7 @@ elseif ~strcmp(idxNonNegative,'no') && ~isempty(idxNonNegative)
               'NonNegative vector cannot contain repeated indices.  See %s.',...
               solver);
     end
-    y0(idxNonNegative) = max(y0(idxNonNegative),0);
+    y0(idxNonNegative) = abs(y0(idxNonNegative));
     NonNegative = true;
 else
     idxNonNegative = [];

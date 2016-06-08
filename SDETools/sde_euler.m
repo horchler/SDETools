@@ -96,7 +96,7 @@ function [Y,W,TE,YE,WE,IE] = sde_euler(f,g,tspan,y0,options)
 %   Springer-Verlag, 1992.
 
 %   Andrew D. Horchler, adh9 @ case . edu, Created 10-28-10
-%   Revision: 1.2, 4-8-16
+%   Revision: 1.3, 6-8-16
 
 
 solver = 'SDE_EULER';
@@ -481,7 +481,7 @@ else
             
             % Force solution to be >= 0
             if NonNegative
-                Yi = max(Yi,0);
+                Yi = abs(Yi);
             end
             
             Ti = tspan(i+1);                % Increment current time
@@ -581,7 +581,7 @@ else
             
             % Force specified solution indices to be >= 0
             if NonNegative
-                Yi(idxNonNegative) = max(Yi(idxNonNegative),0);
+                Yi(idxNonNegative) = abs(Yi(idxNonNegative));
             end
             
             Ti = tspan(i+1);                % Increment current time
