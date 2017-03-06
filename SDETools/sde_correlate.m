@@ -23,7 +23,7 @@ function varargout=sde_correlate(c,r1)
 %
 %   See also: SDE_DECORRELATE, RAND, RANDN, RANDSTREAM, RANDSTREAM/RANDN
 
-%   Andrew D. Horchler, adh9 @ case . edu, Created 5-20-13
+%   Andrew D. Horchler, horchler @ gmail . com, Created 5-20-13
 %   Revision: 1.2, 7-17-13
 
 

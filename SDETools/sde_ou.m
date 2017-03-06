@@ -80,7 +80,7 @@ function [Y,W,TE,YE,WE,IE] = sde_ou(th,mu,sig,tspan,y0,options)
 %   From: J. L. Doob, "The Brownian Movement and Stochastic Equations," Annals
 %   of Mathematics, Vol. 43, No. 2, pp. 351-369, April 1942.
 
-%   Andrew D. Horchler, adh9 @ case . edu, Created 4-8-12
+%   Andrew D. Horchler, horchler @ gmail . com, Created 4-8-12
 %   Revision: 1.2, 4-8-16
 
 

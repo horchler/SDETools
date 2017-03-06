@@ -32,7 +32,7 @@ function status=sdeplot(t,y,flag,w)
 
 %   SDEPLOT is based on an updating of Matlab's ODEPLOT, version 1.25.4.9
 
-%   Andrew D. Horchler, adh9 @ case . edu, 4-29-13
+%   Andrew D. Horchler, horchler @ gmail . com, 4-29-13
 %   Revision: 1.2, 7-16-13
 
 

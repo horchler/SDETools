@@ -145,7 +145,7 @@ function options = sdeset(varargin)
 
 %   SDESET is based on an updating of version 1.46.4.10 of Matlab's ODESET.
 
-%   Andrew D. Horchler, adh9 @ case . edu, 10-27-10
+%   Andrew D. Horchler, horchler @ gmail . com, 10-27-10
 %   Revision: 1.3, 6-8-16
 
 

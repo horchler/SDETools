@@ -21,7 +21,7 @@ function varargout=sde_euler_validate(dt,n,a,b,options)
 %   Platen, "Numerical solution of Stochastic Differential Equations,"
 %   Springer-Verlag, 1992.
 
-%   Andrew D. Horchler, adh9 @ case . edu, Created 11-1-10
+%   Andrew D. Horchler, horchler @ gmail . com, Created 11-1-10
 %   Revision: 1.2, 11-28-13
 
 

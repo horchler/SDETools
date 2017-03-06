@@ -93,7 +93,7 @@ function [Y,W,TE,YE,WE,IE] = sde_milstein(f,g,tspan,y0,options)
 %   Platen, "Numerical solution of Stochastic Differential Equations,"
 %   Springer-Verlag, 1992.
 
-%   Andrew D. Horchler, adh9 @ case . edu, 10-25-10
+%   Andrew D. Horchler, horchler @ gmail . com, 10-25-10
 %   Revision: 1.3, 6-8-16
 
 

@@ -32,7 +32,7 @@ function status=sdeprint(t,y,flag,w)
 
 %   SDEPRINT is based on an updating of Matlab's ODEPRINT, version 1.17.4.4
 
-%   Andrew D. Horchler, adh9 @ case . edu, 5-11-13
+%   Andrew D. Horchler, horchler @ gmail . com, 5-11-13
 %   Revision: 1.2, 5-13-13
 
 

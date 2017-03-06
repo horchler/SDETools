@@ -9,7 +9,7 @@ function sde_install(opt)
 %
 %   See also: PATH, ADDPATH, RMPATH, SAVEPATH
 
-%   Andrew D. Horchler, adh9 @ case . edu, Created 8-12-13
+%   Andrew D. Horchler, horchler @ gmail . com, Created 8-12-13
 %   Revision: 1.2, 11-16-13
 
 
