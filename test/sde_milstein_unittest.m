@@ -17,7 +17,7 @@ function sde_milstein_unittest(tests)
 %   See also: SDE_MILSTEIN, SDEARGUMENTS, SDE_MILSTEIN_BENCHMARK,
 %       SDE_MILSTEIN_VALIDATE, SDE_EULER_UNITTEST, WAITTEXT
 
-%   Andrew D. Horchler, adh9 @ case . edu, Created 4-2-12
+%   Andrew D. Horchler, horchler @ gmail . com, Created 4-2-12
 %   Revision: 1.2, 5-3-13
 
 

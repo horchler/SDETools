@@ -17,7 +17,7 @@ function sde_euler_benchmark(tests,N,Tol)
 %   See also: SDE_EULER, SDEARGUMENTS, SDE_EULER_UNITTEST, SDE_EULER_VALIDATE,
 %       SDE_MILSTEIN_BENCHMARK
 
-%   Andrew D. Horchler, adh9 @ case . edu, Created 1-2-11
+%   Andrew D. Horchler, horchler @ gmail . com, Created 1-2-11
 %   Revision: 1.2, 5-3-13
 
 
