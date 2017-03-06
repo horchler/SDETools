@@ -3,7 +3,7 @@ function bool=sde_issquare(V)
 %
 %   See also: SDE_ISMATRIX, SDE_ISDIAG
 
-%   Andrew D. Horchler, adh9 @ case . edu, Created 4-30-13
+%   Andrew D. Horchler, horchler @ gmail . com, Created 4-30-13
 %   Revision: 1.2, 5-4-13
 
 

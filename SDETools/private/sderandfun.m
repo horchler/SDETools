@@ -5,7 +5,7 @@ function [RandFUN,ResetStream]=sderandfun(solver,dataType,options)
 %       SDEARGUMENTS, SDEARGUMENTS_PROCESS, SDEEVENTSFUN, SDEOUTPUTFUN, SDEGET,
 %       FUNCTION_HANDLE
         
-%   Andrew D. Horchler, adh9 @ case . edu, Created 5-2-13
+%   Andrew D. Horchler, horchler @ gmail . com, Created 5-2-13
 %   Revision: 1.3, 11-28-13
 
 

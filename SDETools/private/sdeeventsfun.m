@@ -5,7 +5,7 @@ function [EventsFUN,EventsValue]=sdeeventsfun(solver,tspan,y0,options)
 %       SDEARGUMENTS, SDEARGUMENTS_PROCESS, SDEOUTPUTFUN, SDERANDFUN, SDEGET,
 %       FUNCTION_HANDLE
         
-%   Andrew D. Horchler, adh9 @ case . edu, Created 5-2-13
+%   Andrew D. Horchler, horchler @ gmail . com, Created 5-2-13
 %   Revision: 1.2, 5-2-13
 
 

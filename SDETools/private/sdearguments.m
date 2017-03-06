@@ -9,7 +9,7 @@ function [N,D,tspan,tdir,lt,y0,f0,g0,dg0,dg,h,ConstStep,dataType,NonNegative,...
 %       SDE_EULER, SDE_MILSTEIN, SDEARGUMENTS_PROCESS, SDEGET, SDEEVENTS,
 %       SDEZERO, SDEOUTPUT, SDERESET_STREAM, FUNCTION_HANDLE
         
-%   Andrew D. Horchler, adh9 @ case . edu, Created 12-12-11
+%   Andrew D. Horchler, horchler @ gmail . com, Created 12-12-11
 %   Revision: 1.3, 6-8-16
 
 %   SDEARGUMENTS is partially based on an updating of version 1.12.4.15 of

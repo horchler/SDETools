@@ -7,7 +7,7 @@ function [N,tspan,tdir,lt,y0,h,ConstStep,Stratonovich,RandFUN,ResetStream,...
 %       SDE_BM, SDE_GBM, SDE_OU, SDEARGUMENTS, SDEGET, SDEEVENTS, SDEZERO,
 %       SDEOUTPUT, SDERESET_STREAM, FUNCTION_HANDLE
         
-%   Andrew D. Horchler, adh9 @ case . edu, Created 4-4-12
+%   Andrew D. Horchler, horchler @ gmail . com, Created 4-4-12
 %   Revision: 1.2, 5-3-13
 
 %   sdearguments_process is partially based on an updating of version 1.12.4.15

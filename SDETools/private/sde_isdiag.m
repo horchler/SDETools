@@ -12,7 +12,7 @@ function bool=sde_isdiag(V,k)
 
 %   http://mathworks.com/matlabcentral/newsreader/view_thread/299383#806642
 
-%   Andrew D. Horchler, adh9 @ case . edu, Created 4-30-13
+%   Andrew D. Horchler, horchler @ gmail . com, Created 4-30-13
 %   Revision: 1.2, 7-12-13
 
 
