@@ -6,7 +6,7 @@ function brusselator2_sde_milstein
 
 %   Inspired by: http://en.wikipedia.org/wiki/File:Brusselator_space.gif
 
-%   Andrew D. Horchler, adh9 @ case . edu, Created 4-28-13
+%   Andrew D. Horchler, horchler @ gmail . com, Created 4-28-13
 %   Revision: 1.2, 7-16-13
 
 

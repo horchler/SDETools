@@ -4,7 +4,7 @@ function brusellator1_sde_euler
 %
 %   See also: SDE_EULER, SDE_SET
 
-%   Andrew D. Horchler, adh9 @ case . edu, Created 4-28-13
+%   Andrew D. Horchler, horchler @ gmail . com, Created 4-28-13
 %   Revision: 1.0, 7-16-13
 
 

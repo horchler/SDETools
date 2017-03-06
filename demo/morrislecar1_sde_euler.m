@@ -10,7 +10,7 @@ function morrislecar1_sde_euler
 %   2nd Ed., Eds. C. Koch, I. Segev, MIT Press, Cambridge, MA, 1998, Ch. 7,
 %   251-292.  http://www.math.pitt.edu/~bard/classes/chapt7.ps
 
-%   Andrew D. Horchler, adh9 @ case . edu, Created 9-11-12
+%   Andrew D. Horchler, horchler @ gmail . com, Created 9-11-12
 %   Revision: 1.2, 8-30-13
 
 
