@@ -1,8 +1,8 @@
 SDETools
 ========
-#####A Matlab Toolbox for the Numerical Solution of Stochastic Differential Equations (SDEs).#####
-######Version 1.2, 9-21-13######
-#####Download Repository: [ZIP Archive](https://github.com/horchler/SDETools/archive/master.zip)#####
+#####A Matlab Toolbox for the Numerical Solution of Stochastic Differential Equations (SDEs).
+######Version 1.2, 9-21-13
+#####Download Repository: [ZIP Archive](https://github.com/horchler/SDETools/archive/master.zip)
 
 How to install (and uninstall) SDETools:  
  1. Download and expand the *[SDETools-master.zip](https://github.com/horchler/SDETools/archive/master.zip)* ZIP archive of the repository.  
